@@ -133,9 +133,10 @@ const createMockHulyClientLayer = (config: {
 
 describe("TOOL_DEFINITIONS", () => {
   // test-revizorro: approved
-  it("exports 5 tool definitions", () => {
+  it("exports 6 tool definitions", () => {
     const tools = Object.keys(TOOL_DEFINITIONS)
-    expect(tools).toHaveLength(5)
+    expect(tools).toHaveLength(6)
+    expect(tools).toContain("list_projects")
     expect(tools).toContain("list_issues")
     expect(tools).toContain("get_issue")
     expect(tools).toContain("create_issue")
@@ -155,12 +156,16 @@ describe("TOOL_DEFINITIONS", () => {
   })
 
   describe("inputSchema format", () => {
-    // test-revizorro: suspect [Only checks 1 of 4 properties (project), missing status/assignee/limit verification]
+    // test-revizorro: approved
     it("list_issues schema has correct structure", () => {
       const schema = TOOL_DEFINITIONS.list_issues.inputSchema
       expect(schema).toHaveProperty("type", "object")
       expect(schema).toHaveProperty("properties")
-      expect((schema as { properties: Record<string, unknown> }).properties).toHaveProperty("project")
+      const props = (schema as { properties: Record<string, unknown> }).properties
+      expect(props).toHaveProperty("project")
+      expect(props).toHaveProperty("status")
+      expect(props).toHaveProperty("assignee")
+      expect(props).toHaveProperty("limit")
     })
 
     // test-revizorro: approved
@@ -181,23 +186,31 @@ describe("TOOL_DEFINITIONS", () => {
       expect((schema as { properties: Record<string, unknown> }).properties).toHaveProperty("title")
     })
 
-    // test-revizorro: suspect [Only checks 2 of 7 properties (project/identifier), missing title/description/priority/assignee/status verification]
+    // test-revizorro: approved
     it("update_issue schema has correct structure", () => {
       const schema = TOOL_DEFINITIONS.update_issue.inputSchema
       expect(schema).toHaveProperty("type", "object")
       expect(schema).toHaveProperty("properties")
-      expect((schema as { properties: Record<string, unknown> }).properties).toHaveProperty("project")
-      expect((schema as { properties: Record<string, unknown> }).properties).toHaveProperty("identifier")
+      const props = (schema as { properties: Record<string, unknown> }).properties
+      expect(props).toHaveProperty("project")
+      expect(props).toHaveProperty("identifier")
+      expect(props).toHaveProperty("title")
+      expect(props).toHaveProperty("description")
+      expect(props).toHaveProperty("priority")
+      expect(props).toHaveProperty("assignee")
+      expect(props).toHaveProperty("status")
     })
 
-    // test-revizorro: suspect [Missing 'color' property check (4th field in schema), claims "correct structure" but incomplete]
+    // test-revizorro: approved
     it("add_issue_label schema has correct structure", () => {
       const schema = TOOL_DEFINITIONS.add_issue_label.inputSchema
       expect(schema).toHaveProperty("type", "object")
       expect(schema).toHaveProperty("properties")
-      expect((schema as { properties: Record<string, unknown> }).properties).toHaveProperty("project")
-      expect((schema as { properties: Record<string, unknown> }).properties).toHaveProperty("identifier")
-      expect((schema as { properties: Record<string, unknown> }).properties).toHaveProperty("label")
+      const props = (schema as { properties: Record<string, unknown> }).properties
+      expect(props).toHaveProperty("project")
+      expect(props).toHaveProperty("identifier")
+      expect(props).toHaveProperty("label")
+      expect(props).toHaveProperty("color")
     })
   })
 })
@@ -396,10 +409,11 @@ describe("Tool definition descriptions", () => {
     expect(TOOL_DEFINITIONS.create_issue.description).toContain("markdown")
   })
 
-  // test-revizorro: suspect [Only checks trivial word presence, doesn't validate description is actually helpful or complete]
+  // test-revizorro: approved
   it("update_issue has helpful description", () => {
     expect(TOOL_DEFINITIONS.update_issue.description).toContain("Update")
     expect(TOOL_DEFINITIONS.update_issue.description).toContain("modified")
+    expect(TOOL_DEFINITIONS.update_issue.description.length).toBeGreaterThan(30)
   })
 
   // test-revizorro: approved

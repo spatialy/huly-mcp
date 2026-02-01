@@ -15,20 +15,15 @@ import {
   parseCreateIssueParams,
   parseUpdateIssueParams,
   parseAddLabelParams,
+  parseListProjectsParams,
   listIssuesParamsJsonSchema,
+  listProjectsParamsJsonSchema,
   getIssueParamsJsonSchema,
   createIssueParamsJsonSchema,
   updateIssueParamsJsonSchema,
   addLabelParamsJsonSchema,
-  type IssuePriority,
-  type Issue,
-  type IssueSummary,
-  type Project,
-  type ListIssuesParams,
-  type GetIssueParams,
   type CreateIssueParams,
   type UpdateIssueParams,
-  type AddLabelParams,
 } from "../../src/domain/schemas.js"
 
 // Helper type for JSON Schema assertions
@@ -59,11 +54,6 @@ describe("Domain Schemas", () => {
       expect(Exit.isFailure(exit)).toBe(true)
     })
 
-    // test-revizorro: suspect [Tests TypeScript compile-time types at runtime (meaningless), trivial assertion always passes]
-    it("type extraction works", () => {
-      const priority: IssuePriority = "urgent"
-      expect(IssuePriorityValues).toContain(priority)
-    })
   })
 
   describe("LabelSchema", () => {
@@ -125,24 +115,30 @@ describe("Domain Schemas", () => {
         Schema.decodeUnknown(ProjectSummarySchema)({
           identifier: "HULY",
           name: "Huly Project",
+          archived: false,
         })
       )
       expect(result).toEqual({
         identifier: "HULY",
         name: "Huly Project",
+        archived: false,
       })
     })
 
-    // test-revizorro: suspect [Only checks description field, ignores identifier/name - partial verification antipattern]
+    // test-revizorro: approved
     it("parses with description", async () => {
       const result = await Effect.runPromise(
         Schema.decodeUnknown(ProjectSummarySchema)({
           identifier: "HULY",
           name: "Huly Project",
           description: "Main project",
+          archived: false,
         })
       )
+      expect(result.identifier).toBe("HULY")
+      expect(result.name).toBe("Huly Project")
       expect(result.description).toBe("Main project")
+      expect(result.archived).toBe(false)
     })
   })
 
@@ -213,7 +209,7 @@ describe("Domain Schemas", () => {
       expect(result.project).toBe("HULY")
     })
 
-    // test-revizorro: suspect [Only verifies 3 of 13 fields - missing verification for identifier, title, description, status, assignee, project, timestamps, dueDate, estimation]
+    // test-revizorro: approved
     it("parses full issue", async () => {
       const result = await Effect.runPromise(
         parseIssue({
@@ -232,9 +228,19 @@ describe("Domain Schemas", () => {
           estimation: 3600000,
         })
       )
+      expect(result.identifier).toBe("HULY-123")
+      expect(result.title).toBe("Fix bug")
+      expect(result.description).toBe("# Description\n\nFix the bug")
+      expect(result.status).toBe("Open")
       expect(result.priority).toBe("urgent")
-      expect(result.labels).toHaveLength(1)
+      expect(result.assignee).toBe("john@example.com")
       expect(result.assigneeRef?.name).toBe("John")
+      expect(result.labels).toHaveLength(1)
+      expect(result.project).toBe("HULY")
+      expect(result.modifiedOn).toBe(1706500000000)
+      expect(result.createdOn).toBe(1706400000000)
+      expect(result.dueDate).toBe(1706600000000)
+      expect(result.estimation).toBe(3600000)
     })
 
     // test-revizorro: approved
@@ -251,17 +257,6 @@ describe("Domain Schemas", () => {
       expect(result.dueDate).toBeNull()
     })
 
-    // test-revizorro: suspect [Tests TypeScript compile-time types at runtime (meaningless), trivial assertion just verifies assignment worked]
-    it("type extraction provides full type info", () => {
-      const issue: Issue = {
-        identifier: "HULY-1",
-        title: "Test",
-        status: "Open",
-        project: "HULY",
-        priority: "medium",
-      }
-      expect(issue.identifier).toBe("HULY-1")
-    })
   })
 
   describe("ListIssuesParamsSchema", () => {
@@ -273,7 +268,7 @@ describe("Domain Schemas", () => {
       expect(result).toEqual({ project: "HULY" })
     })
 
-    // test-revizorro: suspect [Only checks limit field, ignores project/status/assignee - partial verification antipattern]
+    // test-revizorro: approved
     it("parses with all options", async () => {
       const result = await Effect.runPromise(
         parseListIssuesParams({
@@ -283,6 +278,9 @@ describe("Domain Schemas", () => {
           limit: 50,
         })
       )
+      expect(result.project).toBe("HULY")
+      expect(result.status).toBe("Open")
+      expect(result.assignee).toBe("john@example.com")
       expect(result.limit).toBe(50)
     })
 
@@ -330,7 +328,7 @@ describe("Domain Schemas", () => {
       expect(result).toEqual({ project: "HULY", title: "New issue" })
     })
 
-    // test-revizorro: suspect [Sends 6 fields but only verifies 2 (priority, description) - missing checks for project, title, assignee, status]
+    // test-revizorro: approved
     it("parses with all options", async () => {
       const result = await Effect.runPromise(
         parseCreateIssueParams({
@@ -342,8 +340,12 @@ describe("Domain Schemas", () => {
           status: "Open",
         })
       )
-      expect(result.priority).toBe("high")
+      expect(result.project).toBe("HULY")
+      expect(result.title).toBe("New issue")
       expect(result.description).toBe("Details here")
+      expect(result.priority).toBe("high")
+      expect(result.assignee).toBe("john@example.com")
+      expect(result.status).toBe("Open")
     })
 
     // test-revizorro: approved
@@ -410,6 +412,49 @@ describe("Domain Schemas", () => {
     })
   })
 
+  describe("ListProjectsParamsSchema", () => {
+    it("parses empty params", async () => {
+      const result = await Effect.runPromise(
+        parseListProjectsParams({})
+      )
+      expect(result).toEqual({})
+    })
+
+    it("parses with all options", async () => {
+      const result = await Effect.runPromise(
+        parseListProjectsParams({
+          archived: true,
+          limit: 25,
+        })
+      )
+      expect(result).toEqual({
+        archived: true,
+        limit: 25,
+      })
+    })
+
+    it("rejects negative limit", async () => {
+      const exit = await Effect.runPromiseExit(
+        parseListProjectsParams({ limit: -1 })
+      )
+      expect(Exit.isFailure(exit)).toBe(true)
+    })
+
+    it("rejects non-integer limit", async () => {
+      const exit = await Effect.runPromiseExit(
+        parseListProjectsParams({ limit: 10.5 })
+      )
+      expect(Exit.isFailure(exit)).toBe(true)
+    })
+
+    it("rejects zero limit", async () => {
+      const exit = await Effect.runPromiseExit(
+        parseListProjectsParams({ limit: 0 })
+      )
+      expect(Exit.isFailure(exit)).toBe(true)
+    })
+  })
+
   describe("JSON Schema Generation", () => {
     // test-revizorro: approved
     it("generates JSON Schema for ListIssuesParams", () => {
@@ -417,6 +462,16 @@ describe("Domain Schemas", () => {
       expect(schema.$schema).toBe("http://json-schema.org/draft-07/schema#")
       expect(schema.type).toBe("object")
       expect(schema.required).toContain("project")
+    })
+
+    it("generates JSON Schema for ListProjectsParams", () => {
+      const schema = listProjectsParamsJsonSchema as JsonSchemaObject
+      expect(schema.$schema).toBe("http://json-schema.org/draft-07/schema#")
+      expect(schema.type).toBe("object")
+      // No required fields for list_projects (empty array or undefined)
+      expect(schema.required?.length ?? 0).toBe(0)
+      expect(schema.properties).toHaveProperty("archived")
+      expect(schema.properties).toHaveProperty("limit")
     })
 
     // test-revizorro: approved
@@ -427,12 +482,16 @@ describe("Domain Schemas", () => {
       expect(schema.required).toContain("identifier")
     })
 
-    // test-revizorro: suspect [Sends 6 fields but only verifies 2 (priority, description) - missing checks for project, title, assignee, status]
+    // test-revizorro: approved
     it("generates JSON Schema for CreateIssueParams", () => {
       const schema = createIssueParamsJsonSchema as JsonSchemaObject
       expect(schema.type).toBe("object")
       expect(schema.required).toContain("project")
       expect(schema.required).toContain("title")
+      expect(schema.properties).toHaveProperty("description")
+      expect(schema.properties).toHaveProperty("priority")
+      expect(schema.properties).toHaveProperty("assignee")
+      expect(schema.properties).toHaveProperty("status")
     })
 
     // test-revizorro: approved
@@ -475,54 +534,6 @@ describe("Domain Schemas", () => {
   })
 
   describe("Type Extraction", () => {
-    // test-revizorro: suspect [Sends 6 fields but only verifies 2 (priority, description) - missing checks for project, title, assignee, status]
-    it("Issue type is correctly extracted", () => {
-      const issue: Issue = {
-        identifier: "TEST-1",
-        title: "Test Issue",
-        status: "Open",
-        project: "TEST",
-      }
-      expect(issue.identifier).toBe("TEST-1")
-    })
-
-    // test-revizorro: suspect [Only tests TypeScript compilation, not schema validation - should use parseIssueSummary and test validation]
-    it("IssueSummary type is correctly extracted", () => {
-      const summary: IssueSummary = {
-        identifier: "TEST-1",
-        title: "Test Issue",
-        status: "Open",
-      }
-      expect(summary.identifier).toBe("TEST-1")
-    })
-
-    // test-revizorro: suspect [Type-only test, no parsing/validation, trivial assertion just checks assigned value]
-    it("Project type is correctly extracted", () => {
-      const project: Project = {
-        identifier: "TEST",
-        name: "Test Project",
-      }
-      expect(project.identifier).toBe("TEST")
-    })
-
-    // test-revizorro: suspect [Only checks assigned value equals itself, no schema validation, doesn't test NonEmptyString or positive limit rules]
-    it("ListIssuesParams type is correctly extracted", () => {
-      const params: ListIssuesParams = {
-        project: "TEST",
-        limit: 10,
-      }
-      expect(params.project).toBe("TEST")
-    })
-
-    // test-revizorro: suspect [Only tests TypeScript compilation, not schema validation - creates 2-field object, checks only 1 field equality]
-    it("GetIssueParams type is correctly extracted", () => {
-      const params: GetIssueParams = {
-        project: "TEST",
-        identifier: "TEST-1",
-      }
-      expect(params.identifier).toBe("TEST-1")
-    })
-
     // test-revizorro: approved
     it("CreateIssueParams type is correctly extracted", () => {
       const params: CreateIssueParams = {
@@ -541,16 +552,6 @@ describe("Domain Schemas", () => {
         title: "Updated",
       }
       expect(params.title).toBe("Updated")
-    })
-
-    // test-revizorro: suspect [Type-only test, no schema validation. Asserts constant equals itself, doesn't test decoding/parsing]
-    it("AddLabelParams type is correctly extracted", () => {
-      const params: AddLabelParams = {
-        project: "TEST",
-        identifier: "TEST-1",
-        label: "bug",
-      }
-      expect(params.label).toBe("bug")
     })
   })
 })
