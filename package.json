@@ -1,0 +1,46 @@
+{
+  "name": "hulymcp",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "husky",
+    "start": "node dist/index.cjs",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:ws",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "bin": {
+    "hulymcp": "src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@effect/platform": "^0.94.2",
+    "@hcengineering/api-client": "^0.7.3",
+    "@hcengineering/contact": "^0.7.0",
+    "@hcengineering/core": "^0.7.4",
+    "@hcengineering/rank": "^0.7.3",
+    "@hcengineering/tags": "^0.7.0",
+    "@hcengineering/task": "^0.7.0",
+    "@hcengineering/tracker": "^0.7.0",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "effect": "^3.19.15",
+    "fake-indexeddb": "^6.2.5"
+  },
+  "devDependencies": {
+    "@effect/language-service": "^0.72.0",
+    "@effect/vitest": "latest",
+    "@types/node": "^25.1.0",
+    "@types/ws": "^8.18.1",
+    "esbuild": "^0.27.2",
+    "husky": "^9.1.7",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "latest"
+  }
+}

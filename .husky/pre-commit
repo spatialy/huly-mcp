@@ -1,0 +1,11 @@
+echo "Running gitleaks to check for secrets..."
+
+gitleaks protect --verbose --staged
+
+if [ $? -eq 1 ]; then
+    echo "❌ Gitleaks detected secrets in your changes. Commit blocked."
+    echo "Review the findings above and remove any secrets before committing."
+    exit 1
+fi
+
+echo "✅ No secrets detected"
