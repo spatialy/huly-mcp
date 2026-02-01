@@ -331,6 +331,23 @@ export const AddLabelParamsSchema = Schema.Struct({
 
 export type AddLabelParams = Schema.Schema.Type<typeof AddLabelParamsSchema>
 
+/**
+ * Parameters for delete_issue tool.
+ */
+export const DeleteIssueParamsSchema = Schema.Struct({
+  project: NonEmptyString.annotations({
+    description: "Project identifier (e.g., 'HULY')"
+  }),
+  identifier: NonEmptyString.annotations({
+    description: "Issue identifier (e.g., 'HULY-123')"
+  })
+}).annotations({
+  title: "DeleteIssueParams",
+  description: "Parameters for deleting an issue"
+})
+
+export type DeleteIssueParams = Schema.Schema.Type<typeof DeleteIssueParamsSchema>
+
 // --- JSON Schema Generation ---
 
 /**
@@ -348,6 +365,7 @@ export const getIssueParamsJsonSchema = makeJsonSchema(GetIssueParamsSchema)
 export const createIssueParamsJsonSchema = makeJsonSchema(CreateIssueParamsSchema)
 export const updateIssueParamsJsonSchema = makeJsonSchema(UpdateIssueParamsSchema)
 export const addLabelParamsJsonSchema = makeJsonSchema(AddLabelParamsSchema)
+export const deleteIssueParamsJsonSchema = makeJsonSchema(DeleteIssueParamsSchema)
 
 // --- Parsing Utilities ---
 
@@ -395,3 +413,8 @@ export const parseAddLabelParams = Schema.decodeUnknown(AddLabelParamsSchema)
  * Parse unknown data into ListProjectsParams.
  */
 export const parseListProjectsParams = Schema.decodeUnknown(ListProjectsParamsSchema)
+
+/**
+ * Parse unknown data into DeleteIssueParams.
+ */
+export const parseDeleteIssueParams = Schema.decodeUnknown(DeleteIssueParamsSchema)

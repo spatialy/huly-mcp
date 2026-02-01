@@ -12,11 +12,13 @@ import { Context, Effect, Exit, Layer, Ref, Schema } from "effect"
 import {
   addLabelParamsJsonSchema,
   createIssueParamsJsonSchema,
+  deleteIssueParamsJsonSchema,
   getIssueParamsJsonSchema,
   listIssuesParamsJsonSchema,
   listProjectsParamsJsonSchema,
   parseAddLabelParams,
   parseCreateIssueParams,
+  parseDeleteIssueParams,
   parseGetIssueParams,
   parseListIssuesParams,
   parseListProjectsParams,
@@ -25,7 +27,7 @@ import {
 } from "../domain/schemas.js"
 import { HulyClient } from "../huly/client.js"
 import type { HulyDomainError } from "../huly/errors.js"
-import { addLabel, createIssue, getIssue, listIssues, updateIssue } from "../huly/operations/issues.js"
+import { addLabel, createIssue, deleteIssue, getIssue, listIssues, updateIssue } from "../huly/operations/issues.js"
 import { listProjects } from "../huly/operations/projects.js"
 import {
   createSuccessResponse,
@@ -85,6 +87,11 @@ export const TOOL_DEFINITIONS = {
     name: "add_issue_label",
     description: "Add a tag/label to a Huly issue. Creates the tag if it doesn't exist in the project.",
     inputSchema: addLabelParamsJsonSchema
+  },
+  delete_issue: {
+    name: "delete_issue",
+    description: "Permanently delete a Huly issue. This action cannot be undone.",
+    inputSchema: deleteIssueParamsJsonSchema
   }
 } as const
 
@@ -318,6 +325,15 @@ async function handleToolCall(
         args,
         parseAddLabelParams,
         (params) => addLabel(params),
+        hulyClient
+      )
+
+    case "delete_issue":
+      return runToolHandler(
+        toolName,
+        args,
+        parseDeleteIssueParams,
+        (params) => deleteIssue(params),
         hulyClient
       )
 
