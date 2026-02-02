@@ -134,16 +134,17 @@ const createMockHulyClientLayer = (config: {
 
 describe("TOOL_DEFINITIONS", () => {
   // test-revizorro: approved
-  it.effect("exports 6 tool definitions", () =>
+  it.effect("exports 7 tool definitions", () =>
     Effect.gen(function* () {
       const tools = Object.keys(TOOL_DEFINITIONS)
-      expect(tools).toHaveLength(6)
+      expect(tools).toHaveLength(7)
       expect(tools).toContain("list_projects")
       expect(tools).toContain("list_issues")
       expect(tools).toContain("get_issue")
       expect(tools).toContain("create_issue")
       expect(tools).toContain("update_issue")
       expect(tools).toContain("add_issue_label")
+      expect(tools).toContain("delete_issue")
     })
   )
 
@@ -225,6 +226,17 @@ describe("TOOL_DEFINITIONS", () => {
         expect(props).toHaveProperty("identifier")
         expect(props).toHaveProperty("label")
         expect(props).toHaveProperty("color")
+      })
+    )
+
+    it.effect("delete_issue schema has correct structure", () =>
+      Effect.gen(function* () {
+        const schema = TOOL_DEFINITIONS.delete_issue.inputSchema
+        expect(schema).toHaveProperty("type", "object")
+        expect(schema).toHaveProperty("properties")
+        const props = (schema as { properties: Record<string, unknown> }).properties
+        expect(props).toHaveProperty("project")
+        expect(props).toHaveProperty("identifier")
       })
     )
   })
@@ -434,6 +446,13 @@ describe("Tool definition descriptions", () => {
     Effect.gen(function* () {
       expect(TOOL_DEFINITIONS.add_issue_label.description).toContain("label")
       expect(TOOL_DEFINITIONS.add_issue_label.description).toContain("tag")
+    })
+  )
+
+  it.effect("delete_issue has helpful description", () =>
+    Effect.gen(function* () {
+      expect(TOOL_DEFINITIONS.delete_issue.description).toContain("delete")
+      expect(TOOL_DEFINITIONS.delete_issue.description).toContain("cannot be undone")
     })
   )
 })

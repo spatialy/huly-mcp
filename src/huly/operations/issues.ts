@@ -29,6 +29,7 @@ import { Effect } from "effect"
 import type {
   AddLabelParams,
   CreateIssueParams,
+  DeleteIssueParams,
   GetIssueParams,
   Issue,
   IssuePriority as IssuePriorityStr,
@@ -92,6 +93,14 @@ export type UpdateIssueError =
  * Errors that addLabel can produce.
  */
 export type AddLabelError =
+  | HulyClientError
+  | ProjectNotFoundError
+  | IssueNotFoundError
+
+/**
+ * Errors that deleteIssue can produce.
+ */
+export type DeleteIssueError =
   | HulyClientError
   | ProjectNotFoundError
   | IssueNotFoundError
@@ -910,4 +919,76 @@ export const addLabel = (
     )
 
     return { identifier: issue.identifier, labelAdded: true }
+  })
+
+// --- Delete Issue Operation ---
+
+/**
+ * Result of deleteIssue operation.
+ */
+export interface DeleteIssueResult {
+  identifier: string
+  deleted: boolean
+}
+
+/**
+ * Delete an issue from a project.
+ *
+ * Permanently removes the issue. This operation cannot be undone.
+ *
+ * @param params - Delete issue parameters
+ * @returns Deleted issue identifier and success flag
+ * @throws ProjectNotFoundError if project doesn't exist
+ * @throws IssueNotFoundError if issue doesn't exist
+ */
+export const deleteIssue = (
+  params: DeleteIssueParams
+): Effect.Effect<DeleteIssueResult, DeleteIssueError, HulyClient> =>
+  Effect.gen(function*() {
+    const client = yield* HulyClient
+
+    const projectResult = yield* client.findOne<HulyProject>(
+      tracker.class.Project,
+      { identifier: params.project }
+    )
+    if (projectResult === undefined) {
+      return yield* new ProjectNotFoundError({ identifier: params.project })
+    }
+    const project = projectResult
+
+    const { fullIdentifier, number } = parseIssueIdentifier(
+      params.identifier,
+      params.project
+    )
+
+    let issue = yield* client.findOne<HulyIssue>(
+      tracker.class.Issue,
+      {
+        space: project._id,
+        identifier: fullIdentifier
+      }
+    )
+    if (issue === undefined && number !== null) {
+      issue = yield* client.findOne<HulyIssue>(
+        tracker.class.Issue,
+        {
+          space: project._id,
+          number
+        }
+      )
+    }
+    if (issue === undefined) {
+      return yield* new IssueNotFoundError({
+        identifier: params.identifier,
+        project: params.project
+      })
+    }
+
+    yield* client.removeDoc(
+      tracker.class.Issue,
+      project._id,
+      issue._id
+    )
+
+    return { identifier: issue.identifier, deleted: true }
   })
