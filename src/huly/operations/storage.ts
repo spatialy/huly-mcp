@@ -44,8 +44,8 @@ export const uploadFile = (
     const buffer: Buffer = params.filePath
       ? yield* readFromFilePath(params.filePath)
       : params.fileUrl
-        ? yield* fetchFromUrl(params.fileUrl)
-        : yield* decodeBase64(params.data!)
+      ? yield* fetchFromUrl(params.fileUrl)
+      : yield* decodeBase64(params.data!)
 
     // Upload to storage
     const result = yield* storageClient.uploadFile(

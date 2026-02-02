@@ -58,7 +58,11 @@ export const buildAppLayer = (
   transport: McpTransportType,
   httpPort: number,
   httpHost: string
-): Layer.Layer<McpServerService | HttpServerFactoryService, HulyConfigError | HulyClientError | StorageClientError, never> => {
+): Layer.Layer<
+  McpServerService | HttpServerFactoryService,
+  HulyConfigError | HulyClientError | StorageClientError,
+  never
+> => {
   const configLayer = HulyConfigService.layer
 
   const hulyClientLayer = HulyClient.layer.pipe(
