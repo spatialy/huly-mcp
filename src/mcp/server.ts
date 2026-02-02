@@ -126,7 +126,9 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
       Effect.gen(function*() {
         const hulyClient = yield* HulyClient
 
-        // Create the MCP server instance using low-level Server API
+        // Using low-level Server API (not McpServer) because we use Effect Schema
+        // for validation and custom JSON Schema generation - this qualifies as an
+        // "advanced use case" per the SDK deprecation note on Server
         const server = new Server(
           {
             name: "huly-mcp",
