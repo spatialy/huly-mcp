@@ -86,12 +86,46 @@ export const ProjectSummarySchema = Schema.Struct({
   identifier: NonEmptyString,
   name: Schema.String,
   description: Schema.optional(Schema.String),
+  archived: Schema.Boolean,
 }).annotations({
   title: "ProjectSummary",
   description: "Project summary for list operations",
 })
 
 export type ProjectSummary = Schema.Schema.Type<typeof ProjectSummarySchema>
+
+/**
+ * Parameters for list_projects tool.
+ */
+export const ListProjectsParamsSchema = Schema.Struct({
+  archived: Schema.optional(Schema.Boolean.annotations({
+    description: "Include archived projects (default: false, showing only active)",
+  })),
+  limit: Schema.optional(Schema.Number.pipe(
+    Schema.int(),
+    Schema.positive()
+  ).annotations({
+    description: "Maximum number of projects to return (default: 50)",
+  })),
+}).annotations({
+  title: "ListProjectsParams",
+  description: "Parameters for listing projects",
+})
+
+export type ListProjectsParams = Schema.Schema.Type<typeof ListProjectsParamsSchema>
+
+/**
+ * Result schema for list_projects tool.
+ */
+export const ListProjectsResultSchema = Schema.Struct({
+  projects: Schema.Array(ProjectSummarySchema),
+  total: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+}).annotations({
+  title: "ListProjectsResult",
+  description: "Result of listing projects",
+})
+
+export type ListProjectsResult = Schema.Schema.Type<typeof ListProjectsResultSchema>
 
 /**
  * Full project schema with statuses.
@@ -297,6 +331,7 @@ export const makeJsonSchema = <A, I, R>(
 ): ReturnType<typeof JSONSchema.make> => JSONSchema.make(schema)
 
 // Pre-generated JSON schemas for MCP tools
+export const listProjectsParamsJsonSchema = makeJsonSchema(ListProjectsParamsSchema)
 export const listIssuesParamsJsonSchema = makeJsonSchema(ListIssuesParamsSchema)
 export const getIssueParamsJsonSchema = makeJsonSchema(GetIssueParamsSchema)
 export const createIssueParamsJsonSchema = makeJsonSchema(CreateIssueParamsSchema)
@@ -344,3 +379,8 @@ export const parseUpdateIssueParams = Schema.decodeUnknown(UpdateIssueParamsSche
  * Parse unknown data into AddLabelParams.
  */
 export const parseAddLabelParams = Schema.decodeUnknown(AddLabelParamsSchema)
+
+/**
+ * Parse unknown data into ListProjectsParams.
+ */
+export const parseListProjectsParams = Schema.decodeUnknown(ListProjectsParamsSchema)

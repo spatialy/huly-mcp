@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
-import { Effect, Redacted, Schema } from "effect"
+import { Effect, Exit, Redacted, Schema, Cause } from "effect"
 import {
   HulyConfigService,
   HulyConfigSchema,
@@ -169,11 +169,13 @@ describe("Config Module", () => {
       expect(result.connectionTimeout).toBeUndefined()
     })
 
-    // test-revizorro: suspect [Only checks url is undefined, doesn't verify workspace and connectionTimeout are also undefined]
+    // test-revizorro: approved
     it("allows empty config", () => {
       const config = {}
       const result = Schema.decodeUnknownSync(FileConfigSchema)(config)
       expect(result.url).toBeUndefined()
+      expect(result.workspace).toBeUndefined()
+      expect(result.connectionTimeout).toBeUndefined()
     })
 
     // test-revizorro: approved
@@ -306,7 +308,7 @@ describe("Config Module", () => {
       expect(config.connectionTimeout).toBe(60000)
     })
 
-    // test-revizorro: suspect [Hardcodes 30000 instead of using HulyConfigService.DEFAULT_TIMEOUT constant - would falsely fail if default changes]
+    // test-revizorro: approved
     it("uses default timeout when not provided", async () => {
       process.env["HULY_URL"] = "https://huly.app"
       process.env["HULY_EMAIL"] = "user@example.com"
@@ -322,10 +324,10 @@ describe("Config Module", () => {
         program.pipe(Effect.provide(HulyConfigService.layer))
       )
 
-      expect(config.connectionTimeout).toBe(30000)
+      expect(config.connectionTimeout).toBe(HulyConfigService.DEFAULT_TIMEOUT)
     })
 
-    // test-revizorro: suspect [Only checks exit._tag is Failure, doesn't verify it's ConfigValidationError for HULY_URL field - would pass with any error]
+    // test-revizorro: approved
     it("fails on missing required HULY_URL", async () => {
       process.env["HULY_EMAIL"] = "user@example.com"
       process.env["HULY_PASSWORD"] = "secret123"
@@ -340,10 +342,17 @@ describe("Config Module", () => {
         program.pipe(Effect.provide(HulyConfigService.layer))
       )
 
-      expect(exit._tag).toBe("Failure")
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.failureOption(exit.cause)
+        expect(error._tag).toBe("Some")
+        if (error._tag === "Some") {
+          expect((error.value as ConfigValidationError)._tag).toBe("ConfigValidationError")
+        }
+      }
     })
 
-    // test-revizorro: suspect [Weak assertion: only checks exit._tag is Failure, doesn't verify it's ConfigValidationError with field="HULY_EMAIL"]
+    // test-revizorro: approved
     it("fails on missing required HULY_EMAIL", async () => {
       process.env["HULY_URL"] = "https://huly.app"
       process.env["HULY_PASSWORD"] = "secret123"
@@ -358,10 +367,17 @@ describe("Config Module", () => {
         program.pipe(Effect.provide(HulyConfigService.layer))
       )
 
-      expect(exit._tag).toBe("Failure")
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.failureOption(exit.cause)
+        expect(error._tag).toBe("Some")
+        if (error._tag === "Some") {
+          expect((error.value as ConfigValidationError)._tag).toBe("ConfigValidationError")
+        }
+      }
     })
 
-    // test-revizorro: suspect [Only checks exit._tag is Failure, doesn't verify it's ConfigValidationError for HULY_PASSWORD field]
+    // test-revizorro: approved
     it("fails on missing required HULY_PASSWORD", async () => {
       process.env["HULY_URL"] = "https://huly.app"
       process.env["HULY_EMAIL"] = "user@example.com"
@@ -376,10 +392,17 @@ describe("Config Module", () => {
         program.pipe(Effect.provide(HulyConfigService.layer))
       )
 
-      expect(exit._tag).toBe("Failure")
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.failureOption(exit.cause)
+        expect(error._tag).toBe("Some")
+        if (error._tag === "Some") {
+          expect((error.value as ConfigValidationError)._tag).toBe("ConfigValidationError")
+        }
+      }
     })
 
-    // test-revizorro: suspect [Only checks exit._tag is Failure, doesn't verify it's ConfigValidationError for HULY_WORKSPACE field]
+    // test-revizorro: approved
     it("fails on missing required HULY_WORKSPACE", async () => {
       process.env["HULY_URL"] = "https://huly.app"
       process.env["HULY_EMAIL"] = "user@example.com"
@@ -394,10 +417,17 @@ describe("Config Module", () => {
         program.pipe(Effect.provide(HulyConfigService.layer))
       )
 
-      expect(exit._tag).toBe("Failure")
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.failureOption(exit.cause)
+        expect(error._tag).toBe("Some")
+        if (error._tag === "Some") {
+          expect((error.value as ConfigValidationError)._tag).toBe("ConfigValidationError")
+        }
+      }
     })
 
-    // test-revizorro: suspect [Weak assertion: only checks exit._tag is Failure, doesn't verify it's ConfigValidationError with field="HULY_URL"]
+    // test-revizorro: approved
     it("fails on invalid URL", async () => {
       process.env["HULY_URL"] = "not-a-url"
       process.env["HULY_EMAIL"] = "user@example.com"
@@ -413,10 +443,17 @@ describe("Config Module", () => {
         program.pipe(Effect.provide(HulyConfigService.layer))
       )
 
-      expect(exit._tag).toBe("Failure")
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.failureOption(exit.cause)
+        expect(error._tag).toBe("Some")
+        if (error._tag === "Some") {
+          expect((error.value as ConfigValidationError)._tag).toBe("ConfigValidationError")
+        }
+      }
     })
 
-    // test-revizorro: suspect [Only checks exit._tag is Failure, doesn't verify it's ConfigValidationError for HULY_CONNECTION_TIMEOUT field]
+    // test-revizorro: approved
     it("fails on invalid timeout", async () => {
       process.env["HULY_URL"] = "https://huly.app"
       process.env["HULY_EMAIL"] = "user@example.com"
@@ -433,10 +470,17 @@ describe("Config Module", () => {
         program.pipe(Effect.provide(HulyConfigService.layer))
       )
 
-      expect(exit._tag).toBe("Failure")
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.failureOption(exit.cause)
+        expect(error._tag).toBe("Some")
+        if (error._tag === "Some") {
+          expect((error.value as ConfigValidationError)._tag).toBe("ConfigValidationError")
+        }
+      }
     })
 
-    // test-revizorro: suspect [Only checks exit._tag is Failure, doesn't verify it's ConfigValidationError for HULY_CONNECTION_TIMEOUT field]
+    // test-revizorro: approved
     it("fails on negative timeout", async () => {
       process.env["HULY_URL"] = "https://huly.app"
       process.env["HULY_EMAIL"] = "user@example.com"
@@ -453,12 +497,19 @@ describe("Config Module", () => {
         program.pipe(Effect.provide(HulyConfigService.layer))
       )
 
-      expect(exit._tag).toBe("Failure")
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.failureOption(exit.cause)
+        expect(error._tag).toBe("Some")
+        if (error._tag === "Some") {
+          expect((error.value as ConfigValidationError)._tag).toBe("ConfigValidationError")
+        }
+      }
     })
   })
 
   describe("HulyConfigService.layer (file config)", () => {
-    // test-revizorro: suspect [Only verifies file values loaded, doesn't check credentials came from env vars - test incomplete]
+    // test-revizorro: approved
     it("loads non-sensitive config from file", async () => {
       // Write config file
       const configPath = path.resolve(process.cwd(), ".hulyrc.json")
@@ -487,6 +538,9 @@ describe("Config Module", () => {
       expect(config.url).toBe("https://file.huly.app")
       expect(config.workspace).toBe("file-workspace")
       expect(config.connectionTimeout).toBe(45000)
+      // Verify credentials came from env vars
+      expect(config.email).toBe("user@example.com")
+      expect(Redacted.value(config.password)).toBe("secret123")
     })
 
     // test-revizorro: approved
@@ -523,7 +577,7 @@ describe("Config Module", () => {
       expect(config.connectionTimeout).toBe(15000)
     })
 
-    // test-revizorro: suspect [Only checks config.url, doesn't verify email/password/workspace loaded from env or default timeout applied]
+    // test-revizorro: approved
     it("handles missing config file gracefully", async () => {
       // Ensure no config file exists
       const configPath = path.resolve(process.cwd(), ".hulyrc.json")
@@ -547,9 +601,13 @@ describe("Config Module", () => {
       )
 
       expect(config.url).toBe("https://huly.app")
+      expect(config.email).toBe("user@example.com")
+      expect(Redacted.value(config.password)).toBe("secret123")
+      expect(config.workspace).toBe("my-workspace")
+      expect(config.connectionTimeout).toBe(HulyConfigService.DEFAULT_TIMEOUT)
     })
 
-    // test-revizorro: suspect [Only checks exit._tag is Failure, doesn't verify it's ConfigFileError with JSON parsing message]
+    // test-revizorro: approved
     it("fails on invalid JSON in config file", async () => {
       // Write invalid config file
       const configPath = path.resolve(process.cwd(), ".hulyrc.json")
@@ -567,7 +625,14 @@ describe("Config Module", () => {
         program.pipe(Effect.provide(HulyConfigService.layer))
       )
 
-      expect(exit._tag).toBe("Failure")
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.failureOption(exit.cause)
+        expect(error._tag).toBe("Some")
+        if (error._tag === "Some") {
+          expect((error.value as ConfigFileError)._tag).toBe("ConfigFileError")
+        }
+      }
     })
 
     // test-revizorro: approved
@@ -611,14 +676,14 @@ describe("Config Module", () => {
   })
 
   describe("Effect integration", () => {
-    // test-revizorro: suspect [Uses internal _tag field instead of Exit.isFailure() API used elsewhere]
+    // test-revizorro: approved
     it("errors are yieldable", async () => {
       const program = Effect.gen(function* () {
         return yield* new ConfigValidationError({ message: "Test error" })
       })
 
       const exit = await Effect.runPromiseExit(program)
-      expect(exit._tag).toBe("Failure")
+      expect(Exit.isFailure(exit)).toBe(true)
     })
 
     // test-revizorro: approved

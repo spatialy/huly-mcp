@@ -24,12 +24,15 @@ import {
   updateIssue,
   addLabel,
 } from "../huly/operations/issues.js"
+import { listProjects } from "../huly/operations/projects.js"
 import {
+  listProjectsParamsJsonSchema,
   listIssuesParamsJsonSchema,
   getIssueParamsJsonSchema,
   createIssueParamsJsonSchema,
   updateIssueParamsJsonSchema,
   addLabelParamsJsonSchema,
+  parseListProjectsParams,
   parseListIssuesParams,
   parseGetIssueParams,
   parseCreateIssueParams,
@@ -78,6 +81,12 @@ export class McpServerError extends Schema.TaggedError<McpServerError>()(
  * Maps tool names to their descriptions and JSON schemas.
  */
 export const TOOL_DEFINITIONS = {
+  list_projects: {
+    name: "list_projects",
+    description:
+      "List all Huly projects. Returns projects sorted by name. Supports filtering by archived status.",
+    inputSchema: listProjectsParamsJsonSchema,
+  },
   list_issues: {
     name: "list_issues",
     description:
@@ -303,6 +312,15 @@ async function handleToolCall(
   hulyClient: HulyClient["Type"]
 ): Promise<McpToolResponse> {
   switch (toolName) {
+    case "list_projects":
+      return runToolHandler(
+        toolName,
+        args,
+        parseListProjectsParams,
+        (params) => listProjects(params),
+        hulyClient
+      )
+
     case "list_issues":
       return runToolHandler(
         toolName,

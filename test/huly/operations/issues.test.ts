@@ -2120,7 +2120,7 @@ describe("addLabel", () => {
   })
 
   describe("identifier parsing", () => {
-    // test-revizorro: suspect [Only checks return value labelAdded:true, doesn't verify addCollection was called or TagReference was created]
+    // test-revizorro: approved
     it("finds issue by full identifier", async () => {
       const project = makeProject({ identifier: "HULY" })
       const issue = makeIssue({ identifier: "HULY-42", number: 42 })
@@ -2145,6 +2145,9 @@ describe("addLabel", () => {
 
       expect(result.identifier).toBe("HULY-42")
       expect(result.labelAdded).toBe(true)
+      // Verify addCollection was called to create TagReference
+      expect(captureAddCollection.attributes).toBeDefined()
+      expect(captureAddCollection.attributes?.title).toBe("Bug")
     })
 
     // test-revizorro: approved

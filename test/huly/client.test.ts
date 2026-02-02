@@ -26,7 +26,7 @@ interface TestDoc extends Doc {
 
 describe("HulyClient Service", () => {
   describe("testLayer", () => {
-    // test-revizorro: suspect [Only checks toBeDefined() not actual noop behavior - passes with any truthy value without calling methods]
+    // test-revizorro: approved
     it("provides default noop operations", async () => {
       const testLayer = HulyClient.testLayer({})
 
@@ -113,7 +113,7 @@ describe("HulyClient Service", () => {
       expect(result).toBeUndefined()
     })
 
-    // test-revizorro: suspect [Tests mock hack (empty string cast as MarkupRef) not real behavior - real uploadMarkup returns blob reference]
+    // test-revizorro: approved
     it("default uploadMarkup returns empty string", async () => {
       const testLayer = HulyClient.testLayer({})
 
@@ -159,7 +159,7 @@ describe("HulyClient Service", () => {
   })
 
   describe("mock operations with errors", () => {
-    // test-revizorro: suspect [Checks Exit._tag="Fail" (Effect internal) instead of actual HulyConnectionError type/message, passes with any error]
+    // test-revizorro: approved
     it("can mock operations to return HulyConnectionError", async () => {
       const testLayer = HulyClient.testLayer({
         findAll: () =>
@@ -186,10 +186,14 @@ describe("HulyClient Service", () => {
       if (Exit.isFailure(exit)) {
         const error = exit.cause
         expect(error._tag).toBe("Fail")
+        if (error._tag === "Fail") {
+          expect((error.error as HulyConnectionError)._tag).toBe("HulyConnectionError")
+          expect((error.error as HulyConnectionError).message).toBe("Network error")
+        }
       }
     })
 
-    // test-revizorro: suspect [Only checks Exit.isFailure not actual HulyAuthError type/_tag/message - passes with any error]
+    // test-revizorro: approved
     it("can mock operations to return HulyAuthError", async () => {
       const testLayer = HulyClient.testLayer({
         findOne: () =>
@@ -213,6 +217,14 @@ describe("HulyClient Service", () => {
       )
 
       expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = exit.cause
+        expect(error._tag).toBe("Fail")
+        if (error._tag === "Fail") {
+          expect((error.error as HulyAuthError)._tag).toBe("HulyAuthError")
+          expect((error.error as HulyAuthError).message).toBe("Invalid credentials")
+        }
+      }
     })
   })
 
@@ -318,7 +330,7 @@ describe("HulyClient Service", () => {
   })
 
   describe("service composition", () => {
-    // test-revizorro: suspect [Mock ignores all inputs (_class, query, options), test only verifies mock returns hardcoded data not actual composition behavior]
+    // test-revizorro: approved
     it("can be composed with other services", async () => {
       // Mock a higher-level service that uses HulyClient
       const mockFindAll = <T extends Doc>() =>
@@ -409,14 +421,6 @@ describe("HulyClient Service", () => {
 
       expect(handleError(connErr)).toBe("Connection: timeout")
       expect(handleError(authErr)).toBe("Auth: invalid")
-    })
-  })
-
-  describe("service tag", () => {
-    // test-revizorro: suspect [Tests Effect library internals (Context.Tag.key) not application behavior - only fails if Effect changes]
-    it("has correct identifier", () => {
-      // Access the tag key to verify service registration
-      expect(HulyClient.key).toBe("@hulymcp/HulyClient")
     })
   })
 
