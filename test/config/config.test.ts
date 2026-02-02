@@ -506,6 +506,81 @@ describe("Config Module", () => {
         }
       }
     })
+
+    it("fails on empty password", async () => {
+      process.env["HULY_URL"] = "https://huly.app"
+      process.env["HULY_EMAIL"] = "user@example.com"
+      process.env["HULY_PASSWORD"] = ""
+      process.env["HULY_WORKSPACE"] = "my-workspace"
+
+      const program = Effect.gen(function* () {
+        const config = yield* HulyConfigService
+        return config
+      })
+
+      const exit = await Effect.runPromiseExit(
+        program.pipe(Effect.provide(HulyConfigService.layer))
+      )
+
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.failureOption(exit.cause)
+        expect(error._tag).toBe("Some")
+        if (error._tag === "Some") {
+          expect((error.value as ConfigValidationError)._tag).toBe("ConfigValidationError")
+        }
+      }
+    })
+
+    it("fails on whitespace-only password", async () => {
+      process.env["HULY_URL"] = "https://huly.app"
+      process.env["HULY_EMAIL"] = "user@example.com"
+      process.env["HULY_PASSWORD"] = "   "
+      process.env["HULY_WORKSPACE"] = "my-workspace"
+
+      const program = Effect.gen(function* () {
+        const config = yield* HulyConfigService
+        return config
+      })
+
+      const exit = await Effect.runPromiseExit(
+        program.pipe(Effect.provide(HulyConfigService.layer))
+      )
+
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.failureOption(exit.cause)
+        expect(error._tag).toBe("Some")
+        if (error._tag === "Some") {
+          expect((error.value as ConfigValidationError)._tag).toBe("ConfigValidationError")
+        }
+      }
+    })
+
+    it("fails on whitespace-only email", async () => {
+      process.env["HULY_URL"] = "https://huly.app"
+      process.env["HULY_EMAIL"] = "   "
+      process.env["HULY_PASSWORD"] = "secret123"
+      process.env["HULY_WORKSPACE"] = "my-workspace"
+
+      const program = Effect.gen(function* () {
+        const config = yield* HulyConfigService
+        return config
+      })
+
+      const exit = await Effect.runPromiseExit(
+        program.pipe(Effect.provide(HulyConfigService.layer))
+      )
+
+      expect(Exit.isFailure(exit)).toBe(true)
+      if (Exit.isFailure(exit)) {
+        const error = Cause.failureOption(exit.cause)
+        expect(error._tag).toBe("Some")
+        if (error._tag === "Some") {
+          expect((error.value as ConfigValidationError)._tag).toBe("ConfigValidationError")
+        }
+      }
+    })
   })
 
   describe("HulyConfigService.layer (file config)", () => {
