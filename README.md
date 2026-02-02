@@ -12,7 +12,7 @@ claude mcp add huly \
   -e HULY_EMAIL=your@email.com \
   -e HULY_PASSWORD=yourpassword \
   -e HULY_WORKSPACE=yourworkspace \
-  -- npx @firfi/huly-mcp
+  -- npx -y @firfi/huly-mcp@latest
 ```
 
 ### JSON Config
@@ -24,7 +24,7 @@ Add to `~/.claude.json` or `.mcp.json`:
   "mcpServers": {
     "huly": {
       "command": "npx",
-      "args": ["@firfi/huly-mcp"],
+      "args": ["-y", "@firfi/huly-mcp@latest"],
       "env": {
         "HULY_URL": "https://huly.app",
         "HULY_EMAIL": "your@email.com",
