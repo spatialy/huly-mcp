@@ -92,9 +92,6 @@ export class HttpServerFactoryService extends Context.Tag("@hulymcp/HttpServerFa
   )
 }
 
-// Note: SessionStore would be used for stateful mode (future enhancement)
-// type SessionStore = Map<string, StreamableHTTPServerTransport>
-
 /**
  * Create HTTP request handlers for the MCP endpoint.
  * Uses stateless mode - each request creates a new server/transport pair.
@@ -108,27 +105,17 @@ export const createMcpHandlers = (
   get: (req: Request, res: Response) => Promise<void>
   delete: (req: Request, res: Response) => Promise<void>
 } => {
-  // For stateless mode, we don't maintain sessions
-  // Each request creates a fresh server/transport pair
-
   const post = async (req: Request, res: Response): Promise<void> => {
     try {
-      // Stateless mode: every request gets a new server and transport
-      // No session management - sessionIdGenerator is undefined
       const server = createServer()
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined
       })
 
-      // Connect server to transport
-      // Note: StreamableHTTPServerTransport implements Transport but SDK types
-      // are not fully aligned - cast is safe as runtime behavior is correct
       await server.connect(transport as Transport)
       await transport.handleRequest(req, res, req.body)
 
-      // Clean up after response completes
       res.on("close", () => {
-        // Cleanup errors are logged but not propagated as response is already sent
         transport.close().catch((err) => {
           process.stderr.write(`Transport cleanup error: ${String(err)}\n`)
         })
@@ -150,7 +137,6 @@ export const createMcpHandlers = (
     }
   }
 
-  // GET not supported in stateless mode
   const get = async (_req: Request, res: Response): Promise<void> => {
     res.status(405).json({
       jsonrpc: "2.0",
@@ -162,7 +148,6 @@ export const createMcpHandlers = (
     })
   }
 
-  // DELETE not supported in stateless mode
   const del = async (_req: Request, res: Response): Promise<void> => {
     res.status(405).json({
       jsonrpc: "2.0",
@@ -215,14 +200,11 @@ export const startHttpTransport = (
     const factory = yield* HttpServerFactoryService
 
     const app = factory.createApp(config.host)
-
-    // Set up MCP endpoint handlers
     const handlers = createMcpHandlers(createServer)
     app.post("/mcp", handlers.post)
     app.get("/mcp", handlers.get)
     app.delete("/mcp", handlers.delete)
 
-    // Acquire the server with proper resource management
     yield* Effect.acquireRelease(
       factory.listen(app, config.port, config.host),
       (srv) =>
