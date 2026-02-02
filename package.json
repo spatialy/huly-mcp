@@ -33,9 +33,9 @@
     "huly-mcp": "./dist/index.cjs",
     "@firfi/huly-mcp": "./dist/index.cjs"
   },
-  "keywords": [],
+  "keywords": ["mcp", "model-context-protocol", "huly", "project-management", "issue-tracker", "ai-tools", "claude", "llm"],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@effect/platform": "^0.94.2",
     "@effect/platform-node": "^0.104.1",
