@@ -139,7 +139,8 @@ const createTestLayerWithMocks = (config: MockConfig) => {
   const persons = config.persons ?? []
   const channels = config.channels ?? []
 
-  const findAllImpl: HulyClientOperations["findAll"] = ((_class: unknown, query: unknown) => {
+  const findAllImpl: HulyClientOperations["findAll"] = ((_class: unknown, query: unknown, options?: unknown) => {
+    const opts = options as { lookup?: Record<string, unknown> } | undefined
     if (_class === tracker.class.Issue) {
       const q = query as Record<string, unknown>
       if (q._id?.$in) {
@@ -157,6 +158,24 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       }
       if (q.space) {
         filtered = filtered.filter(r => String(r.space) === String(q.space))
+      }
+      // Add $lookup data if lookup is requested
+      if (opts?.lookup) {
+        filtered = filtered.map(report => {
+          const lookupData: Record<string, unknown> = {}
+          if (opts.lookup?.attachedTo) {
+            lookupData.attachedTo = issues.find(i => String(i._id) === String(report.attachedTo))
+          }
+          if (opts.lookup?.employee) {
+            lookupData.employee = report.employee
+              ? persons.find(p => String(p._id) === String(report.employee))
+              : undefined
+          }
+          return {
+            ...report,
+            $lookup: lookupData
+          }
+        })
       }
       return Effect.succeed(filtered as unknown as FindResult<Doc>)
     }
