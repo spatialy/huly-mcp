@@ -6,7 +6,7 @@ import type {
   AccountRole as HulyAccountRole,
   WorkspaceInfoWithStatus
 } from "@hcengineering/core"
-import { Effect } from "effect"
+import { Effect, Option } from "effect"
 
 import type {
   AccountRole,
@@ -80,7 +80,7 @@ export const listWorkspaceMembers = (
           catch: () => undefined
         }).pipe(Effect.option)
 
-        if (personInfoResult._tag === "Some" && personInfoResult.value !== undefined) {
+        if (Option.isSome(personInfoResult)) {
           const personInfo = personInfoResult.value
           name = personInfo.name
           const emailSocialId = personInfo.socialIds?.find((s) => s.type === "email")
