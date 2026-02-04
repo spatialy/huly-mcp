@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![MCP Server](https://badge.mcpx.dev?type=server&features=tools)](https://github.com/dearlordylord/huly-mcp)
-[![cooked at Monadical](https://img.shields.io/endpoint?url=https://monadical.com/static/api/cooked-at-monadical.json)](https://monadical.com)
+[![cooked at Monadical](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Monadical-SAS/monadical.com/main/static/api/cooked-at-monadical.json)](https://monadical.com)
 
 MCP server for [Huly](https://huly.io/) integration.
 
@@ -124,12 +124,12 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @firfi/huly-m
 | `HULY_PASSWORD` | Auth* | Account password |
 | `HULY_TOKEN` | Auth* | API token (alternative to email/password) |
 | `HULY_WORKSPACE` | Yes | Workspace identifier |
-
-*Auth: Provide either `HULY_EMAIL` + `HULY_PASSWORD` or `HULY_TOKEN`.
 | `HULY_CONNECTION_TIMEOUT` | No | Connection timeout in ms (default: 30000) |
 | `MCP_TRANSPORT` | No | Transport type: `stdio` (default) or `http` |
 | `MCP_HTTP_PORT` | No | HTTP server port (default: 3000) |
 | `MCP_HTTP_HOST` | No | HTTP server host (default: 127.0.0.1) |
+
+*Auth: Provide either `HULY_EMAIL` + `HULY_PASSWORD` or `HULY_TOKEN`.
 
 <!-- tools:start -->
 ## Available Tools
