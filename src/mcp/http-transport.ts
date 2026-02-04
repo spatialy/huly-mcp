@@ -8,12 +8,13 @@
  */
 import type http from "node:http"
 
-import type { Server } from "@modelcontextprotocol/sdk/server/index.js"
-import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js"
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js"
+import type { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js"
+import type { Scope } from "effect"
+import { Context, Effect, Layer, Schema } from "effect"
 import type { Express, Request, Response } from "express"
-import { Context, Effect, Layer, Schema, Scope } from "effect"
 
 /**
  * HTTP transport configuration.

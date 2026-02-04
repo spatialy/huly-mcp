@@ -1,0 +1,59 @@
+import { Schema } from "effect"
+
+import { LimitParam, makeJsonSchema, NonEmptyString } from "./shared.js"
+
+export const ProjectSummarySchema = Schema.Struct({
+  identifier: NonEmptyString,
+  name: Schema.String,
+  description: Schema.optional(Schema.String),
+  archived: Schema.Boolean
+}).annotations({
+  title: "ProjectSummary",
+  description: "Project summary for list operations"
+})
+
+export type ProjectSummary = Schema.Schema.Type<typeof ProjectSummarySchema>
+
+export const ListProjectsParamsSchema = Schema.Struct({
+  includeArchived: Schema.optional(Schema.Boolean.annotations({
+    description: "Include archived projects in results (default: false, showing only active)"
+  })),
+  limit: Schema.optional(
+    LimitParam.annotations({
+      description: "Maximum number of projects to return (default: 50)"
+    })
+  )
+}).annotations({
+  title: "ListProjectsParams",
+  description: "Parameters for listing projects"
+})
+
+export type ListProjectsParams = Schema.Schema.Type<typeof ListProjectsParamsSchema>
+
+export const ListProjectsResultSchema = Schema.Struct({
+  projects: Schema.Array(ProjectSummarySchema),
+  total: Schema.Number.pipe(Schema.int(), Schema.nonNegative())
+}).annotations({
+  title: "ListProjectsResult",
+  description: "Result of listing projects"
+})
+
+export type ListProjectsResult = Schema.Schema.Type<typeof ListProjectsResultSchema>
+
+export const ProjectSchema = Schema.Struct({
+  identifier: NonEmptyString,
+  name: Schema.String,
+  description: Schema.optional(Schema.String),
+  defaultStatus: Schema.optional(Schema.String),
+  statuses: Schema.optional(Schema.Array(Schema.String))
+}).annotations({
+  title: "Project",
+  description: "Full project with status information"
+})
+
+export type Project = Schema.Schema.Type<typeof ProjectSchema>
+
+export const listProjectsParamsJsonSchema = makeJsonSchema(ListProjectsParamsSchema)
+
+export const parseListProjectsParams = Schema.decodeUnknown(ListProjectsParamsSchema)
+export const parseProject = Schema.decodeUnknown(ProjectSchema)

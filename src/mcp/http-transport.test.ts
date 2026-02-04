@@ -8,16 +8,16 @@
 import type http from "node:http"
 
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js"
-import type { Express, Request, Response } from "express"
 import { Effect, Exit, Layer } from "effect"
+import type { Express, Request, Response } from "express"
 import { describe, expect, it, vi } from "vitest"
 
 import {
   createMcpHandlers,
+  type HttpServerFactory,
   HttpServerFactoryService,
   HttpTransportError,
-  startHttpTransport,
-  type HttpServerFactory
+  startHttpTransport
 } from "./http-transport.js"
 
 // Mock Express app for testing
@@ -111,7 +111,7 @@ describe("HTTP Transport", () => {
     })
 
     it("should create fresh server for each request in stateless mode", async () => {
-      const serverInstances: Server[] = []
+      const serverInstances: Array<Server> = []
       const handlers = createMcpHandlers(() => {
         const server = createMockMcpServer()
         serverInstances.push(server)

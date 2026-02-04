@@ -1,0 +1,78 @@
+import type { ParseResult } from "effect"
+import { Effect, Exit } from "effect"
+
+import { HulyClient } from "../../huly/client.js"
+import type { HulyDomainError } from "../../huly/errors.js"
+import { HulyStorageClient } from "../../huly/storage.js"
+import {
+  createSuccessResponse,
+  mapDomainCauseToMcp,
+  mapParseCauseToMcp,
+  type McpToolResponse
+} from "../error-mapping.js"
+
+export interface ToolDefinition {
+  readonly name: string
+  readonly description: string
+  readonly inputSchema: object
+}
+
+export interface RegisteredTool extends ToolDefinition {
+  readonly handler: (
+    args: unknown,
+    hulyClient: HulyClient["Type"],
+    storageClient: HulyStorageClient["Type"]
+  ) => Promise<McpToolResponse>
+}
+
+export const createToolHandler = <P, R>(
+  toolName: string,
+  parse: (input: unknown) => Effect.Effect<P, ParseResult.ParseError>,
+  operation: (params: P) => Effect.Effect<R, HulyDomainError, HulyClient>
+): RegisteredTool["handler"] => {
+  return async (args, hulyClient, _storageClient) => {
+    const parseResult = await Effect.runPromiseExit(parse(args))
+
+    if (Exit.isFailure(parseResult)) {
+      return mapParseCauseToMcp(parseResult.cause, toolName)
+    }
+
+    const params = parseResult.value
+
+    const operationResult = await Effect.runPromiseExit(
+      operation(params).pipe(Effect.provideService(HulyClient, hulyClient))
+    )
+
+    if (Exit.isFailure(operationResult)) {
+      return mapDomainCauseToMcp(operationResult.cause)
+    }
+
+    return createSuccessResponse(operationResult.value)
+  }
+}
+
+export const createStorageToolHandler = <P, R>(
+  toolName: string,
+  parse: (input: unknown) => Effect.Effect<P, ParseResult.ParseError>,
+  operation: (params: P) => Effect.Effect<R, HulyDomainError, HulyStorageClient>
+): RegisteredTool["handler"] => {
+  return async (args, _hulyClient, storageClient) => {
+    const parseResult = await Effect.runPromiseExit(parse(args))
+
+    if (Exit.isFailure(parseResult)) {
+      return mapParseCauseToMcp(parseResult.cause, toolName)
+    }
+
+    const params = parseResult.value
+
+    const operationResult = await Effect.runPromiseExit(
+      operation(params).pipe(Effect.provideService(HulyStorageClient, storageClient))
+    )
+
+    if (Exit.isFailure(operationResult)) {
+      return mapDomainCauseToMcp(operationResult.cause)
+    }
+
+    return createSuccessResponse(operationResult.value)
+  }
+}
