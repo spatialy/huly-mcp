@@ -13,6 +13,7 @@ import fakeIndexedDB from "fake-indexeddb"
 
 import { type HulyConfigError, HulyConfigService } from "./config/config.js"
 import { HulyClient, type HulyClientError } from "./huly/client.js"
+import { HttpServerFactoryService } from "./mcp/http-transport.js"
 import { type McpServerError, McpServerService, type McpTransportType } from "./mcp/server.js"
 ;(globalThis as any).indexedDB = fakeIndexedDB
 
@@ -48,27 +49,35 @@ const getHttpPort = Config.integer("MCP_HTTP_PORT").pipe(
   Config.withDefault(3000)
 )
 
+const getHttpHost = Config.string("MCP_HTTP_HOST").pipe(
+  Config.withDefault("127.0.0.1")
+)
+
 export const buildAppLayer = (
   transport: McpTransportType,
-  httpPort: number
-): Layer.Layer<McpServerService, HulyConfigError | HulyClientError, never> => {
+  httpPort: number,
+  httpHost: string
+): Layer.Layer<McpServerService | HttpServerFactoryService, HulyConfigError | HulyClientError, never> => {
   const hulyClientLayer = HulyClient.layer.pipe(
     Layer.provide(HulyConfigService.layer)
   )
 
   const mcpServerLayer = McpServerService.layer({
     transport,
-    httpPort
+    httpPort,
+    httpHost
   }).pipe(Layer.provide(hulyClientLayer))
 
-  return mcpServerLayer
+  // Merge with HttpServerFactoryService for HTTP transport
+  return Layer.merge(mcpServerLayer, HttpServerFactoryService.defaultLayer)
 }
 
 export const main: Effect.Effect<void, AppError> = Effect.gen(function*() {
   const transport = yield* getTransportType
   const httpPort = yield* getHttpPort
+  const httpHost = yield* getHttpHost
   // stdout reserved for MCP protocol in stdio mode - no console output here
-  const appLayer = buildAppLayer(transport, httpPort)
+  const appLayer = buildAppLayer(transport, httpPort, httpHost)
 
   yield* Effect.gen(function*() {
     const server = yield* McpServerService
