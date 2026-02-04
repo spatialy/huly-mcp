@@ -4,6 +4,7 @@ import { Effect, Layer, Cause } from "effect"
 import { HulyConfigService } from "../src/config/config.js"
 import { HulyClient } from "../src/huly/client.js"
 import { HulyStorageClient } from "../src/huly/storage.js"
+import { WorkspaceClient } from "../src/huly/workspace-client.js"
 import { McpServerService, McpServerError } from "../src/mcp/server.js"
 import { main } from "../src/index.js"
 
@@ -64,12 +65,16 @@ describe("Main Entry Point", () => {
   })
 
   describe("layer composition", () => {
-        it.scoped("McpServerService layer composes with HulyClient and HulyStorageClient", () =>
+        it.scoped("McpServerService layer composes with HulyClient, HulyStorageClient, and WorkspaceClient", () =>
       Effect.gen(function* () {
         const hulyClientLayer = HulyClient.testLayer({})
         const storageClientLayer = HulyStorageClient.testLayer({})
+        const workspaceClientLayer = WorkspaceClient.testLayer({})
         const mcpServerLayer = McpServerService.layer({ transport: "stdio" }).pipe(
-          Layer.provide(Layer.merge(hulyClientLayer, storageClientLayer))
+          Layer.provide(Layer.merge(
+            Layer.merge(hulyClientLayer, storageClientLayer),
+            workspaceClientLayer
+          ))
         )
 
         yield* Layer.build(mcpServerLayer)
