@@ -22,6 +22,7 @@ export interface McpServerConfig {
   readonly transport: McpTransportType
   readonly httpPort?: number
   readonly httpHost?: string
+  readonly autoExit?: boolean
 }
 
 export class McpServerError extends Schema.TaggedError<McpServerError>()(
@@ -151,9 +152,18 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
                   process.on("SIGINT", cleanup)
                   process.on("SIGTERM", cleanup)
 
+                  if (config.autoExit) {
+                    process.stdin.on("end", cleanup)
+                    process.stdin.on("close", cleanup)
+                  }
+
                   return Effect.sync(() => {
                     process.off("SIGINT", cleanup)
                     process.off("SIGTERM", cleanup)
+                    if (config.autoExit) {
+                      process.stdin.off("end", cleanup)
+                      process.stdin.off("close", cleanup)
+                    }
                   })
                 })
 

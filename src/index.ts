@@ -54,10 +54,15 @@ const getHttpHost = Config.string("MCP_HTTP_HOST").pipe(
   Config.withDefault("127.0.0.1")
 )
 
+const getAutoExit = Config.boolean("MCP_AUTO_EXIT").pipe(
+  Config.withDefault(false)
+)
+
 export const buildAppLayer = (
   transport: McpTransportType,
   httpPort: number,
-  httpHost: string
+  httpHost: string,
+  autoExit: boolean
 ): Layer.Layer<
   McpServerService | HttpServerFactoryService,
   HulyConfigError | HulyClientError | StorageClientError,
@@ -78,7 +83,8 @@ export const buildAppLayer = (
   const mcpServerLayer = McpServerService.layer({
     transport,
     httpPort,
-    httpHost
+    httpHost,
+    autoExit
   }).pipe(Layer.provide(combinedClientLayer))
 
   // Merge with HttpServerFactoryService for HTTP transport
@@ -89,8 +95,9 @@ export const main: Effect.Effect<void, AppError> = Effect.gen(function*() {
   const transport = yield* getTransportType
   const httpPort = yield* getHttpPort
   const httpHost = yield* getHttpHost
+  const autoExit = yield* getAutoExit
   // stdout reserved for MCP protocol in stdio mode - no console output here
-  const appLayer = buildAppLayer(transport, httpPort, httpHost)
+  const appLayer = buildAppLayer(transport, httpPort, httpHost, autoExit)
 
   yield* Effect.gen(function*() {
     const server = yield* McpServerService
