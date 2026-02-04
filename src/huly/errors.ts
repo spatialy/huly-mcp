@@ -280,6 +280,42 @@ export class ChannelNotFoundError extends Schema.TaggedError<ChannelNotFoundErro
 }
 
 /**
+ * Message not found in the channel.
+ * Maps to MCP -32602 (Invalid params).
+ */
+export class MessageNotFoundError extends Schema.TaggedError<MessageNotFoundError>()(
+  "MessageNotFoundError",
+  {
+    messageId: Schema.String,
+    channel: Schema.String
+  }
+) {
+  readonly mcpErrorCode: McpErrorCode = McpErrorCode.InvalidParams
+
+  override get message(): string {
+    return `Message '${this.messageId}' not found in channel '${this.channel}'`
+  }
+}
+
+/**
+ * Thread reply not found.
+ * Maps to MCP -32602 (Invalid params).
+ */
+export class ThreadReplyNotFoundError extends Schema.TaggedError<ThreadReplyNotFoundError>()(
+  "ThreadReplyNotFoundError",
+  {
+    replyId: Schema.String,
+    messageId: Schema.String
+  }
+) {
+  readonly mcpErrorCode: McpErrorCode = McpErrorCode.InvalidParams
+
+  override get message(): string {
+    return `Thread reply '${this.replyId}' not found on message '${this.messageId}'`
+  }
+}
+
+/**
  * Calendar event not found.
  * Maps to MCP -32602 (Invalid params).
  */
@@ -385,6 +421,8 @@ export type HulyDomainError =
   | CommentNotFoundError
   | MilestoneNotFoundError
   | ChannelNotFoundError
+  | MessageNotFoundError
+  | ThreadReplyNotFoundError
   | EventNotFoundError
   | RecurringEventNotFoundError
   | ActivityMessageNotFoundError
@@ -412,6 +450,8 @@ export const HulyDomainError: Schema.Union<
     typeof CommentNotFoundError,
     typeof MilestoneNotFoundError,
     typeof ChannelNotFoundError,
+    typeof MessageNotFoundError,
+    typeof ThreadReplyNotFoundError,
     typeof EventNotFoundError,
     typeof RecurringEventNotFoundError,
     typeof ActivityMessageNotFoundError,
@@ -435,6 +475,8 @@ export const HulyDomainError: Schema.Union<
   CommentNotFoundError,
   MilestoneNotFoundError,
   ChannelNotFoundError,
+  MessageNotFoundError,
+  ThreadReplyNotFoundError,
   EventNotFoundError,
   RecurringEventNotFoundError,
   ActivityMessageNotFoundError,
