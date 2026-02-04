@@ -205,7 +205,11 @@ describe("Contacts Operations", () => {
     })
 
     it("handles persons without city", async () => {
-      const mockPerson = createMockPerson({ city: undefined })
+      // Create person without city - use a spread from a valid person and delete city
+      const basePerson = createMockPerson()
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { city: _city, ...personWithoutCity } = basePerson
+      const mockPerson = personWithoutCity as HulyPerson
 
       const testLayer = createTestLayer({
         persons: [mockPerson],
