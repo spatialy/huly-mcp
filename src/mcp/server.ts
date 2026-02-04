@@ -9,6 +9,8 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 import type { ParseResult } from "effect"
 import { Context, Effect, Exit, Layer, Ref, Schema } from "effect"
 
+import { HttpServerFactoryService, HttpTransportError, startHttpTransport } from "./http-transport.js"
+
 import {
   addLabelParamsJsonSchema,
   createDocumentParamsJsonSchema,
@@ -63,6 +65,7 @@ export type McpTransportType = "stdio" | "http"
 export interface McpServerConfig {
   readonly transport: McpTransportType
   readonly httpPort?: number
+  readonly httpHost?: string
 }
 
 export class McpServerError extends Schema.TaggedError<McpServerError>()(
@@ -160,12 +163,60 @@ export interface McpServerOperations {
    * Start the MCP server and connect to transport.
    * Returns an Effect that completes when the server is stopped.
    */
-  readonly run: () => Effect.Effect<void, McpServerError>
+  readonly run: () => Effect.Effect<void, McpServerError, HttpServerFactoryService>
 
   /**
    * Stop the MCP server gracefully.
    */
   readonly stop: () => Effect.Effect<void, McpServerError>
+}
+
+/**
+ * Create a configured MCP Server instance with tool handlers.
+ * Used for both stdio and HTTP transports.
+ */
+export const createMcpServer = (hulyClient: HulyClient["Type"]): Server => {
+  const server = new Server(
+    {
+      name: "huly-mcp",
+      version: "1.0.0"
+    },
+    {
+      capabilities: {
+        tools: {}
+      }
+    }
+  )
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: Object.values(TOOL_DEFINITIONS).map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      inputSchema: tool.inputSchema as {
+        type: "object"
+        properties?: Record<string, unknown>
+        required?: Array<string>
+      }
+    }))
+  }))
+
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { arguments: args, name } = request.params
+
+    const toolNameResult = Schema.decodeUnknownEither(ToolNameSchema)(name)
+    if (toolNameResult._tag === "Left") {
+      return toMcpResponse(createUnknownToolError(name))
+    }
+
+    const result = await handleToolCall(
+      toolNameResult.right,
+      args ?? {},
+      hulyClient
+    )
+    return toMcpResponse(result)
+  })
+
+  return server
 }
 
 export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
@@ -184,48 +235,9 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
       Effect.gen(function*() {
         const hulyClient = yield* HulyClient
 
-        // Using low-level Server API (not McpServer) because we use Effect Schema
-        // for validation and custom JSON Schema generation - this qualifies as an
-        // "advanced use case" per the SDK deprecation note on Server
-        const server = new Server(
-          {
-            name: "huly-mcp",
-            version: "1.0.0"
-          },
-          {
-            capabilities: {
-              tools: {}
-            }
-          }
-        )
-
-        server.setRequestHandler(ListToolsRequestSchema, async () => ({
-          tools: Object.values(TOOL_DEFINITIONS).map((tool) => ({
-            name: tool.name,
-            description: tool.description,
-            inputSchema: tool.inputSchema as {
-              type: "object"
-              properties?: Record<string, unknown>
-              required?: Array<string>
-            }
-          }))
-        }))
-
-        server.setRequestHandler(CallToolRequestSchema, async (request) => {
-          const { arguments: args, name } = request.params
-
-          const toolNameResult = Schema.decodeUnknownEither(ToolNameSchema)(name)
-          if (toolNameResult._tag === "Left") {
-            return toMcpResponse(createUnknownToolError(name))
-          }
-
-          const result = await handleToolCall(
-            toolNameResult.right,
-            args ?? {},
-            hulyClient
-          )
-          return toMcpResponse(result)
-        })
+        // For stdio, we create a single server instance
+        // For HTTP, we create a new server per request (stateless mode)
+        const server = config.transport === "stdio" ? createMcpServer(hulyClient) : null
 
         const isRunning = yield* Ref.make(false)
 
@@ -244,7 +256,7 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
                 const transport = new StdioServerTransport()
 
                 yield* Effect.tryPromise({
-                  try: () => server.connect(transport),
+                  try: () => server!.connect(transport),
                   catch: (e) =>
                     new McpServerError({
                       message: `Failed to connect stdio transport: ${String(e)}`,
@@ -271,7 +283,7 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
                 })
 
                 yield* Effect.tryPromise({
-                  try: () => server.close(),
+                  try: () => server!.close(),
                   catch: (e) =>
                     new McpServerError({
                       message: `Failed to close server: ${String(e)}`,
@@ -279,11 +291,25 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
                     })
                 })
               } else if (config.transport === "http") {
-                // HTTP transport - for future implementation
-                // The MCP SDK provides SSE and StreamableHttp transports
-                return yield* new McpServerError({
-                  message: "HTTP transport not yet implemented"
-                })
+                // HTTP transport using Streamable HTTP protocol
+                const port = config.httpPort ?? 3000
+                const host = config.httpHost ?? "127.0.0.1"
+
+                yield* startHttpTransport(
+                  { port, host },
+                  () => createMcpServer(hulyClient)
+                ).pipe(
+                  Effect.scoped,
+                  Effect.mapError(
+                    (e: HttpTransportError) =>
+                      new McpServerError({
+                        message: e.message,
+                        cause: e.cause
+                      })
+                  )
+                )
+
+                yield* Ref.set(isRunning, false)
               }
             }),
 
@@ -295,14 +321,16 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
 
               yield* Ref.set(isRunning, false)
 
-              yield* Effect.tryPromise({
-                try: () => server.close(),
-                catch: (e) =>
-                  new McpServerError({
-                    message: `Failed to stop server: ${String(e)}`,
-                    cause: e as Error
-                  })
-              })
+              if (server) {
+                yield* Effect.tryPromise({
+                  try: () => server.close(),
+                  catch: (e) =>
+                    new McpServerError({
+                      message: `Failed to stop server: ${String(e)}`,
+                      cause: e as Error
+                    })
+                })
+              }
             })
         }
 
