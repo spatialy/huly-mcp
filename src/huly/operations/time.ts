@@ -444,7 +444,8 @@ export const createWorkSlot = (
     const slotId: Ref<HulyWorkSlot> = generateId()
 
     // Huly API: WorkSlot requires all calendar event fields even for simple slots.
-    // Null casts are required because server will populate calendar/user from context.
+    // Empty string casts are used because server will populate calendar/user from auth context.
+    // This matches the pattern used in calendar.ts for Event creation.
     const slotData: AttachedData<HulyWorkSlot> = {
       date: params.date,
       dueDate: params.dueDate,
@@ -456,8 +457,8 @@ export const createWorkSlot = (
       reminders: [],
       visibility: "public" as const,
       eventId: "",
-      calendar: null as unknown as Ref<import("@hcengineering/calendar").Calendar>,
-      user: null as unknown as import("@hcengineering/core").PersonId,
+      calendar: "" as Ref<import("@hcengineering/calendar").Calendar>,
+      user: "" as import("@hcengineering/core").PersonId,
       blockTime: false
     }
 
