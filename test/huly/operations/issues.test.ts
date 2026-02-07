@@ -195,12 +195,26 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         config.captureIssueQuery.options = options as Record<string, unknown>
       }
       // Apply sorting if specified in options
-      const opts = options as { sort?: Record<string, number> } | undefined
+      const opts = options as { sort?: Record<string, number>; lookup?: Record<string, unknown> } | undefined
       let result = [...issues]
       if (opts?.sort?.modifiedOn !== undefined) {
         // SortingOrder.Descending = -1, Ascending = 1
         const direction = opts.sort.modifiedOn
         result = result.sort((a, b) => direction * (a.modifiedOn - b.modifiedOn))
+      }
+      // Add $lookup data for assignee if lookup is requested
+      if (opts?.lookup?.assignee) {
+        result = result.map(issue => {
+          const assigneePerson = issue.assignee
+            ? persons.find(p => String(p._id) === String(issue.assignee))
+            : undefined
+          return {
+            ...issue,
+            $lookup: {
+              assignee: assigneePerson
+            }
+          }
+        })
       }
       return Effect.succeed(result as unknown as FindResult<Doc>)
     }

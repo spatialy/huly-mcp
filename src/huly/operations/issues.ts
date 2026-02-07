@@ -19,7 +19,8 @@ import {
   SortingOrder,
   type Space,
   type Status,
-  type StatusCategory
+  type StatusCategory,
+  type WithLookup
 } from "@hcengineering/core"
 import { makeRank } from "@hcengineering/rank"
 import type { TagElement, TagReference } from "@hcengineering/tags"
@@ -38,8 +39,9 @@ import type {
   UpdateIssueParams
 } from "../../domain/schemas.js"
 import type { HulyClient, HulyClientError } from "../client.js"
-import type { IssueNotFoundError, ProjectNotFoundError } from "../errors.js"
-import { InvalidStatusError, PersonNotFoundError } from "../errors.js"
+import type { ProjectNotFoundError } from "../errors.js"
+import { InvalidStatusError, IssueNotFoundError, PersonNotFoundError } from "../errors.js"
+import { withLookup } from "./query-helpers.js"
 import { findProject, findProjectAndIssue, findProjectWithStatuses, parseIssueIdentifier, type StatusInfo } from "./shared.js"
 
 // Import plugin objects at runtime (CommonJS modules)
@@ -197,38 +199,28 @@ export const listIssues = (
 
     const limit = Math.min(params.limit ?? 50, 200)
 
-    const issues = yield* client.findAll<HulyIssue>(
+    type IssueWithLookup = WithLookup<HulyIssue> & {
+      $lookup?: { assignee?: Person }
+    }
+
+    const issues = yield* client.findAll<IssueWithLookup>(
       tracker.class.Issue,
       query,
-      {
-        limit,
-        sort: {
-          modifiedOn: SortingOrder.Descending
-        }
-      }
+      withLookup(
+        {
+          limit,
+          sort: {
+            modifiedOn: SortingOrder.Descending
+          }
+        },
+        { assignee: contact.class.Person }
+      )
     )
-
-    const assigneeIds = [
-      ...new Set(
-        issues.filter(i => i.assignee !== null).map(i => i.assignee!)
-      )
-    ]
-
-    const persons = assigneeIds.length > 0
-      ? yield* client.findAll<Person>(
-        contact.class.Person,
-        { _id: { $in: assigneeIds } }
-      )
-      : []
-
-    const personMap = new Map(persons.map(p => [p._id, p]))
 
     const summaries: Array<IssueSummary> = issues.map(issue => {
       const statusDoc = statuses.find(s => String(s._id) === String(issue.status))
       const statusName = statusDoc?.name ?? "Unknown"
-      const assigneeName = issue.assignee !== null
-        ? personMap.get(issue.assignee)?.name
-        : undefined
+      const assigneeName = issue.$lookup?.assignee?.name
 
       return {
         identifier: issue.identifier,

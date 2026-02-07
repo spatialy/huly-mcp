@@ -1,6 +1,6 @@
 import { AccessLevel } from "@hcengineering/calendar"
 import type { Channel, Person } from "@hcengineering/contact"
-import { type AttachedData, type DocumentUpdate, generateId, type Ref, SortingOrder } from "@hcengineering/core"
+import { type AttachedData, type DocumentUpdate, generateId, type Ref, SortingOrder, type WithLookup } from "@hcengineering/core"
 import {
   type Issue as HulyIssue,
   type Project as HulyProject,
@@ -25,6 +25,7 @@ import type {
 import { HulyClient, type HulyClientError } from "../client.js"
 import type { IssueNotFoundError } from "../errors.js"
 import { ProjectNotFoundError } from "../errors.js"
+import { withLookup } from "./query-helpers.js"
 import { findProject, findProjectAndIssue } from "./shared.js"
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -171,38 +172,29 @@ export const listTimeSpendReports = (
 
     const limit = Math.min(params.limit ?? 50, 200)
 
-    const reports = yield* client.findAll<HulyTimeSpendReport>(
+    type TimeSpendReportWithLookup = WithLookup<HulyTimeSpendReport> & {
+      $lookup?: {
+        attachedTo?: HulyIssue
+        employee?: Person
+      }
+    }
+
+    const reports = yield* client.findAll<TimeSpendReportWithLookup>(
       tracker.class.TimeSpendReport,
       query,
-      { limit, sort: { date: SortingOrder.Descending } }
+      withLookup(
+        { limit, sort: { date: SortingOrder.Descending } },
+        {
+          attachedTo: tracker.class.Issue,
+          employee: contact.class.Person
+        }
+      )
     )
-
-    const issueIds = [...new Set(reports.map(r => r.attachedTo))]
-    const issues = issueIds.length > 0
-      ? yield* client.findAll<HulyIssue>(
-        tracker.class.Issue,
-        { _id: { $in: issueIds } }
-      )
-      : []
-    const issueMap = new Map(issues.map(i => [String(i._id), i.identifier]))
-
-    const employeeIds = [
-      ...new Set(
-        reports.filter(r => r.employee !== null).map(r => r.employee!)
-      )
-    ]
-    const persons = employeeIds.length > 0
-      ? yield* client.findAll<Person>(
-        contact.class.Person,
-        { _id: { $in: employeeIds } }
-      )
-      : []
-    const personMap = new Map(persons.map(p => [String(p._id), p.name]))
 
     return reports.map(r => ({
       id: String(r._id),
-      identifier: issueMap.get(String(r.attachedTo)) ?? "Unknown",
-      employee: r.employee ? personMap.get(String(r.employee)) : undefined,
+      identifier: r.$lookup?.attachedTo?.identifier ?? "Unknown",
+      employee: r.$lookup?.employee?.name,
       date: r.date,
       value: r.value,
       description: r.description
@@ -224,33 +216,24 @@ export const getDetailedTimeReport = (
       query.date = dateFilter
     }
 
-    const reports = yield* client.findAll<HulyTimeSpendReport>(
+    type TimeSpendReportWithLookup = WithLookup<HulyTimeSpendReport> & {
+      $lookup?: {
+        attachedTo?: HulyIssue
+        employee?: Person
+      }
+    }
+
+    const reports = yield* client.findAll<TimeSpendReportWithLookup>(
       tracker.class.TimeSpendReport,
       query,
-      { sort: { date: SortingOrder.Descending } }
+      withLookup(
+        { sort: { date: SortingOrder.Descending } },
+        {
+          attachedTo: tracker.class.Issue,
+          employee: contact.class.Person
+        }
+      )
     )
-
-    const issueIds = [...new Set(reports.map(r => r.attachedTo))]
-    const issues = issueIds.length > 0
-      ? yield* client.findAll<HulyIssue>(
-        tracker.class.Issue,
-        { _id: { $in: issueIds } }
-      )
-      : []
-    const issueMap = new Map(issues.map(i => [String(i._id), i]))
-
-    const employeeIds = [
-      ...new Set(
-        reports.filter(r => r.employee !== null).map(r => r.employee!)
-      )
-    ]
-    const persons = employeeIds.length > 0
-      ? yield* client.findAll<Person>(
-        contact.class.Person,
-        { _id: { $in: employeeIds } }
-      )
-      : []
-    const personMap = new Map(persons.map(p => [String(p._id), p.name]))
 
     const byIssueMap = new Map<string, {
       identifier: string
@@ -267,7 +250,7 @@ export const getDetailedTimeReport = (
       totalTime += r.value
 
       const issueKey = String(r.attachedTo)
-      const issue = issueMap.get(issueKey)
+      const issue = r.$lookup?.attachedTo
       const existing = byIssueMap.get(issueKey) ?? {
         identifier: issue?.identifier ?? "Unknown",
         issueTitle: issue?.title ?? "Unknown",
@@ -278,7 +261,7 @@ export const getDetailedTimeReport = (
       existing.reports.push({
         id: String(r._id),
         identifier: issue?.identifier ?? "Unknown",
-        employee: r.employee ? personMap.get(String(r.employee)) : undefined,
+        employee: r.$lookup?.employee?.name,
         date: r.date,
         value: r.value,
         description: r.description
@@ -287,7 +270,7 @@ export const getDetailedTimeReport = (
 
       const empKey = r.employee ? String(r.employee) : "__unassigned__"
       const empExisting = byEmployeeMap.get(empKey) ?? {
-        employeeName: r.employee ? personMap.get(String(r.employee)) : undefined,
+        employeeName: r.$lookup?.employee?.name,
         totalTime: 0
       }
       empExisting.totalTime += r.value
