@@ -314,6 +314,40 @@ export class RecurringEventNotFoundError extends Schema.TaggedError<RecurringEve
 }
 
 /**
+ * Notification not found.
+ * Maps to MCP -32602 (Invalid params).
+ */
+export class NotificationNotFoundError extends Schema.TaggedError<NotificationNotFoundError>()(
+  "NotificationNotFoundError",
+  {
+    notificationId: Schema.String
+  }
+) {
+  readonly mcpErrorCode: McpErrorCode = McpErrorCode.InvalidParams
+
+  override get message(): string {
+    return `Notification '${this.notificationId}' not found`
+  }
+}
+
+/**
+ * Notification context not found.
+ * Maps to MCP -32602 (Invalid params).
+ */
+export class NotificationContextNotFoundError extends Schema.TaggedError<NotificationContextNotFoundError>()(
+  "NotificationContextNotFoundError",
+  {
+    contextId: Schema.String
+  }
+) {
+  readonly mcpErrorCode: McpErrorCode = McpErrorCode.InvalidParams
+
+  override get message(): string {
+    return `Notification context '${this.contextId}' not found`
+  }
+}
+
+/**
  * Union of all Huly domain errors.
  */
 export type HulyDomainError =
@@ -335,6 +369,8 @@ export type HulyDomainError =
   | ChannelNotFoundError
   | EventNotFoundError
   | RecurringEventNotFoundError
+  | NotificationNotFoundError
+  | NotificationContextNotFoundError
 
 /**
  * Schema for all Huly domain errors (for serialization).
@@ -358,7 +394,9 @@ export const HulyDomainError: Schema.Union<
     typeof MilestoneNotFoundError,
     typeof ChannelNotFoundError,
     typeof EventNotFoundError,
-    typeof RecurringEventNotFoundError
+    typeof RecurringEventNotFoundError,
+    typeof NotificationNotFoundError,
+    typeof NotificationContextNotFoundError
   ]
 > = Schema.Union(
   HulyError,
@@ -378,7 +416,9 @@ export const HulyDomainError: Schema.Union<
   MilestoneNotFoundError,
   ChannelNotFoundError,
   EventNotFoundError,
-  RecurringEventNotFoundError
+  RecurringEventNotFoundError,
+  NotificationNotFoundError,
+  NotificationContextNotFoundError
 )
 
 /**
