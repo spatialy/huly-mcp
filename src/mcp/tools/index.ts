@@ -11,6 +11,7 @@ import { milestoneTools } from "./milestones.js"
 import { projectTools } from "./projects.js"
 import type { RegisteredTool, ToolDefinition } from "./registry.js"
 import { storageTools } from "./storage.js"
+import { timeTools } from "./time.js"
 
 const allTools: ReadonlyArray<RegisteredTool> = [
   ...projectTools,
@@ -21,7 +22,8 @@ const allTools: ReadonlyArray<RegisteredTool> = [
   ...storageTools,
   ...contactTools,
   ...channelTools,
-  ...calendarTools
+  ...calendarTools,
+  ...timeTools
 ]
 
 const toolMap = new Map<string, RegisteredTool>(
