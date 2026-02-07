@@ -40,7 +40,7 @@ import type {
 import type { HulyClient, HulyClientError } from "../client.js"
 import type { IssueNotFoundError, ProjectNotFoundError } from "../errors.js"
 import { InvalidStatusError, PersonNotFoundError } from "../errors.js"
-import { findProject, findProjectAndIssue } from "./shared.js"
+import { findProject, findProjectAndIssue, findProjectWithStatuses, type StatusInfo } from "./shared.js"
 
 // Import plugin objects at runtime (CommonJS modules)
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -123,35 +123,6 @@ const stringToPriority = (priority: IssuePriorityStr): IssuePriority => {
   }
 }
 
-type StatusWithCategory = Status & { category?: Ref<StatusCategory> }
-
-/**
- * Check if a status is a "done" category status.
- * Done = the issue is completed successfully.
- */
-const isDoneStatus = (statusRef: Ref<Status>, statuses: ReadonlyArray<StatusWithCategory>): boolean => {
-  // String comparison works because Ref<T> is a branded string
-  const status = statuses.find(s => String(s._id) === String(statusRef))
-  if (!status?.category) return false
-
-  // task.statusCategory.Won is the "done" category
-  const wonCategory = task.statusCategory.Won
-  return status.category === wonCategory
-}
-
-/**
- * Check if a status is a "canceled" category status.
- */
-const isCanceledStatus = (statusRef: Ref<Status>, statuses: ReadonlyArray<StatusWithCategory>): boolean => {
-  // String comparison works because Ref<T> is a branded string
-  const status = statuses.find(s => String(s._id) === String(statusRef))
-  if (!status?.category) return false
-
-  // task.statusCategory.Lost is the "canceled" category
-  const lostCategory = task.statusCategory.Lost
-  return status.category === lostCategory
-}
-
 // --- Operations ---
 
 /**
@@ -162,13 +133,7 @@ export const listIssues = (
   params: ListIssuesParams
 ): Effect.Effect<Array<IssueSummary>, ListIssuesError, HulyClient> =>
   Effect.gen(function*() {
-    const { client, project } = yield* findProject(params.project)
-
-    const allStatuses = yield* client.findAll<Status>(
-      tracker.class.IssueStatus,
-      {}
-    )
-    const statusList = allStatuses as ReadonlyArray<StatusWithCategory>
+    const { client, project, statuses } = yield* findProjectWithStatuses(params.project)
 
     const query: Record<string, unknown> = {
       space: project._id
@@ -178,19 +143,16 @@ export const listIssues = (
       const statusFilter = params.status.toLowerCase()
 
       if (statusFilter === "open") {
-        const doneAndCanceledStatuses = statusList
-          .filter(s =>
-            isDoneStatus(s._id, statusList)
-            || isCanceledStatus(s._id, statusList)
-          )
+        const doneAndCanceledStatuses = statuses
+          .filter(s => s.isDone || s.isCanceled)
           .map(s => s._id)
 
         if (doneAndCanceledStatuses.length > 0) {
           query.status = { $nin: doneAndCanceledStatuses }
         }
       } else if (statusFilter === "done") {
-        const doneStatuses = statusList
-          .filter(s => isDoneStatus(s._id, statusList))
+        const doneStatuses = statuses
+          .filter(s => s.isDone)
           .map(s => s._id)
 
         if (doneStatuses.length > 0) {
@@ -199,8 +161,8 @@ export const listIssues = (
           return []
         }
       } else if (statusFilter === "canceled") {
-        const canceledStatuses = statusList
-          .filter(s => isCanceledStatus(s._id, statusList))
+        const canceledStatuses = statuses
+          .filter(s => s.isCanceled)
           .map(s => s._id)
 
         if (canceledStatuses.length > 0) {
@@ -209,7 +171,7 @@ export const listIssues = (
           return []
         }
       } else {
-        const matchingStatus = statusList.find(
+        const matchingStatus = statuses.find(
           s => s.name.toLowerCase() === statusFilter
         )
 
@@ -262,7 +224,7 @@ export const listIssues = (
     const personMap = new Map(persons.map(p => [p._id, p]))
 
     const summaries: Array<IssueSummary> = issues.map(issue => {
-      const statusDoc = statusList.find(s => String(s._id) === String(issue.status))
+      const statusDoc = statuses.find(s => String(s._id) === String(issue.status))
       const statusName = statusDoc?.name ?? "Unknown"
       const assigneeName = issue.assignee !== null
         ? personMap.get(issue.assignee)?.name
@@ -348,14 +310,25 @@ export const getIssue = (
   params: GetIssueParams
 ): Effect.Effect<Issue, GetIssueError, HulyClient> =>
   Effect.gen(function*() {
-    const { client, issue } = yield* findProjectAndIssue(params)
+    const { client, project, statuses } = yield* findProjectWithStatuses(params.project)
 
-    const statusList = yield* client.findAll<Status>(
-      tracker.class.IssueStatus,
-      {}
+    const { fullIdentifier, number } = parseIssueIdentifier(params.identifier, params.project)
+
+    let issue = yield* client.findOne<HulyIssue>(
+      tracker.class.Issue,
+      { space: project._id, identifier: fullIdentifier }
     )
+    if (issue === undefined && number !== null) {
+      issue = yield* client.findOne<HulyIssue>(
+        tracker.class.Issue,
+        { space: project._id, number }
+      )
+    }
+    if (issue === undefined) {
+      return yield* new IssueNotFoundError({ identifier: params.identifier, project: params.project })
+    }
 
-    const statusDoc = statusList.find(s => String(s._id) === String(issue.status))
+    const statusDoc = statuses.find(s => String(s._id) === String(issue.status))
     const statusName = statusDoc?.name ?? "Unknown"
 
     let assigneeName: string | undefined
@@ -432,7 +405,15 @@ export const createIssue = (
   params: CreateIssueParams
 ): Effect.Effect<CreateIssueResult, CreateIssueError, HulyClient> =>
   Effect.gen(function*() {
-    const { client, project } = yield* findProject(params.project)
+    const result = params.status !== undefined
+      ? yield* findProjectWithStatuses(params.project)
+      : yield* Effect.map(findProject(params.project), ({ client, project }) => ({
+          client,
+          project,
+          statuses: []
+        }))
+
+    const { client, project, statuses } = result
 
     const issueId: Ref<HulyIssue> = generateId()
 
@@ -448,12 +429,8 @@ export const createIssue = (
 
     let statusRef: Ref<Status> = project.defaultIssueStatus
     if (params.status !== undefined) {
-      const allStatuses = yield* client.findAll<Status>(
-        tracker.class.IssueStatus,
-        {}
-      )
       const statusFilter = params.status.toLowerCase()
-      const matchingStatus = allStatuses.find(
+      const matchingStatus = statuses.find(
         s => s.name.toLowerCase() === statusFilter
       )
       if (matchingStatus === undefined) {
@@ -561,6 +538,12 @@ export const updateIssue = (
   Effect.gen(function*() {
     const { client, issue, project } = yield* findProjectAndIssue(params)
 
+    let statuses: StatusInfo[] = []
+    if (params.status !== undefined) {
+      const result = yield* findProjectWithStatuses(params.project)
+      statuses = result.statuses
+    }
+
     const updateOps: DocumentUpdate<HulyIssue> = {}
     let descriptionUpdatedInPlace = false
 
@@ -595,12 +578,8 @@ export const updateIssue = (
     }
 
     if (params.status !== undefined) {
-      const allStatuses = yield* client.findAll<Status>(
-        tracker.class.IssueStatus,
-        {}
-      )
       const statusFilter = params.status.toLowerCase()
-      const matchingStatus = allStatuses.find(
+      const matchingStatus = statuses.find(
         s => s.name.toLowerCase() === statusFilter
       )
       if (matchingStatus === undefined) {

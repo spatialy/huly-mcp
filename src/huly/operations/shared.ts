@@ -1,3 +1,5 @@
+import type { Class, Doc, Ref, Status, WithLookup } from "@hcengineering/core"
+import type { ProjectType } from "@hcengineering/task"
 import type { Issue as HulyIssue, Project as HulyProject } from "@hcengineering/tracker"
 import { Effect } from "effect"
 
@@ -6,6 +8,14 @@ import { IssueNotFoundError, ProjectNotFoundError } from "../errors.js"
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const tracker = require("@hcengineering/tracker").default as typeof import("@hcengineering/tracker").default
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const task = require("@hcengineering/task").default as typeof import("@hcengineering/task").default
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const core = require("@hcengineering/core").default as typeof import("@hcengineering/core").default
+
+export type ProjectWithType = WithLookup<HulyProject> & {
+  $lookup?: { type?: ProjectType }
+}
 
 export const findProject = (
   projectIdentifier: string
@@ -26,6 +36,69 @@ export const findProject = (
     }
 
     return { client, project }
+  })
+
+export type StatusInfo = {
+  _id: Ref<Status>
+  name: string
+  isDone: boolean
+  isCanceled: boolean
+}
+
+/**
+ * Find project with its ProjectType lookup to get status information.
+ * This avoids querying IssueStatus directly which can fail on some workspaces.
+ */
+export const findProjectWithStatuses = (
+  projectIdentifier: string
+): Effect.Effect<
+  { client: HulyClient["Type"]; project: HulyProject; statuses: StatusInfo[] },
+  ProjectNotFoundError | HulyClientError,
+  HulyClient
+> =>
+  Effect.gen(function*() {
+    const client = yield* HulyClient
+
+    // Use lookup to get ProjectType which contains status definitions
+    const project = yield* client.findOne<ProjectWithType>(
+      tracker.class.Project,
+      { identifier: projectIdentifier },
+      { lookup: { type: task.class.ProjectType } }
+    )
+    if (project === undefined) {
+      return yield* new ProjectNotFoundError({ identifier: projectIdentifier })
+    }
+
+    // Extract statuses from ProjectType
+    const projectType = project.$lookup?.type
+    const statuses: StatusInfo[] = []
+
+    // Category refs for done/canceled detection
+    const wonCategory = String(task.statusCategory.Won)
+    const lostCategory = String(task.statusCategory.Lost)
+
+    if (projectType?.statuses) {
+      // ProjectType.statuses contains ProjectStatus objects with _id refs
+      // We need to fetch the actual Status documents to get names
+      const statusRefs = projectType.statuses.map(s => s._id)
+      if (statusRefs.length > 0) {
+        const statusDocs = yield* client.findAll<Status>(
+          core.class.Status as Ref<Class<Doc>> as Ref<Class<Status>>,
+          { _id: { $in: statusRefs } }
+        )
+        for (const doc of statusDocs) {
+          const categoryStr = doc.category ? String(doc.category) : ""
+          statuses.push({
+            _id: doc._id,
+            name: doc.name,
+            isDone: categoryStr === wonCategory,
+            isCanceled: categoryStr === lostCategory
+          })
+        }
+      }
+    }
+
+    return { client, project, statuses }
   })
 
 export const parseIssueIdentifier = (
