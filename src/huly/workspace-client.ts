@@ -5,10 +5,11 @@
  */
 import type { AccountClient } from "@hcengineering/account-client"
 import { getClient as getAccountClient } from "@hcengineering/account-client"
-import { loadServerConfig } from "@hcengineering/api-client"
-import { Context, Effect, Layer, Redacted, Schedule } from "effect"
+import { getWorkspaceToken, loadServerConfig } from "@hcengineering/api-client"
+import { Context, Effect, Layer, Schedule } from "effect"
 
 import { type Auth, HulyConfigService } from "../config/config.js"
+import { authToOptions } from "./auth-utils.js"
 import { HulyAuthError, HulyConnectionError } from "./errors.js"
 
 export type WorkspaceClientError = HulyConnectionError | HulyAuthError
@@ -166,28 +167,9 @@ const connectAccountClient = async (
   config: ConnectionConfig
 ): Promise<{ client: AccountClient; token: string }> => {
   const serverConfig = await loadServerConfig(config.url)
-  const accountsUrl = serverConfig.ACCOUNTS_URL
-
-  let token: string
-
-  if (config.auth._tag === "token") {
-    token = Redacted.value(config.auth.token)
-  } else {
-    const tempClient = getAccountClient(accountsUrl)
-    const loginInfo = await tempClient.login(
-      config.auth.email,
-      Redacted.value(config.auth.password)
-    )
-    if (!loginInfo.token) {
-      throw new Error("Login failed: no token returned")
-    }
-    token = loginInfo.token
-
-    const workspaceLoginInfo = await tempClient.selectWorkspace(config.workspace)
-    token = workspaceLoginInfo.token
-  }
-
-  const client = getAccountClient(accountsUrl, token)
+  const authOptions = authToOptions(config.auth, config.workspace)
+  const { token } = await getWorkspaceToken(config.url, authOptions, serverConfig)
+  const client = getAccountClient(serverConfig.ACCOUNTS_URL, token)
   return { client, token }
 }
 
