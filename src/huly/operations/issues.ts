@@ -557,6 +557,9 @@ export interface UpdateIssueResult {
  * - priority: New priority
  * - assignee: New assignee email/name, or null to unassign
  *
+ * Note: Huly REST API is eventually consistent. Reads immediately after
+ * updates may return stale data. Allow ~2 seconds for propagation.
+ *
  * @param params - Update issue parameters
  * @returns Updated issue identifier and success flag
  * @throws ProjectNotFoundError if project doesn't exist

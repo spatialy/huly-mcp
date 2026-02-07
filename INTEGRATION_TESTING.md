@@ -28,6 +28,21 @@ Expected: JSON with `"projects": [...]`
 
 **Note**: `MCP_AUTO_EXIT=true` makes the server exit when stdin closes (for testing only).
 
+## Eventual Consistency
+
+**Important**: Huly REST API is eventually consistent. Reads immediately after writes may return stale data. When testing update-then-read sequences, add a ~2 second delay between operations:
+
+```bash
+# Update
+printf '...update...' | MCP_AUTO_EXIT=true node dist/index.cjs
+
+# Wait for propagation
+sleep 2
+
+# Read (separate connection)
+printf '...get...' | MCP_AUTO_EXIT=true node dist/index.cjs
+```
+
 ## Full Test Suite
 
 Run all operations in one batch:
@@ -63,6 +78,28 @@ printf '..initialize..\n{"jsonrpc":"2.0","method":"tools/call","params":{"name":
 
 # Delete issue
 printf '..initialize..\n{"jsonrpc":"2.0","method":"tools/call","params":{"name":"delete_issue","arguments":{"project":"PROJECT","identifier":"123"}},"id":2}\n' | node dist/index.cjs
+```
+
+### Issue CRUD with Update (requires delay)
+
+```bash
+# Create issue
+INIT='{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}},"id":1}'
+
+printf "$INIT"'\n{"jsonrpc":"2.0","method":"tools/call","params":{"name":"create_issue","arguments":{"project":"PROJECT","title":"Test Issue","priority":"low"}},"id":2}\n' | MCP_AUTO_EXIT=true node dist/index.cjs 2>/dev/null | grep '"id":2'
+# Note the identifier (e.g., PROJECT-123)
+
+# Update issue
+printf "$INIT"'\n{"jsonrpc":"2.0","method":"tools/call","params":{"name":"update_issue","arguments":{"project":"PROJECT","identifier":"123","title":"Updated Title","priority":"high"}},"id":2}\n' | MCP_AUTO_EXIT=true node dist/index.cjs 2>/dev/null | grep '"id":2'
+
+# IMPORTANT: Wait for eventual consistency
+sleep 2
+
+# Verify update (separate connection after delay)
+printf "$INIT"'\n{"jsonrpc":"2.0","method":"tools/call","params":{"name":"get_issue","arguments":{"project":"PROJECT","identifier":"123"}},"id":2}\n' | MCP_AUTO_EXIT=true node dist/index.cjs 2>/dev/null | grep '"id":2'
+
+# Cleanup
+printf "$INIT"'\n{"jsonrpc":"2.0","method":"tools/call","params":{"name":"delete_issue","arguments":{"project":"PROJECT","identifier":"123"}},"id":2}\n' | MCP_AUTO_EXIT=true node dist/index.cjs 2>/dev/null | grep '"id":2'
 ```
 
 ### Documents
