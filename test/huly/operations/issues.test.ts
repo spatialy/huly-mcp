@@ -28,6 +28,14 @@ const task = require("@hcengineering/task").default as typeof import("@hcenginee
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const core = require("@hcengineering/core").default as typeof import("@hcengineering/core").default
 
+// Helper to create properly typed FindResult for tests
+// FindResult<T> = T[] & { total: number; lookupMap?: Record<string, Doc> }
+const toFindResult = <T extends Doc>(docs: T[]): FindResult<T> => {
+  const result = docs as FindResult<T>
+  result.total = docs.length
+  return result
+}
+
 // --- Mock Data Builders ---
 
 const makeProject = (overrides?: Partial<HulyProject>): HulyProject =>
@@ -188,8 +196,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
   const tagElements = config.tagElements ?? []
   const tagReferences = config.tagReferences ?? []
 
-  // Use type assertion to bypass strict generic type checking in tests
-  // This is safe because the mock implementation returns the correct data
+  // Mock findAll implementation - uses toFindResult helper for proper typing
   const findAllImpl: HulyClientOperations["findAll"] = ((_class: unknown, query: unknown, options: unknown) => {
     if (_class === tracker.class.Issue) {
       if (config.captureIssueQuery) {
@@ -218,10 +225,10 @@ const createTestLayerWithMocks = (config: MockConfig) => {
           }
         })
       }
-      return Effect.succeed(result as unknown as FindResult<Doc>)
+      return Effect.succeed(toFindResult(result as Doc[]))
     }
     if (_class === tracker.class.IssueStatus) {
-      return Effect.succeed(statuses as unknown as FindResult<Doc>)
+      return Effect.succeed(toFindResult(statuses as Doc[]))
     }
     // Handle core.class.Status queries (used by findProjectWithStatuses)
     if (String(_class) === String(core.class.Status)) {
@@ -229,22 +236,22 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       const inQuery = q._id as { $in?: Ref<Status>[] } | undefined
       if (inQuery?.$in) {
         const filtered = statuses.filter(s => inQuery.$in!.includes(s._id))
-        return Effect.succeed(filtered as unknown as FindResult<Doc>)
+        return Effect.succeed(toFindResult(filtered as Doc[]))
       }
-      return Effect.succeed(statuses as unknown as FindResult<Doc>)
+      return Effect.succeed(toFindResult(statuses as Doc[]))
     }
     if (_class === contact.class.Channel) {
       const value = (query as Record<string, unknown>).value as string
       const filtered = channels.filter(c => c.value === value)
-      return Effect.succeed(filtered as unknown as FindResult<Doc>)
+      return Effect.succeed(toFindResult(filtered as Doc[]))
     }
     if (_class === contact.class.Person) {
       const nameFilter = (query as Record<string, unknown>).name as string | undefined
       if (nameFilter) {
         const filtered = persons.filter(p => p.name === nameFilter)
-        return Effect.succeed(filtered as unknown as FindResult<Doc>)
+        return Effect.succeed(toFindResult(filtered as Doc[]))
       }
-      return Effect.succeed(persons as unknown as FindResult<Doc>)
+      return Effect.succeed(toFindResult(persons as Doc[]))
     }
     if (_class === tags.class.TagReference) {
       const q = query as Record<string, unknown>
@@ -253,9 +260,9 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         tr.attachedTo === q.attachedTo &&
         tr.attachedToClass === q.attachedToClass
       )
-      return Effect.succeed(filtered as unknown as FindResult<Doc>)
+      return Effect.succeed(toFindResult(filtered as Doc[]))
     }
-    return Effect.succeed([] as unknown as FindResult<Doc>)
+    return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
 
   const findOneImpl: HulyClientOperations["findOne"] = ((_class: unknown, query: unknown, options?: unknown) => {

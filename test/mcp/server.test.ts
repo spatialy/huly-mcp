@@ -11,6 +11,7 @@ import type {
 import { type Issue as HulyIssue, type Project as HulyProject, IssuePriority } from "@hcengineering/tracker"
 import { HulyClient, type HulyClientOperations } from "../../src/huly/client.js"
 import { HulyStorageClient } from "../../src/huly/storage.js"
+import { WorkspaceClient } from "../../src/huly/workspace-client.js"
 import {
   McpServerService,
   McpServerError,
@@ -335,10 +336,12 @@ describe("McpServerService", () => {
         })
 
         const storageClientLayer = HulyStorageClient.testLayer({})
+        const workspaceClientLayer = WorkspaceClient.testLayer({})
 
         const serverLayer = McpServerService.layer({ transport: "stdio" }).pipe(
           Layer.provide(hulyClientLayer),
-          Layer.provide(storageClientLayer)
+          Layer.provide(storageClientLayer),
+          Layer.provide(workspaceClientLayer)
         )
 
         // Verify we can build the layer (this tests the Effect.gen runs without error)
@@ -356,13 +359,15 @@ describe("McpServerService", () => {
         })
 
         const storageClientLayer = HulyStorageClient.testLayer({})
+        const workspaceClientLayer = WorkspaceClient.testLayer({})
 
         const serverLayer = McpServerService.layer({
           transport: "http",
           httpPort: 3000,
         }).pipe(
           Layer.provide(hulyClientLayer),
-          Layer.provide(storageClientLayer)
+          Layer.provide(storageClientLayer),
+          Layer.provide(workspaceClientLayer)
         )
 
         yield* Layer.build(serverLayer)
