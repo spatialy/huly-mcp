@@ -365,6 +365,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
 
 describe("Issues Extended Coverage", () => {
   describe("extractUpdatedSequence fallback (line 121 None branch)", () => {
+    // test-revizorro: scheduled
     it.effect("falls back to project.sequence + 1 when updateDoc returns non-decodable result", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST", sequence: 10 })
@@ -440,6 +441,7 @@ describe("Issues Extended Coverage", () => {
   })
 
   describe("deleteIssue", () => {
+    // test-revizorro: scheduled
     it.effect("deletes an existing issue", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -464,6 +466,7 @@ describe("Issues Extended Coverage", () => {
         expect(captureRemoveDoc.id).toBe("issue-1")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns ProjectNotFoundError when project does not exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -483,6 +486,7 @@ describe("Issues Extended Coverage", () => {
         expect((error as ProjectNotFoundError).identifier).toBe("NONEXISTENT")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns IssueNotFoundError when issue does not exist", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -505,6 +509,7 @@ describe("Issues Extended Coverage", () => {
         expect((error as IssueNotFoundError).identifier).toBe("TEST-999")
       }))
 
+    // test-revizorro: scheduled
     it.effect("deletes issue found by numeric identifier", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -530,6 +535,7 @@ describe("Issues Extended Coverage", () => {
   })
 
   describe("addLabel - tagElement undefined after creation (line 622-623)", () => {
+    // test-revizorro: scheduled
     it.effect("returns labelAdded=false when tag element not found after creation", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -560,6 +566,7 @@ describe("Issues Extended Coverage", () => {
   })
 
   describe("updateIssue - description update in place (line 503-512)", () => {
+    // test-revizorro: scheduled
     it.effect("updates description in place when issue already has one", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -592,6 +599,7 @@ describe("Issues Extended Coverage", () => {
         expect(captureUpdateDoc.operations?.description).toBeUndefined()
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns updated=true when only description is updated in place (no other updateOps)", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })

@@ -197,6 +197,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
 
 describe("listComments", () => {
   describe("basic functionality", () => {
+    // test-revizorro: scheduled
     it.effect("returns comments for an issue", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "TEST" })
@@ -238,6 +239,7 @@ describe("listComments", () => {
         expect(result[1].body).toBe("Second comment")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns empty array when issue has no comments", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -257,6 +259,7 @@ describe("listComments", () => {
         expect(result).toHaveLength(0)
       }))
 
+    // test-revizorro: scheduled
     it.effect("transforms message to comment format", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -294,6 +297,7 @@ describe("listComments", () => {
   })
 
   describe("identifier parsing", () => {
+    // test-revizorro: scheduled
     it.effect("finds issue by full identifier HULY-123", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-huly" as Ref<HulyProject>, identifier: "HULY" })
@@ -324,6 +328,7 @@ describe("listComments", () => {
         expect(result).toHaveLength(1)
       }))
 
+    // test-revizorro: scheduled
     it.effect("finds issue by numeric identifier 42", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-test" as Ref<HulyProject>, identifier: "TEST" })
@@ -354,6 +359,7 @@ describe("listComments", () => {
         expect(result).toHaveLength(1)
       }))
 
+    // test-revizorro: scheduled
     it.effect("handles lowercase identifier test-5", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-test" as Ref<HulyProject>, identifier: "TEST" })
@@ -386,6 +392,7 @@ describe("listComments", () => {
   })
 
   describe("limit handling", () => {
+    // test-revizorro: scheduled
     it.effect("uses default limit of 50", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -408,6 +415,7 @@ describe("listComments", () => {
         expect(captureQuery.options?.limit).toBe(50)
       }))
 
+    // test-revizorro: scheduled
     it.effect("enforces max limit of 200", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -431,6 +439,7 @@ describe("listComments", () => {
         expect(captureQuery.options?.limit).toBe(200)
       }))
 
+    // test-revizorro: scheduled
     it.effect("uses provided limit when under max", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -456,6 +465,7 @@ describe("listComments", () => {
   })
 
   describe("error handling", () => {
+    // test-revizorro: scheduled
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -475,6 +485,7 @@ describe("listComments", () => {
         expect((error as ProjectNotFoundError).identifier).toBe("NONEXISTENT")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns IssueNotFoundError when issue doesn't exist", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -501,6 +512,7 @@ describe("listComments", () => {
 
 describe("addComment", () => {
   describe("basic functionality", () => {
+    // test-revizorro: scheduled
     it.effect("adds a comment to an issue", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "TEST" })
@@ -530,6 +542,7 @@ describe("addComment", () => {
         expect(captureAddCollection.attributes?.message).toBe("This is my new comment")
       }))
 
+    // test-revizorro: scheduled
     it.effect("supports markdown in comment body", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -553,6 +566,7 @@ describe("addComment", () => {
         expect(captureAddCollection.attributes?.message).toContain("console.log")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns comment ID and issue identifier", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "HULY" })
@@ -578,6 +592,7 @@ describe("addComment", () => {
   })
 
   describe("error handling", () => {
+    // test-revizorro: scheduled
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -597,6 +612,7 @@ describe("addComment", () => {
         expect((error as ProjectNotFoundError).identifier).toBe("NONEXISTENT")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns IssueNotFoundError when issue doesn't exist", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -623,6 +639,7 @@ describe("addComment", () => {
 
 describe("updateComment", () => {
   describe("basic functionality", () => {
+    // test-revizorro: scheduled
     it.effect("updates an existing comment", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "TEST" })
@@ -662,6 +679,7 @@ describe("updateComment", () => {
         expect(captureUpdateDoc.operations?.message).toBe("Updated comment body")
       }))
 
+    // test-revizorro: scheduled
     it.effect("sets editedOn timestamp", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -699,6 +717,7 @@ describe("updateComment", () => {
         expect(editedOn).toBeLessThanOrEqual(after)
       }))
 
+    // test-revizorro: scheduled
     it.effect("supports markdown in updated body", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -730,6 +749,7 @@ describe("updateComment", () => {
         expect(captureUpdateDoc.operations?.message).toBe("**Bold** and *italic*")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns updated: false when body is unchanged", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "TEST" })
@@ -771,6 +791,7 @@ describe("updateComment", () => {
   })
 
   describe("error handling", () => {
+    // test-revizorro: scheduled
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -792,6 +813,7 @@ describe("updateComment", () => {
         expect((error as ProjectNotFoundError).identifier).toBe("NONEXISTENT")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns IssueNotFoundError when issue doesn't exist", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -815,6 +837,7 @@ describe("updateComment", () => {
         expect((error as IssueNotFoundError).identifier).toBe("TEST-999")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns CommentNotFoundError when comment doesn't exist", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -841,6 +864,7 @@ describe("updateComment", () => {
         expect((error as CommentNotFoundError).project).toBe("TEST")
       }))
 
+    // test-revizorro: scheduled
     it.effect("CommentNotFoundError has helpful message", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "HULY" })
@@ -870,6 +894,7 @@ describe("updateComment", () => {
 
 describe("deleteComment", () => {
   describe("basic functionality", () => {
+    // test-revizorro: scheduled
     it.effect("deletes an existing comment", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "TEST" })
@@ -908,6 +933,7 @@ describe("deleteComment", () => {
         expect(captureRemoveDoc.id).toBe("comment-to-delete")
       }))
 
+    // test-revizorro: scheduled
     it.effect("finds issue by numeric identifier", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "HULY" })
@@ -946,6 +972,7 @@ describe("deleteComment", () => {
   })
 
   describe("error handling", () => {
+    // test-revizorro: scheduled
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -966,6 +993,7 @@ describe("deleteComment", () => {
         expect((error as ProjectNotFoundError).identifier).toBe("NONEXISTENT")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns IssueNotFoundError when issue doesn't exist", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -988,6 +1016,7 @@ describe("deleteComment", () => {
         expect((error as IssueNotFoundError).identifier).toBe("TEST-999")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns CommentNotFoundError when comment doesn't exist", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -1011,6 +1040,7 @@ describe("deleteComment", () => {
         expect((error as CommentNotFoundError).commentId).toBe("nonexistent-comment")
       }))
 
+    // test-revizorro: scheduled
     it.effect("only deletes comment attached to correct issue", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "TEST" })

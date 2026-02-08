@@ -335,6 +335,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
 }
 
 describe("Issues Coverage - resolveStatusName", () => {
+  // test-revizorro: scheduled
   it.effect("fails with HulyError when status ID not found in project status list", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -361,6 +362,7 @@ describe("Issues Coverage - resolveStatusName", () => {
 })
 
 describe("Issues Coverage - listIssues status filters", () => {
+  // test-revizorro: scheduled
   it.effect("open filter excludes done and canceled statuses", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -400,6 +402,7 @@ describe("Issues Coverage - listIssues status filters", () => {
       })
     }))
 
+  // test-revizorro: scheduled
   it.effect("open filter with no done/canceled statuses does not set $nin", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -427,6 +430,7 @@ describe("Issues Coverage - listIssues status filters", () => {
       expect(captureQuery.query?.status).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("done filter includes only done statuses", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -461,6 +465,7 @@ describe("Issues Coverage - listIssues status filters", () => {
       })
     }))
 
+  // test-revizorro: scheduled
   it.effect("done filter returns empty when no done statuses exist", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -483,6 +488,7 @@ describe("Issues Coverage - listIssues status filters", () => {
       expect(result).toEqual([])
     }))
 
+  // test-revizorro: scheduled
   it.effect("canceled filter includes only canceled statuses", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -517,6 +523,7 @@ describe("Issues Coverage - listIssues status filters", () => {
       })
     }))
 
+  // test-revizorro: scheduled
   it.effect("canceled filter returns empty when no canceled statuses exist", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -539,6 +546,7 @@ describe("Issues Coverage - listIssues status filters", () => {
       expect(result).toEqual([])
     }))
 
+  // test-revizorro: scheduled
   it.effect("custom status name resolves via resolveStatusByName", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -563,6 +571,7 @@ describe("Issues Coverage - listIssues status filters", () => {
       expect(captureQuery.query?.status).toBe("status-review")
     }))
 
+  // test-revizorro: scheduled
   it.effect("custom status name fails with InvalidStatusError when not found", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -586,6 +595,7 @@ describe("Issues Coverage - listIssues status filters", () => {
 })
 
 describe("Issues Coverage - listIssues assignee filter", () => {
+  // test-revizorro: scheduled
   it.effect("returns empty when assignee not found", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -607,6 +617,7 @@ describe("Issues Coverage - listIssues assignee filter", () => {
       expect(result).toEqual([])
     }))
 
+  // test-revizorro: scheduled
   it.effect("sets assignee query when person found", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -632,6 +643,7 @@ describe("Issues Coverage - listIssues assignee filter", () => {
 })
 
 describe("Issues Coverage - listIssues titleSearch", () => {
+  // test-revizorro: scheduled
   it.effect("sets $like query for titleSearch", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -650,6 +662,7 @@ describe("Issues Coverage - listIssues titleSearch", () => {
       expect(captureQuery.query?.title).toEqual({ $like: "%bug fix%" })
     }))
 
+  // test-revizorro: scheduled
   it.effect("skips titleSearch when empty or whitespace-only", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -670,6 +683,7 @@ describe("Issues Coverage - listIssues titleSearch", () => {
 })
 
 describe("Issues Coverage - listIssues descriptionSearch", () => {
+  // test-revizorro: scheduled
   it.effect("sets $search query for descriptionSearch", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -688,6 +702,7 @@ describe("Issues Coverage - listIssues descriptionSearch", () => {
       expect(captureQuery.query?.$search).toBe("error handling")
     }))
 
+  // test-revizorro: scheduled
   it.effect("skips descriptionSearch when empty or whitespace-only", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -708,6 +723,7 @@ describe("Issues Coverage - listIssues descriptionSearch", () => {
 })
 
 describe("Issues Coverage - listIssues component filter", () => {
+  // test-revizorro: scheduled
   it.effect("filters by component when found", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -728,6 +744,7 @@ describe("Issues Coverage - listIssues component filter", () => {
       expect(captureQuery.query?.component).toBe("comp-1")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns empty when component not found", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -750,6 +767,7 @@ describe("Issues Coverage - listIssues component filter", () => {
 })
 
 describe("Issues Coverage - extractUpdatedSequence", () => {
+  // test-revizorro: scheduled
   it.effect("uses TxIncResult decoded sequence when updateDoc returns proper shape", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST", sequence: 5 })
@@ -772,6 +790,7 @@ describe("Issues Coverage - extractUpdatedSequence", () => {
       expect(result.identifier).toBe("TEST-42")
     }))
 
+  // test-revizorro: scheduled
   it.effect("falls back to project.sequence + 1 when updateDoc returns non-decodable result", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST", sequence: 10 })
@@ -831,6 +850,7 @@ describe("Issues Coverage - extractUpdatedSequence", () => {
 })
 
 describe("Issues Coverage - resolveAssignee", () => {
+  // test-revizorro: scheduled
   it.effect("fails with PersonNotFoundError when person not found", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST", sequence: 1 })
@@ -856,6 +876,7 @@ describe("Issues Coverage - resolveAssignee", () => {
       expect((error as PersonNotFoundError).identifier).toBe("ghost@example.com")
     }))
 
+  // test-revizorro: scheduled
   it.effect("resolves person successfully when found by email", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST", sequence: 1 })
@@ -885,6 +906,7 @@ describe("Issues Coverage - resolveAssignee", () => {
 })
 
 describe("Issues Coverage - resolveStatusByName", () => {
+  // test-revizorro: scheduled
   it.effect("resolves status by case-insensitive name match", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST", sequence: 1 })
@@ -910,6 +932,7 @@ describe("Issues Coverage - resolveStatusByName", () => {
       expect(captureAddCollection.attributes?.status).toBe("status-progress")
     }))
 
+  // test-revizorro: scheduled
   it.effect("fails with InvalidStatusError when status name not found", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST", sequence: 1 })
@@ -939,6 +962,7 @@ describe("Issues Coverage - resolveStatusByName", () => {
 })
 
 describe("Issues Coverage - createIssue full flow", () => {
+  // test-revizorro: scheduled
   it.effect("creates issue with all optional params: priority, status, assignee, description", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST", sequence: 5 })
@@ -980,6 +1004,7 @@ describe("Issues Coverage - createIssue full flow", () => {
       expect(captureUploadMarkup.markup).toBe("# Details")
     }))
 
+  // test-revizorro: scheduled
   it.effect("skips status lookup when status not provided (uses findProject instead)", () =>
     Effect.gen(function*() {
       const project = makeProject({
@@ -1008,6 +1033,7 @@ describe("Issues Coverage - createIssue full flow", () => {
 })
 
 describe("Issues Coverage - updateIssue branches", () => {
+  // test-revizorro: scheduled
   it.effect("updates priority", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -1031,6 +1057,7 @@ describe("Issues Coverage - updateIssue branches", () => {
       expect(captureUpdateDoc.operations?.priority).toBe(IssuePriority.Low)
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates status", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -1056,6 +1083,7 @@ describe("Issues Coverage - updateIssue branches", () => {
       expect(captureUpdateDoc.operations?.status).toBe("status-done")
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates assignee by email", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -1083,6 +1111,7 @@ describe("Issues Coverage - updateIssue branches", () => {
       expect(captureUpdateDoc.operations?.assignee).toBe("person-1")
     }))
 
+  // test-revizorro: scheduled
   it.effect("unassigns with null assignee", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -1110,6 +1139,7 @@ describe("Issues Coverage - updateIssue branches", () => {
       expect(captureUpdateDoc.operations?.assignee).toBeNull()
     }))
 
+  // test-revizorro: scheduled
   it.effect("clears description with empty string", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -1137,6 +1167,7 @@ describe("Issues Coverage - updateIssue branches", () => {
       expect(captureUpdateDoc.operations?.description).toBeNull()
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates description in place when issue already has one", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -1168,6 +1199,7 @@ describe("Issues Coverage - updateIssue branches", () => {
       expect(captureUpdateDoc.operations?.description).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("uploads new description when issue has no existing one", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -1199,6 +1231,7 @@ describe("Issues Coverage - updateIssue branches", () => {
       expect(captureUpdateDoc.operations?.description).toBe("markup-ref-123")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns updated=false when no changes provided", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -1220,6 +1253,7 @@ describe("Issues Coverage - updateIssue branches", () => {
       expect(result.identifier).toBe("TEST-1")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns updated=true when only description updated in place (no updateDoc call)", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -1248,6 +1282,7 @@ describe("Issues Coverage - updateIssue branches", () => {
       expect(captureUpdateMarkup.markup).toBe("# Only desc changed")
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates title field", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -1272,6 +1307,7 @@ describe("Issues Coverage - updateIssue branches", () => {
       expect(captureUpdateDoc.operations?.title).toBe("Brand New Title")
     }))
 
+  // test-revizorro: scheduled
   it.effect("fails with PersonNotFoundError for unknown assignee in updateIssue", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })
@@ -1300,6 +1336,7 @@ describe("Issues Coverage - updateIssue branches", () => {
 })
 
 describe("Issues Coverage - getIssue assignee person not found", () => {
+  // test-revizorro: scheduled
   it.effect("returns undefined assignee when issue has assignee ref but person doc not found", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })

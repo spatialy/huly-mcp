@@ -75,6 +75,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
 }
 
 describe("buildSocialIdToPersonNameMap - empty socialIds branch (line 136)", () => {
+  // test-revizorro: scheduled
   it.effect("returns empty map when socialIds array is empty", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient
@@ -87,6 +88,7 @@ describe("buildSocialIdToPersonNameMap - empty socialIds branch (line 136)", () 
 })
 
 describe("listChannels - nameSearch branch (line 214)", () => {
+  // test-revizorro: scheduled
   it.effect("applies nameSearch filter to query", () =>
     Effect.gen(function*() {
       const captureQuery: MockConfig["captureChannelQuery"] = {}
@@ -100,6 +102,7 @@ describe("listChannels - nameSearch branch (line 214)", () => {
       expect(captureQuery.query?.name).toEqual({ $like: "%dev%" })
     }))
 
+  // test-revizorro: scheduled
   it.effect("skips nameSearch when empty string", () =>
     Effect.gen(function*() {
       const captureQuery: MockConfig["captureChannelQuery"] = {}
@@ -115,6 +118,7 @@ describe("listChannels - nameSearch branch (line 214)", () => {
 })
 
 describe("listChannels - topicSearch branch (line 218)", () => {
+  // test-revizorro: scheduled
   it.effect("applies topicSearch filter to query", () =>
     Effect.gen(function*() {
       const captureQuery: MockConfig["captureChannelQuery"] = {}
@@ -128,6 +132,7 @@ describe("listChannels - topicSearch branch (line 218)", () => {
       expect(captureQuery.query?.topic).toEqual({ $like: "%bugs%" })
     }))
 
+  // test-revizorro: scheduled
   it.effect("skips topicSearch when empty string", () =>
     Effect.gen(function*() {
       const captureQuery: MockConfig["captureChannelQuery"] = {}

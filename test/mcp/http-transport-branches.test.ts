@@ -70,6 +70,7 @@ const createMockResponse = () => {
 
 describe("HTTP Transport - Branch Coverage", () => {
   describe("createMcpHandlers - headersSent check (line 135)", () => {
+    // test-revizorro: scheduled
     it("should not send error response when headers already sent", async () => {
       const handlers = createMcpHandlers(() => {
         throw new Error("Factory error")
@@ -92,6 +93,7 @@ describe("HTTP Transport - Branch Coverage", () => {
   })
 
   describe("closeHttpServer - error path (lines 181-188)", () => {
+    // test-revizorro: scheduled
     it("should handle server close error gracefully", async () => {
       const { app } = createMockExpressApp()
       const closeFn = vi.fn((cb?: (err?: Error) => void) => {
@@ -130,6 +132,7 @@ describe("HTTP Transport - Branch Coverage", () => {
   })
 
   describe("GET and DELETE handlers return method not allowed (lines 148-168)", () => {
+    // test-revizorro: scheduled
     it("GET returns 405 with method not allowed error", () => {
       const handlers = createMcpHandlers(createMockMcpServer)
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test mock: empty Request
@@ -146,6 +149,7 @@ describe("HTTP Transport - Branch Coverage", () => {
       )
     })
 
+    // test-revizorro: scheduled
     it("DELETE returns 405 with method not allowed error", () => {
       const handlers = createMcpHandlers(createMockMcpServer)
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test mock: empty Request

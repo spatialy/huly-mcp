@@ -6,6 +6,7 @@ import { mapParseCauseToMcp, McpErrorCode } from "../../src/mcp/error-mapping.js
 
 describe("Error Mapping Branch Coverage", () => {
   describe("mapParseCauseToMcp - Sequential cause with ParseError (line 148)", () => {
+    // test-revizorro: scheduled
     it.effect("extracts first ParseError from sequential cause", () =>
       Effect.gen(function*() {
         const TestSchema = Schema.Struct({ x: Schema.Number })
@@ -30,6 +31,7 @@ describe("Error Mapping Branch Coverage", () => {
   })
 
   describe("mapParseCauseToMcp - Parallel cause with ParseError (line 148)", () => {
+    // test-revizorro: scheduled
     it.effect("extracts first ParseError from parallel cause", () =>
       Effect.gen(function*() {
         const TestSchema1 = Schema.Struct({ a: Schema.String })
@@ -51,6 +53,7 @@ describe("Error Mapping Branch Coverage", () => {
   })
 
   describe("mapParseCauseToMcp - Die cause (no failures, line 151)", () => {
+    // test-revizorro: scheduled
     it.effect("returns generic error for Die cause (no ParseErrors)", () =>
       Effect.gen(function*() {
         const cause = Cause.die(new Error("unexpected"))

@@ -30,6 +30,7 @@ import { createIssueFromTemplate } from "../src/huly/operations/issue-templates.
 // ============================================================
 
 describe("buildSocialIdToPersonNameMap - person not found in map (channels.ts line 159 false branch)", () => {
+  // test-revizorro: scheduled
   it.effect("skips socialIdentity when its attachedTo person is missing from DB", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient
@@ -65,6 +66,7 @@ describe("buildSocialIdToPersonNameMap - person not found in map (channels.ts li
       )
     ))
 
+  // test-revizorro: scheduled
   it.effect("resolves some but skips others when only some persons exist", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient
@@ -136,6 +138,7 @@ describe("buildSocialIdToPersonNameMap - person not found in map (channels.ts li
 // ============================================================
 
 describe("buildAccountUuidToNameMap - employee with undefined personUuid (channels.ts line 187 false branch)", () => {
+  // test-revizorro: scheduled
   it.effect("skips employee when personUuid is undefined", () =>
     Effect.gen(function*() {
       const dm: HulyDirectMessage = {
@@ -185,6 +188,7 @@ describe("buildAccountUuidToNameMap - employee with undefined personUuid (channe
       expect(result.conversations[0].participants).toEqual([])
     }))
 
+  // test-revizorro: scheduled
   it.effect("resolves employees WITH personUuid but skips those WITHOUT", () =>
     Effect.gen(function*() {
       const dm: HulyDirectMessage = {
@@ -311,6 +315,7 @@ describe("createIssueFromTemplate - person not found for template assignee (issu
     ...overrides
   })
 
+  // test-revizorro: scheduled
   it.effect("uses no assignee when template.assignee person is not found in DB", () =>
     Effect.gen(function*() {
       const project = makeProject()
@@ -396,6 +401,7 @@ describe("createIssueFromTemplate - person not found for template assignee (issu
 // ============================================================
 
 describe("hasFileSource - || short-circuit branches (attachments.ts lines 144-145)", () => {
+  // test-revizorro: scheduled
   it.effect("accepts when ONLY fileUrl is provided (filePath falsy)", () =>
     Effect.gen(function*() {
       const result = yield* parseAddAttachmentParams({
@@ -412,6 +418,7 @@ describe("hasFileSource - || short-circuit branches (attachments.ts lines 144-14
       expect(result.data).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("accepts when ONLY data is provided (filePath AND fileUrl falsy)", () =>
     Effect.gen(function*() {
       const result = yield* parseAddAttachmentParams({
@@ -428,6 +435,7 @@ describe("hasFileSource - || short-circuit branches (attachments.ts lines 144-14
       expect(result.fileUrl).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("accepts AddIssueAttachmentParams with ONLY fileUrl", () =>
     Effect.gen(function*() {
       const result = yield* parseAddIssueAttachmentParams({
@@ -441,6 +449,7 @@ describe("hasFileSource - || short-circuit branches (attachments.ts lines 144-14
       expect(result.fileUrl).toBe("https://example.com/doc.pdf")
     }))
 
+  // test-revizorro: scheduled
   it.effect("accepts AddIssueAttachmentParams with ONLY data", () =>
     Effect.gen(function*() {
       const result = yield* parseAddIssueAttachmentParams({
@@ -454,6 +463,7 @@ describe("hasFileSource - || short-circuit branches (attachments.ts lines 144-14
       expect(result.data).toBe("iVBORw0KGgo=")
     }))
 
+  // test-revizorro: scheduled
   it.effect("accepts AddDocumentAttachmentParams with ONLY fileUrl", () =>
     Effect.gen(function*() {
       const result = yield* parseAddDocumentAttachmentParams({
@@ -467,6 +477,7 @@ describe("hasFileSource - || short-circuit branches (attachments.ts lines 144-14
       expect(result.fileUrl).toBe("https://example.com/readme.md")
     }))
 
+  // test-revizorro: scheduled
   it.effect("accepts AddDocumentAttachmentParams with ONLY data", () =>
     Effect.gen(function*() {
       const result = yield* parseAddDocumentAttachmentParams({

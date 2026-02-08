@@ -200,6 +200,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
 }
 
 describe("listNotifications", () => {
+  // test-revizorro: scheduled
   it.effect("returns notifications mapped to summaries", () =>
     Effect.gen(function*() {
       const notif = makeNotification({
@@ -228,6 +229,7 @@ describe("listNotifications", () => {
       expect(result[0].modifiedOn).toBe(1706500001000)
     }))
 
+  // test-revizorro: scheduled
   it.effect("excludes archived notifications by default", () =>
     Effect.gen(function*() {
       const active = makeNotification({
@@ -247,6 +249,7 @@ describe("listNotifications", () => {
       expect(result[0].id).toBe("notif-1")
     }))
 
+  // test-revizorro: scheduled
   it.effect("includes archived when requested", () =>
     Effect.gen(function*() {
       const active = makeNotification({
@@ -265,6 +268,7 @@ describe("listNotifications", () => {
       expect(result).toHaveLength(2)
     }))
 
+  // test-revizorro: scheduled
   it.effect("filters unread only when requested", () =>
     Effect.gen(function*() {
       const unread = makeNotification({
@@ -286,6 +290,7 @@ describe("listNotifications", () => {
       expect(result[0].id).toBe("notif-1")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns empty array when no notifications", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ notifications: [] })
@@ -297,6 +302,7 @@ describe("listNotifications", () => {
 })
 
 describe("getNotification", () => {
+  // test-revizorro: scheduled
   it.effect("returns full notification details", () =>
     Effect.gen(function*() {
       const notif = makeNotification({
@@ -328,6 +334,7 @@ describe("getNotification", () => {
       expect(result.data).toBe("some data")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns NotificationNotFoundError when not found", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ notifications: [] })
@@ -342,6 +349,7 @@ describe("getNotification", () => {
 })
 
 describe("markNotificationRead", () => {
+  // test-revizorro: scheduled
   it.effect("marks unread notification as read", () =>
     Effect.gen(function*() {
       const notif = makeNotification({
@@ -359,6 +367,7 @@ describe("markNotificationRead", () => {
       expect(captureUpdateDoc.operations?.isViewed).toBe(true)
     }))
 
+  // test-revizorro: scheduled
   it.effect("skips update when already viewed", () =>
     Effect.gen(function*() {
       const notif = makeNotification({
@@ -376,6 +385,7 @@ describe("markNotificationRead", () => {
       expect(captureUpdateDoc.operations).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns NotificationNotFoundError when not found", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ notifications: [] })
@@ -389,6 +399,7 @@ describe("markNotificationRead", () => {
 })
 
 describe("markAllNotificationsRead", () => {
+  // test-revizorro: scheduled
   it.effect("marks all unread non-archived notifications as read", () =>
     Effect.gen(function*() {
       const notifs = [
@@ -413,6 +424,7 @@ describe("markAllNotificationsRead", () => {
       expect(captureUpdateDoc.calls).toHaveLength(2)
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns count 0 when no unread notifications", () =>
     Effect.gen(function*() {
       const notifs = [
@@ -432,6 +444,7 @@ describe("markAllNotificationsRead", () => {
 })
 
 describe("archiveNotification", () => {
+  // test-revizorro: scheduled
   it.effect("archives a non-archived notification", () =>
     Effect.gen(function*() {
       const notif = makeNotification({
@@ -449,6 +462,7 @@ describe("archiveNotification", () => {
       expect(captureUpdateDoc.operations?.archived).toBe(true)
     }))
 
+  // test-revizorro: scheduled
   it.effect("skips update when already archived", () =>
     Effect.gen(function*() {
       const notif = makeNotification({
@@ -466,6 +480,7 @@ describe("archiveNotification", () => {
       expect(captureUpdateDoc.operations).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns NotificationNotFoundError when not found", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ notifications: [] })
@@ -479,6 +494,7 @@ describe("archiveNotification", () => {
 })
 
 describe("archiveAllNotifications", () => {
+  // test-revizorro: scheduled
   it.effect("archives all non-archived notifications", () =>
     Effect.gen(function*() {
       const notifs = [
@@ -501,6 +517,7 @@ describe("archiveAllNotifications", () => {
       expect(captureUpdateDoc.calls).toHaveLength(2)
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns count 0 when all already archived", () =>
     Effect.gen(function*() {
       const notifs = [
@@ -519,6 +536,7 @@ describe("archiveAllNotifications", () => {
 })
 
 describe("deleteNotification", () => {
+  // test-revizorro: scheduled
   it.effect("deletes notification", () =>
     Effect.gen(function*() {
       const notif = makeNotification({ _id: "notif-1" as Ref<HulyInboxNotification> })
@@ -533,6 +551,7 @@ describe("deleteNotification", () => {
       expect(captureRemoveDoc.called).toBe(true)
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns NotificationNotFoundError when not found", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ notifications: [] })
@@ -546,6 +565,7 @@ describe("deleteNotification", () => {
 })
 
 describe("getNotificationContext", () => {
+  // test-revizorro: scheduled
   it.effect("returns context by objectId and objectClass", () =>
     Effect.gen(function*() {
       const ctx = makeNotificationContext({
@@ -575,6 +595,7 @@ describe("getNotificationContext", () => {
       expect(result!.lastUpdateTimestamp).toBe(1706500000000)
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns null when context not found", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ contexts: [] })
@@ -589,6 +610,7 @@ describe("getNotificationContext", () => {
 })
 
 describe("listNotificationContexts", () => {
+  // test-revizorro: scheduled
   it.effect("returns non-hidden contexts", () =>
     Effect.gen(function*() {
       const visible = makeNotificationContext({
@@ -610,6 +632,7 @@ describe("listNotificationContexts", () => {
       expect(result[0].id).toBe("ctx-1")
     }))
 
+  // test-revizorro: scheduled
   it.effect("filters pinned only when requested", () =>
     Effect.gen(function*() {
       const pinned = makeNotificationContext({
@@ -631,6 +654,7 @@ describe("listNotificationContexts", () => {
       expect(result[0].id).toBe("ctx-1")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns empty array when no contexts", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ contexts: [] })
@@ -642,6 +666,7 @@ describe("listNotificationContexts", () => {
 })
 
 describe("pinNotificationContext", () => {
+  // test-revizorro: scheduled
   it.effect("pins an unpinned context", () =>
     Effect.gen(function*() {
       const ctx = makeNotificationContext({
@@ -662,6 +687,7 @@ describe("pinNotificationContext", () => {
       expect(captureUpdateDoc.operations?.isPinned).toBe(true)
     }))
 
+  // test-revizorro: scheduled
   it.effect("unpins a pinned context", () =>
     Effect.gen(function*() {
       const ctx = makeNotificationContext({
@@ -682,6 +708,7 @@ describe("pinNotificationContext", () => {
       expect(captureUpdateDoc.operations?.isPinned).toBe(false)
     }))
 
+  // test-revizorro: scheduled
   it.effect("skips update when pin state already matches", () =>
     Effect.gen(function*() {
       const ctx = makeNotificationContext({
@@ -702,6 +729,7 @@ describe("pinNotificationContext", () => {
       expect(captureUpdateDoc.operations).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns NotificationContextNotFoundError when not found", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ contexts: [] })
@@ -719,6 +747,7 @@ describe("pinNotificationContext", () => {
 })
 
 describe("listNotificationSettings", () => {
+  // test-revizorro: scheduled
   it.effect("returns settings mapped to provider settings", () =>
     Effect.gen(function*() {
       const setting = makeNotificationSetting({
@@ -737,6 +766,7 @@ describe("listNotificationSettings", () => {
       expect(result[0].enabled).toBe(true)
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns empty array when no settings", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ settings: [] })
@@ -748,6 +778,7 @@ describe("listNotificationSettings", () => {
 })
 
 describe("updateNotificationProviderSetting", () => {
+  // test-revizorro: scheduled
   it.effect("updates existing setting when value changes", () =>
     Effect.gen(function*() {
       const setting = makeNotificationSetting({
@@ -770,6 +801,7 @@ describe("updateNotificationProviderSetting", () => {
       expect(captureUpdateDoc.operations?.enabled).toBe(false)
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns updated=false when existing setting value matches", () =>
     Effect.gen(function*() {
       const setting = makeNotificationSetting({
@@ -792,6 +824,7 @@ describe("updateNotificationProviderSetting", () => {
       expect(captureUpdateDoc.operations).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns updated=false when setting does not exist", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ settings: [] })
@@ -808,6 +841,7 @@ describe("updateNotificationProviderSetting", () => {
 })
 
 describe("getUnreadNotificationCount", () => {
+  // test-revizorro: scheduled
   it.effect("returns unread count from total", () =>
     Effect.gen(function*() {
       const notifs = [
@@ -830,6 +864,7 @@ describe("getUnreadNotificationCount", () => {
       expect(result.count).toBe(2)
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns 0 when no unread notifications", () =>
     Effect.gen(function*() {
       const notifs = [

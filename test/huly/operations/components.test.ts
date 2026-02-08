@@ -274,6 +274,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
 // --- Tests ---
 
 describe("findComponentByIdOrLabel", () => {
+  // test-revizorro: scheduled
   it.effect("finds component by ID", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient
@@ -286,6 +287,7 @@ describe("findComponentByIdOrLabel", () => {
       components: [makeComponent({ _id: "comp-abc" as Ref<HulyComponent>, label: "Frontend" })]
     }))))
 
+  // test-revizorro: scheduled
   it.effect("finds component by label when ID lookup fails", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient
@@ -298,6 +300,7 @@ describe("findComponentByIdOrLabel", () => {
       components: [makeComponent({ _id: "comp-xyz" as Ref<HulyComponent>, label: "Frontend" })]
     }))))
 
+  // test-revizorro: scheduled
   it.effect("returns undefined when component not found by ID or label", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient
@@ -311,6 +314,7 @@ describe("findComponentByIdOrLabel", () => {
 })
 
 describe("listComponents", () => {
+  // test-revizorro: scheduled
   it.effect("returns components for a project", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -344,6 +348,7 @@ describe("listComponents", () => {
       expect(result[1].lead).toBe("Bob")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns components with no lead", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -363,6 +368,7 @@ describe("listComponents", () => {
       expect(result[0].lead).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ projects: [] })
@@ -375,6 +381,7 @@ describe("listComponents", () => {
       expect((error as ProjectNotFoundError).identifier).toBe("NONEXIST")
     }))
 
+  // test-revizorro: scheduled
   it.effect("clamps limit to 200", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -386,6 +393,7 @@ describe("listComponents", () => {
       expect(result).toHaveLength(0)
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns empty array when no components exist", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -399,6 +407,7 @@ describe("listComponents", () => {
 })
 
 describe("getComponent", () => {
+  // test-revizorro: scheduled
   it.effect("returns full component details", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -430,6 +439,7 @@ describe("getComponent", () => {
       expect(result.createdOn).toBe(500)
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns component with no lead", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -451,6 +461,7 @@ describe("getComponent", () => {
       expect(result.lead).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns ComponentNotFoundError when component doesn't exist", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -466,6 +477,7 @@ describe("getComponent", () => {
       expect((error as ComponentNotFoundError).project).toBe("PROJ")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ projects: [] })
@@ -479,6 +491,7 @@ describe("getComponent", () => {
 })
 
 describe("createComponent", () => {
+  // test-revizorro: scheduled
   it.effect("creates component with minimal params", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -502,6 +515,7 @@ describe("createComponent", () => {
       expect(captureCreateDoc.attributes?.comments).toBe(0)
     }))
 
+  // test-revizorro: scheduled
   it.effect("creates component with description and lead", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -531,6 +545,7 @@ describe("createComponent", () => {
       expect(captureCreateDoc.attributes?.lead).toBe("person-1")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns PersonNotFoundError when lead not found", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -549,6 +564,7 @@ describe("createComponent", () => {
       expect((error as PersonNotFoundError).identifier).toBe("nobody@example.com")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ projects: [] })
@@ -565,6 +581,7 @@ describe("createComponent", () => {
 })
 
 describe("updateComponent", () => {
+  // test-revizorro: scheduled
   it.effect("updates component label", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -592,6 +609,7 @@ describe("updateComponent", () => {
       expect(captureUpdateDoc.operations?.label).toBe("Backend V2")
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates component description", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -618,6 +636,7 @@ describe("updateComponent", () => {
       expect(captureUpdateDoc.operations?.description).toBe("Updated description")
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates component lead", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -651,6 +670,7 @@ describe("updateComponent", () => {
       expect(captureUpdateDoc.operations?.lead).toBe("person-2")
     }))
 
+  // test-revizorro: scheduled
   it.effect("clears lead when set to null", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -678,6 +698,7 @@ describe("updateComponent", () => {
       expect(captureUpdateDoc.operations?.lead).toBeNull()
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns updated=false when no changes provided", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -701,6 +722,7 @@ describe("updateComponent", () => {
       expect(result.updated).toBe(false)
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns ComponentNotFoundError when component doesn't exist", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -719,6 +741,7 @@ describe("updateComponent", () => {
       expect((error as ComponentNotFoundError).identifier).toBe("Ghost")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns PersonNotFoundError when new lead not found", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -745,6 +768,7 @@ describe("updateComponent", () => {
       expect((error as PersonNotFoundError).identifier).toBe("nobody@example.com")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ projects: [] })
@@ -762,6 +786,7 @@ describe("updateComponent", () => {
 })
 
 describe("setIssueComponent", () => {
+  // test-revizorro: scheduled
   it.effect("sets component on an issue", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -796,6 +821,7 @@ describe("setIssueComponent", () => {
       expect(captureUpdateDoc.operations?.component).toBe("comp-1")
     }))
 
+  // test-revizorro: scheduled
   it.effect("clears component when set to null", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -825,6 +851,7 @@ describe("setIssueComponent", () => {
       expect(captureUpdateDoc.operations?.component).toBeNull()
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns ComponentNotFoundError when component doesn't exist", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -853,6 +880,7 @@ describe("setIssueComponent", () => {
       expect((error as ComponentNotFoundError).identifier).toBe("Ghost")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns IssueNotFoundError when issue doesn't exist", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -874,6 +902,7 @@ describe("setIssueComponent", () => {
       expect((error as IssueNotFoundError).identifier).toBe("PROJ-999")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ projects: [] })
@@ -891,6 +920,7 @@ describe("setIssueComponent", () => {
 })
 
 describe("deleteComponent", () => {
+  // test-revizorro: scheduled
   it.effect("deletes component", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -917,6 +947,7 @@ describe("deleteComponent", () => {
       expect(captureRemoveDoc.id).toBe("comp-1")
     }))
 
+  // test-revizorro: scheduled
   it.effect("finds component by ID for deletion", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -942,6 +973,7 @@ describe("deleteComponent", () => {
       expect(result.deleted).toBe(true)
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns ComponentNotFoundError when component doesn't exist", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
@@ -960,6 +992,7 @@ describe("deleteComponent", () => {
       expect((error as ComponentNotFoundError).project).toBe("PROJ")
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ projects: [] })

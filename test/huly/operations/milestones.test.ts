@@ -195,6 +195,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
 
 describe("listMilestones", () => {
   describe("basic functionality", () => {
+    // test-revizorro: scheduled
     it.effect("returns milestones for a project", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -215,6 +216,7 @@ describe("listMilestones", () => {
         expect(result[1].label).toBe("Sprint 2")
       }))
 
+    // test-revizorro: scheduled
     it.effect("transforms status correctly", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -238,6 +240,7 @@ describe("listMilestones", () => {
         expect(result[3].status).toBe("canceled")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns empty array when no milestones", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -254,6 +257,7 @@ describe("listMilestones", () => {
   })
 
   describe("error handling", () => {
+    // test-revizorro: scheduled
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -271,6 +275,7 @@ describe("listMilestones", () => {
   })
 
   describe("limit handling", () => {
+    // test-revizorro: scheduled
     it.effect("uses default limit of 50", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -287,6 +292,7 @@ describe("listMilestones", () => {
         expect(captureQuery.options?.limit).toBe(50)
       }))
 
+    // test-revizorro: scheduled
     it.effect("enforces max limit of 200", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -303,6 +309,7 @@ describe("listMilestones", () => {
         expect(captureQuery.options?.limit).toBe(200)
       }))
 
+    // test-revizorro: scheduled
     it.effect("uses provided limit when under max", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -321,6 +328,7 @@ describe("listMilestones", () => {
   })
 
   describe("sorting", () => {
+    // test-revizorro: scheduled
     it.effect("sorts by modifiedOn descending", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -341,6 +349,7 @@ describe("listMilestones", () => {
 
 describe("getMilestone", () => {
   describe("basic functionality", () => {
+    // test-revizorro: scheduled
     it.effect("returns milestone by label", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -367,6 +376,7 @@ describe("getMilestone", () => {
         expect(result.project).toBe("TEST")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns milestone by ID", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -387,6 +397,7 @@ describe("getMilestone", () => {
         expect(result.id).toBe("milestone-abc")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns empty description when not set", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -406,6 +417,7 @@ describe("getMilestone", () => {
   })
 
   describe("error handling", () => {
+    // test-revizorro: scheduled
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -421,6 +433,7 @@ describe("getMilestone", () => {
         expect((error as ProjectNotFoundError).identifier).toBe("NONEXISTENT")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns MilestoneNotFoundError when milestone doesn't exist", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -439,6 +452,7 @@ describe("getMilestone", () => {
         expect((error as MilestoneNotFoundError).project).toBe("TEST")
       }))
 
+    // test-revizorro: scheduled
     it.effect("MilestoneNotFoundError has helpful message", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -460,6 +474,7 @@ describe("getMilestone", () => {
 
 describe("createMilestone", () => {
   describe("basic functionality", () => {
+    // test-revizorro: scheduled
     it.effect("creates milestone with required fields", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -483,6 +498,7 @@ describe("createMilestone", () => {
         expect(captureCreateDoc.attributes?.status).toBe(MilestoneStatus.Planned)
       }))
 
+    // test-revizorro: scheduled
     it.effect("creates milestone with description", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -504,6 +520,7 @@ describe("createMilestone", () => {
         expect(captureCreateDoc.attributes?.description).toBe("First sprint of Q1")
       }))
 
+    // test-revizorro: scheduled
     it.effect("sets initial status to Planned", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -524,6 +541,7 @@ describe("createMilestone", () => {
         expect(captureCreateDoc.attributes?.status).toBe(MilestoneStatus.Planned)
       }))
 
+    // test-revizorro: scheduled
     it.effect("initializes comments to 0", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -544,6 +562,7 @@ describe("createMilestone", () => {
         expect(captureCreateDoc.attributes?.comments).toBe(0)
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns created milestone ID", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -565,6 +584,7 @@ describe("createMilestone", () => {
   })
 
   describe("error handling", () => {
+    // test-revizorro: scheduled
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -588,6 +608,7 @@ describe("createMilestone", () => {
 
 describe("updateMilestone", () => {
   describe("basic functionality", () => {
+    // test-revizorro: scheduled
     it.effect("updates milestone label", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -610,6 +631,7 @@ describe("updateMilestone", () => {
         expect(captureUpdateDoc.operations?.label).toBe("Sprint 1 - Updated")
       }))
 
+    // test-revizorro: scheduled
     it.effect("updates milestone description", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -631,6 +653,7 @@ describe("updateMilestone", () => {
         expect(captureUpdateDoc.operations?.description).toBe("Updated description")
       }))
 
+    // test-revizorro: scheduled
     it.effect("updates milestone targetDate", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -652,6 +675,7 @@ describe("updateMilestone", () => {
         expect(captureUpdateDoc.operations?.targetDate).toBe(1706600000000)
       }))
 
+    // test-revizorro: scheduled
     it.effect("updates milestone status", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -673,6 +697,7 @@ describe("updateMilestone", () => {
         expect(captureUpdateDoc.operations?.status).toBe(MilestoneStatus.Completed)
       }))
 
+    // test-revizorro: scheduled
     it.effect("updates multiple fields at once", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -700,6 +725,7 @@ describe("updateMilestone", () => {
         expect(captureUpdateDoc.operations?.targetDate).toBe(1706700000000)
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns updated=false when no fields provided", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -718,6 +744,7 @@ describe("updateMilestone", () => {
         expect(result.updated).toBe(false)
       }))
 
+    // test-revizorro: scheduled
     it.effect("status string to enum conversion works for all statuses", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -752,6 +779,7 @@ describe("updateMilestone", () => {
   })
 
   describe("error handling", () => {
+    // test-revizorro: scheduled
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -770,6 +798,7 @@ describe("updateMilestone", () => {
         expect(error._tag).toBe("ProjectNotFoundError")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns MilestoneNotFoundError when milestone doesn't exist", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -795,6 +824,7 @@ describe("updateMilestone", () => {
 
 describe("setIssueMilestone", () => {
   describe("basic functionality", () => {
+    // test-revizorro: scheduled
     it.effect("sets milestone on issue by label", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -820,6 +850,7 @@ describe("setIssueMilestone", () => {
         expect(captureUpdateDoc.operations?.milestone).toBe("m-1")
       }))
 
+    // test-revizorro: scheduled
     it.effect("sets milestone on issue by milestone ID", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -844,6 +875,7 @@ describe("setIssueMilestone", () => {
         expect(captureUpdateDoc.operations?.milestone).toBe("milestone-abc")
       }))
 
+    // test-revizorro: scheduled
     it.effect("clears milestone when null", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -867,6 +899,7 @@ describe("setIssueMilestone", () => {
         expect(captureUpdateDoc.operations?.milestone).toBeNull()
       }))
 
+    // test-revizorro: scheduled
     it.effect("finds issue by number", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -892,6 +925,7 @@ describe("setIssueMilestone", () => {
   })
 
   describe("error handling", () => {
+    // test-revizorro: scheduled
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -911,6 +945,7 @@ describe("setIssueMilestone", () => {
         expect(error._tag).toBe("ProjectNotFoundError")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns IssueNotFoundError when issue doesn't exist", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -935,6 +970,7 @@ describe("setIssueMilestone", () => {
         expect((error as IssueNotFoundError).project).toBe("TEST")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns MilestoneNotFoundError when milestone doesn't exist", () =>
       Effect.gen(function*() {
         const project = makeProject()
@@ -962,6 +998,7 @@ describe("setIssueMilestone", () => {
 
 describe("deleteMilestone", () => {
   describe("basic functionality", () => {
+    // test-revizorro: scheduled
     it.effect("deletes milestone by label", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -984,6 +1021,7 @@ describe("deleteMilestone", () => {
         expect(captureRemoveDoc.called).toBe(true)
       }))
 
+    // test-revizorro: scheduled
     it.effect("deletes milestone by ID", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -1007,6 +1045,7 @@ describe("deleteMilestone", () => {
   })
 
   describe("error handling", () => {
+    // test-revizorro: scheduled
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -1025,6 +1064,7 @@ describe("deleteMilestone", () => {
         expect((error as ProjectNotFoundError).identifier).toBe("NONEXISTENT")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns MilestoneNotFoundError when milestone doesn't exist", () =>
       Effect.gen(function*() {
         const project = makeProject()

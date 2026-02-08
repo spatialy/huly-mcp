@@ -115,6 +115,7 @@ describe("HulyClient Service", () => {
   })
 
   describe("testLayer", () => {
+    // test-revizorro: scheduled
     it.effect("provides default noop operations", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
@@ -130,6 +131,7 @@ describe("HulyClient Service", () => {
         expect(client.fetchMarkup).toBeDefined()
       }))
 
+    // test-revizorro: scheduled
     it.effect("allows overriding specific operations", () =>
       Effect.gen(function*() {
         const testDoc: TestDoc = {
@@ -157,6 +159,7 @@ describe("HulyClient Service", () => {
         expect(results).toHaveLength(1)
       }))
 
+    // test-revizorro: scheduled
     it.effect("default findAll returns empty array", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
@@ -170,6 +173,7 @@ describe("HulyClient Service", () => {
         expect(results).toHaveLength(0)
       }))
 
+    // test-revizorro: scheduled
     it.effect("default findOne returns undefined", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
@@ -183,6 +187,7 @@ describe("HulyClient Service", () => {
         expect(result).toBeUndefined()
       }))
 
+    // test-revizorro: scheduled
     it.effect("default uploadMarkup dies (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
@@ -199,6 +204,7 @@ describe("HulyClient Service", () => {
         expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
       }))
 
+    // test-revizorro: scheduled
     it.effect("default fetchMarkup returns empty string", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
@@ -215,6 +221,7 @@ describe("HulyClient Service", () => {
         expect(result).toBe("")
       }))
 
+    // test-revizorro: scheduled
     it.effect("default removeDoc dies (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
@@ -231,6 +238,7 @@ describe("HulyClient Service", () => {
         expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
       }))
 
+    // test-revizorro: scheduled
     it.effect("default updateMarkup dies (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
@@ -249,6 +257,7 @@ describe("HulyClient Service", () => {
         expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
       }))
 
+    // test-revizorro: scheduled
     it.effect("default addCollection dies (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
@@ -268,6 +277,7 @@ describe("HulyClient Service", () => {
         expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
       }))
 
+    // test-revizorro: scheduled
     it.effect("default createDoc dies (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
@@ -284,6 +294,7 @@ describe("HulyClient Service", () => {
         expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
       }))
 
+    // test-revizorro: scheduled
     it.effect("default updateDoc dies (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
@@ -303,6 +314,7 @@ describe("HulyClient Service", () => {
   })
 
   describe("mock operations with errors", () => {
+    // test-revizorro: scheduled
     it.effect("can mock operations to return HulyConnectionError", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({
@@ -326,6 +338,7 @@ describe("HulyClient Service", () => {
         expect(error.message).toBe("Network error")
       }))
 
+    // test-revizorro: scheduled
     it.effect("can mock operations to return HulyAuthError", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({
@@ -351,6 +364,7 @@ describe("HulyClient Service", () => {
   })
 
   describe("error handling patterns", () => {
+    // test-revizorro: scheduled
     it.effect("can catch HulyConnectionError with catchTag", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({
@@ -376,6 +390,7 @@ describe("HulyClient Service", () => {
         expect(result).toBe("Recovered from: Connection timeout")
       }))
 
+    // test-revizorro: scheduled
     it.effect("can catch HulyAuthError with catchTag", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({
@@ -402,6 +417,7 @@ describe("HulyClient Service", () => {
         expect(result).toBe("Auth error: Session expired")
       }))
 
+    // test-revizorro: scheduled
     it.effect("can handle both error types with catchTags", () =>
       Effect.gen(function*() {
         const connectionErrorLayer = HulyClient.testLayer({
@@ -436,6 +452,7 @@ describe("HulyClient Service", () => {
   })
 
   describe("service composition", () => {
+    // test-revizorro: scheduled
     it.effect("can be composed with other services", () =>
       Effect.gen(function*() {
         const mockFindAllOp = <T extends Doc>() =>
@@ -463,6 +480,7 @@ describe("HulyClient Service", () => {
         expect(result).toEqual(["Issue 1", "Issue 2"])
       }))
 
+    // test-revizorro: scheduled
     it.effect("multiple operations reuse same mock layer", () =>
       Effect.gen(function*() {
         const callCount = { findAll: 0, findOne: 0 }
@@ -501,6 +519,7 @@ describe("HulyClient Service", () => {
   })
 
   describe("HulyClientError type", () => {
+    // test-revizorro: scheduled
     it.effect("is union of HulyConnectionError and HulyAuthError", () =>
       Effect.gen(function*() {
         const handleError = (error: HulyClientError): string => {
@@ -521,6 +540,7 @@ describe("HulyClient Service", () => {
   })
 
   describe("operation tracking", () => {
+    // test-revizorro: scheduled
     it.effect("tracks operation calls for testing", () =>
       Effect.gen(function*() {
         const operations: Array<string> = []
@@ -563,12 +583,14 @@ describe("HulyClient Service", () => {
 
 describe("Connection error classification", () => {
   describe("HulyConnectionError", () => {
+    // test-revizorro: scheduled
     it.effect("has correct tag", () =>
       Effect.gen(function*() {
         const error = new HulyConnectionError({ message: "timeout" })
         expect(error._tag).toBe("HulyConnectionError")
       }))
 
+    // test-revizorro: scheduled
     it.effect("includes cause", () =>
       Effect.gen(function*() {
         const cause = new Error("underlying")
@@ -581,6 +603,7 @@ describe("Connection error classification", () => {
   })
 
   describe("HulyAuthError", () => {
+    // test-revizorro: scheduled
     it.effect("has correct tag", () =>
       Effect.gen(function*() {
         const error = new HulyAuthError({ message: "invalid credentials" })
@@ -604,6 +627,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("connection", () => {
+    // test-revizorro: scheduled
     it.effect("connects via connectRestWithRetry and creates client", () =>
       Effect.gen(function*() {
         const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
@@ -620,6 +644,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("findAll", () => {
+    // test-revizorro: scheduled
     it.effect("delegates to TxOperations.findAll", () =>
       Effect.gen(function*() {
         const docs = [{ _id: "d1", title: "Doc 1" }]
@@ -640,6 +665,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         )
       }))
 
+    // test-revizorro: scheduled
     it.effect("wraps errors in HulyConnectionError", () =>
       Effect.gen(function*() {
         mockFindAll.mockRejectedValue(new Error("network failure"))
@@ -659,6 +685,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("findOne", () => {
+    // test-revizorro: scheduled
     it.effect("delegates to TxOperations.findOne", () =>
       Effect.gen(function*() {
         const doc = { _id: "d1", title: "Found" }
@@ -674,6 +701,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(mockFindOne).toHaveBeenCalledWith("class", { _id: "d1" }, undefined)
       }))
 
+    // test-revizorro: scheduled
     it.effect("wraps errors in HulyConnectionError", () =>
       Effect.gen(function*() {
         mockFindOne.mockRejectedValue(new Error("query error"))
@@ -692,6 +720,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("createDoc", () => {
+    // test-revizorro: scheduled
     it.effect("delegates to TxOperations.createDoc", () =>
       Effect.gen(function*() {
         mockCreateDoc.mockResolvedValue("created-id")
@@ -713,6 +742,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         )
       }))
 
+    // test-revizorro: scheduled
     it.effect("wraps errors in HulyConnectionError", () =>
       Effect.gen(function*() {
         mockCreateDoc.mockRejectedValue(new Error("create failed"))
@@ -732,6 +762,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("updateDoc", () => {
+    // test-revizorro: scheduled
     it.effect("delegates to TxOperations.updateDoc", () =>
       Effect.gen(function*() {
         const txResult = { id: "tx-1" }
@@ -756,6 +787,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         )
       }))
 
+    // test-revizorro: scheduled
     it.effect("wraps errors in HulyConnectionError", () =>
       Effect.gen(function*() {
         mockUpdateDoc.mockRejectedValue(new Error("update error"))
@@ -776,6 +808,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("addCollection", () => {
+    // test-revizorro: scheduled
     it.effect("delegates to TxOperations.addCollection", () =>
       Effect.gen(function*() {
         mockAddCollection.mockResolvedValue("attached-id")
@@ -803,6 +836,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         )
       }))
 
+    // test-revizorro: scheduled
     it.effect("wraps errors in HulyConnectionError", () =>
       Effect.gen(function*() {
         mockAddCollection.mockRejectedValue(new Error("collection error"))
@@ -825,6 +859,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("removeDoc", () => {
+    // test-revizorro: scheduled
     it.effect("delegates to TxOperations.removeDoc", () =>
       Effect.gen(function*() {
         const txResult = { id: "tx-rm" }
@@ -841,6 +876,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(mockRemoveDoc).toHaveBeenCalledWith("class", "space", "id")
       }))
 
+    // test-revizorro: scheduled
     it.effect("wraps errors in HulyConnectionError", () =>
       Effect.gen(function*() {
         mockRemoveDoc.mockRejectedValue(new Error("remove error"))
@@ -860,6 +896,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("uploadMarkup", () => {
+    // test-revizorro: scheduled
     it.effect("uploads with markup format (passthrough)", () =>
       Effect.gen(function*() {
         mockCreateMarkup.mockResolvedValue("ref-123")
@@ -879,6 +916,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(mockCreateMarkup.mock.calls[0][1]).toBe("raw markup value")
       }))
 
+    // test-revizorro: scheduled
     it.effect("uploads with html format (converts via htmlToJSON + jsonToMarkup)", () =>
       Effect.gen(function*() {
         mockCreateMarkup.mockResolvedValue("ref-html")
@@ -899,6 +937,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(uploadedValue).toContain("html-parsed")
       }))
 
+    // test-revizorro: scheduled
     it.effect("uploads with markdown format (converts via markdownToMarkup + jsonToMarkup)", () =>
       Effect.gen(function*() {
         mockCreateMarkup.mockResolvedValue("ref-md")
@@ -918,6 +957,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(uploadedValue).toContain("md-parsed")
       }))
 
+    // test-revizorro: scheduled
     it.effect("wraps errors in HulyConnectionError", () =>
       Effect.gen(function*() {
         mockCreateMarkup.mockRejectedValue(new Error("upload failed"))
@@ -939,6 +979,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("fetchMarkup", () => {
+    // test-revizorro: scheduled
     it.effect("fetches with markup format (passthrough)", () =>
       Effect.gen(function*() {
         mockGetMarkup.mockResolvedValue("raw-internal-markup")
@@ -956,6 +997,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(result).toBe("raw-internal-markup")
       }))
 
+    // test-revizorro: scheduled
     it.effect("fetches with html format (converts via markupToJSON + jsonToHTML)", () =>
       Effect.gen(function*() {
         mockGetMarkup.mockResolvedValue("stored-markup")
@@ -973,6 +1015,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(result).toContain("<html>")
       }))
 
+    // test-revizorro: scheduled
     it.effect("fetches with markdown format (converts via markupToJSON + markupToMarkdown)", () =>
       Effect.gen(function*() {
         mockGetMarkup.mockResolvedValue("stored-markup")
@@ -989,6 +1032,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(result).toBe("# Markdown output")
       }))
 
+    // test-revizorro: scheduled
     it.effect("wraps errors in HulyConnectionError", () =>
       Effect.gen(function*() {
         mockGetMarkup.mockRejectedValue(new Error("fetch failed"))
@@ -1010,6 +1054,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("updateMarkup", () => {
+    // test-revizorro: scheduled
     it.effect("updates with markup format (passthrough)", () =>
       Effect.gen(function*() {
         const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
@@ -1025,6 +1070,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(mockUpdateMarkup.mock.calls[0][1]).toBe("updated markup")
       }))
 
+    // test-revizorro: scheduled
     it.effect("updates with html format", () =>
       Effect.gen(function*() {
         const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
@@ -1041,6 +1087,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(uploadedValue).toContain("html-parsed")
       }))
 
+    // test-revizorro: scheduled
     it.effect("updates with markdown format", () =>
       Effect.gen(function*() {
         const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
@@ -1057,6 +1104,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(uploadedValue).toContain("md-parsed")
       }))
 
+    // test-revizorro: scheduled
     it.effect("wraps errors in HulyConnectionError", () =>
       Effect.gen(function*() {
         mockUpdateMarkup.mockRejectedValue(new Error("update failed"))
@@ -1078,6 +1126,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("toInternalMarkup default branch (invalid format)", () => {
+    // test-revizorro: scheduled
     it.effect("throws on invalid format during uploadMarkup", () =>
       Effect.gen(function*() {
         const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
@@ -1097,6 +1146,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(Exit.isFailure(exit)).toBe(true)
       }))
 
+    // test-revizorro: scheduled
     it.effect("throws on invalid format during updateMarkup", () =>
       Effect.gen(function*() {
         const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
@@ -1117,6 +1167,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("fromInternalMarkup default branch (invalid format)", () => {
+    // test-revizorro: scheduled
     it.effect("throws on invalid format during fetchMarkup", () =>
       Effect.gen(function*() {
         const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
@@ -1137,6 +1188,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
   })
 
   describe("connection failure", () => {
+    // test-revizorro: scheduled
     it.effect("connectRestWithRetry wraps connection errors", () =>
       Effect.gen(function*() {
         const apiClient = yield* Effect.promise(() => import("@hcengineering/api-client"))

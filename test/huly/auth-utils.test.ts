@@ -11,6 +11,7 @@ const makePlatformError = (code: string): PlatformError<Record<string, never>> =
 
 describe("auth-utils", () => {
   describe("authToOptions", () => {
+    // test-revizorro: scheduled
     it.effect("returns token and workspace for token auth", () =>
       Effect.gen(function*() {
         const auth: Auth = { _tag: "token", token: Redacted.make("my-secret-token") }
@@ -18,6 +19,7 @@ describe("auth-utils", () => {
         expect(result).toStrictEqual({ token: "my-secret-token", workspace: "test-workspace" })
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns email, password, and workspace for password auth", () =>
       Effect.gen(function*() {
         const auth: Auth = {
@@ -35,12 +37,14 @@ describe("auth-utils", () => {
   })
 
   describe("connectWithRetry", () => {
+    // test-revizorro: scheduled
     it.effect("resolves on successful connection", () =>
       Effect.gen(function*() {
         const result = yield* connectWithRetry(() => Promise.resolve("connected"), "test")
         expect(result).toBe("connected")
       }))
 
+    // test-revizorro: scheduled
     it.effect("retries on non-auth errors and eventually fails with HulyConnectionError", () =>
       Effect.gen(function*() {
         let callCount = 0
@@ -63,6 +67,7 @@ describe("auth-utils", () => {
         expect(callCount).toBe(3)
       }))
 
+    // test-revizorro: scheduled
     it.effect("does not retry on auth errors, fails immediately with HulyAuthError", () =>
       Effect.gen(function*() {
         let callCount = 0
@@ -79,6 +84,7 @@ describe("auth-utils", () => {
         expect(callCount).toBe(1)
       }))
 
+    // test-revizorro: scheduled
     it.effect("succeeds after initial failures when retry works", () =>
       Effect.gen(function*() {
         let callCount = 0
@@ -99,6 +105,7 @@ describe("auth-utils", () => {
         expect(callCount).toBe(3)
       }))
 
+    // test-revizorro: scheduled
     it.effect("maps all auth status codes to HulyAuthError", () =>
       Effect.gen(function*() {
         const authCodes = [
@@ -120,6 +127,7 @@ describe("auth-utils", () => {
         }
       }))
 
+    // test-revizorro: scheduled
     it.effect("maps non-auth PlatformError to HulyConnectionError", () =>
       Effect.gen(function*() {
         const fiber = yield* Effect.fork(

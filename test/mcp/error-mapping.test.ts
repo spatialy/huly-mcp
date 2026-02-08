@@ -29,6 +29,7 @@ import {
 describe("Error Mapping to MCP", () => {
   describe("mapDomainErrorToMcp", () => {
     describe("InvalidParams errors (-32602)", () => {
+      // test-revizorro: scheduled
       it.effect("maps IssueNotFoundError with no errorTag", () =>
         Effect.gen(function*() {
           const error = new IssueNotFoundError({
@@ -45,6 +46,7 @@ describe("Error Mapping to MCP", () => {
           )
         }))
 
+      // test-revizorro: scheduled
       it.effect("maps ProjectNotFoundError with descriptive message", () =>
         Effect.gen(function*() {
           const error = new ProjectNotFoundError({ identifier: "MISSING" })
@@ -55,6 +57,7 @@ describe("Error Mapping to MCP", () => {
           expect(response.content[0].text).toBe("Project 'MISSING' not found")
         }))
 
+      // test-revizorro: scheduled
       it.effect("maps InvalidStatusError with descriptive message", () =>
         Effect.gen(function*() {
           const error = new InvalidStatusError({
@@ -70,6 +73,7 @@ describe("Error Mapping to MCP", () => {
           )
         }))
 
+      // test-revizorro: scheduled
       it.effect("maps PersonNotFoundError with descriptive message", () =>
         Effect.gen(function*() {
           const error = new PersonNotFoundError({
@@ -84,6 +88,7 @@ describe("Error Mapping to MCP", () => {
           )
         }))
 
+      // test-revizorro: scheduled
       it.effect("maps InvalidFileDataError with descriptive message", () =>
         Effect.gen(function*() {
           const error = new InvalidFileDataError({
@@ -96,6 +101,7 @@ describe("Error Mapping to MCP", () => {
           expect(response.content[0].text).toBe("Invalid base64 encoding")
         }))
 
+      // test-revizorro: scheduled
       it.effect("maps FileNotFoundError with descriptive message", () =>
         Effect.gen(function*() {
           const error = new FileNotFoundError({
@@ -110,6 +116,7 @@ describe("Error Mapping to MCP", () => {
     })
 
     describe("InternalError errors (-32603)", () => {
+      // test-revizorro: scheduled
       it.effect("maps HulyConnectionError with errorTag", () =>
         Effect.gen(function*() {
           const error = new HulyConnectionError({ message: "Network timeout" })
@@ -121,6 +128,7 @@ describe("Error Mapping to MCP", () => {
           expect(response.content[0].text).toBe("Connection error: Network timeout")
         }))
 
+      // test-revizorro: scheduled
       it.effect("maps HulyAuthError with errorTag", () =>
         Effect.gen(function*() {
           const error = new HulyAuthError({ message: "Login failed" })
@@ -132,6 +140,7 @@ describe("Error Mapping to MCP", () => {
           expect(response.content[0].text).toBe("Authentication error: Login failed")
         }))
 
+      // test-revizorro: scheduled
       it.effect("maps HulyError with errorTag", () =>
         Effect.gen(function*() {
           const error = new HulyError({ message: "Something went wrong" })
@@ -143,6 +152,7 @@ describe("Error Mapping to MCP", () => {
           expect(response.content[0].text).toBe("Something went wrong")
         }))
 
+      // test-revizorro: scheduled
       it.effect("maps FileUploadError with errorTag", () =>
         Effect.gen(function*() {
           const error = new FileUploadError({
@@ -158,6 +168,7 @@ describe("Error Mapping to MCP", () => {
           )
         }))
 
+      // test-revizorro: scheduled
       it.effect("maps FileFetchError with errorTag", () =>
         Effect.gen(function*() {
           const error = new FileFetchError({
@@ -176,6 +187,7 @@ describe("Error Mapping to MCP", () => {
   })
 
   describe("mapParseErrorToMcp", () => {
+    // test-revizorro: scheduled
     it.effect("maps parse error with tool name prefix", () =>
       Effect.gen(function*() {
         const TestSchema = Schema.Struct({
@@ -199,6 +211,7 @@ describe("Error Mapping to MCP", () => {
         )
       }))
 
+    // test-revizorro: scheduled
     it.effect("maps parse error without tool name", () =>
       Effect.gen(function*() {
         const TestSchema = Schema.Struct({
@@ -221,6 +234,7 @@ describe("Error Mapping to MCP", () => {
 
   describe("mapDomainCauseToMcp", () => {
     describe("Fail cause", () => {
+      // test-revizorro: scheduled
       it.effect("handles HulyDomainError in Fail cause", () =>
         Effect.gen(function*() {
           const error = new IssueNotFoundError({
@@ -239,6 +253,7 @@ describe("Error Mapping to MCP", () => {
     })
 
     describe("Die cause", () => {
+      // test-revizorro: scheduled
       it.effect("returns UnexpectedError errorTag for defects", () =>
         Effect.gen(function*() {
           const cause = Cause.die(new Error("boom"))
@@ -252,6 +267,7 @@ describe("Error Mapping to MCP", () => {
     })
 
     describe("Empty cause", () => {
+      // test-revizorro: scheduled
       it.effect("returns generic error for empty cause", () =>
         Effect.gen(function*() {
           const cause = Cause.empty
@@ -264,6 +280,7 @@ describe("Error Mapping to MCP", () => {
     })
 
     describe("Sequential cause", () => {
+      // test-revizorro: scheduled
       it.effect("extracts first meaningful error from sequential cause", () =>
         Effect.gen(function*() {
           const error1 = new ProjectNotFoundError({ identifier: "PROJ" })
@@ -281,6 +298,7 @@ describe("Error Mapping to MCP", () => {
     })
 
     describe("Parallel cause", () => {
+      // test-revizorro: scheduled
       it.effect("extracts first meaningful error from parallel cause", () =>
         Effect.gen(function*() {
           const error1 = new InvalidStatusError({ status: "bad", project: "P" })
@@ -298,6 +316,7 @@ describe("Error Mapping to MCP", () => {
 
   describe("mapParseCauseToMcp", () => {
     describe("Fail cause", () => {
+      // test-revizorro: scheduled
       it.effect("handles ParseError in Fail cause", () =>
         Effect.gen(function*() {
           const TestSchema = Schema.Struct({ x: Schema.Number })
@@ -315,6 +334,7 @@ describe("Error Mapping to MCP", () => {
     })
 
     describe("Empty cause", () => {
+      // test-revizorro: scheduled
       it.effect("returns generic error for empty cause", () =>
         Effect.gen(function*() {
           const cause = Cause.empty
@@ -328,6 +348,7 @@ describe("Error Mapping to MCP", () => {
   })
 
   describe("createSuccessResponse", () => {
+    // test-revizorro: scheduled
     it.effect("creates success response with JSON content", () =>
       Effect.gen(function*() {
         const result = { issues: [{ id: 1, title: "Test" }] }
@@ -338,6 +359,7 @@ describe("Error Mapping to MCP", () => {
         expect(JSON.parse(response.content[0].text)).toEqual(result)
       }))
 
+    // test-revizorro: scheduled
     it.effect("formats JSON with indentation", () =>
       Effect.gen(function*() {
         const result = { a: 1, b: 2 }
@@ -349,6 +371,7 @@ describe("Error Mapping to MCP", () => {
   })
 
   describe("createUnknownToolError", () => {
+    // test-revizorro: scheduled
     it.effect("creates error response for unknown tool with errorTag", () =>
       Effect.gen(function*() {
         const response = createUnknownToolError("bogus_tool")
@@ -361,6 +384,7 @@ describe("Error Mapping to MCP", () => {
   })
 
   describe("toMcpResponse", () => {
+    // test-revizorro: scheduled
     it.effect("strips _meta from error response", () =>
       Effect.gen(function*() {
         const response = createUnknownToolError("bogus_tool")
@@ -371,6 +395,7 @@ describe("Error Mapping to MCP", () => {
         expect(wire.content[0].text).toBe("Unknown tool: bogus_tool")
       }))
 
+    // test-revizorro: scheduled
     it.effect("strips _meta from success response", () =>
       Effect.gen(function*() {
         const response = createSuccessResponse({ ok: true })

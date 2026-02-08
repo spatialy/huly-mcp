@@ -209,6 +209,7 @@ const createTestLayer = (config: MockConfig) => {
 // --- ruleToHulyRule coverage (lines 106-121) ---
 
 describe("createRecurringEvent - ruleToHulyRule with all optional fields", () => {
+  // test-revizorro: scheduled
   it.effect("converts rule with endDate, count, interval", () =>
     Effect.gen(function*() {
       const captureAddCollection: MockConfig["captureAddCollection"] = {}
@@ -233,6 +234,7 @@ describe("createRecurringEvent - ruleToHulyRule with all optional fields", () =>
       expect(rules[0].interval).toBe(2)
     }))
 
+  // test-revizorro: scheduled
   it.effect("converts rule with byDay, byMonthDay, byMonth, bySetPos, wkst", () =>
     Effect.gen(function*() {
       const captureAddCollection: MockConfig["captureAddCollection"] = {}
@@ -261,6 +263,7 @@ describe("createRecurringEvent - ruleToHulyRule with all optional fields", () =>
       expect(rules[0].wkst).toBe("MO")
     }))
 
+  // test-revizorro: scheduled
   it.effect("copies arrays (byDay, byMonthDay, byMonth, bySetPos) without shared references", () =>
     Effect.gen(function*() {
       const captureAddCollection: MockConfig["captureAddCollection"] = {}
@@ -286,6 +289,7 @@ describe("createRecurringEvent - ruleToHulyRule with all optional fields", () =>
 // --- createEvent coverage (lines 300-352) ---
 
 describe("createEvent - description and participants", () => {
+  // test-revizorro: scheduled
   it.effect("creates event with description via resolveEventInputs", () =>
     Effect.gen(function*() {
       const captureAddCollection: MockConfig["captureAddCollection"] = {}
@@ -303,6 +307,7 @@ describe("createEvent - description and participants", () => {
       expect(captureAddCollection.attributes?.description).toBe("markup-ref-123")
     }))
 
+  // test-revizorro: scheduled
   it.effect("creates event with participants resolved from emails", () =>
     Effect.gen(function*() {
       const person = makePerson({ _id: "person-1" as Ref<Person>, name: "Alice" })
@@ -340,6 +345,7 @@ describe("createEvent - description and participants", () => {
       expect(participants[0]).toBe("person-1")
     }))
 
+  // test-revizorro: scheduled
   it.effect("creates event with empty description (whitespace only) - no upload", () =>
     Effect.gen(function*() {
       const captureAddCollection: MockConfig["captureAddCollection"] = {}
@@ -359,6 +365,7 @@ describe("createEvent - description and participants", () => {
 // --- updateEvent coverage (lines 354-437) ---
 
 describe("updateEvent - field update branches", () => {
+  // test-revizorro: scheduled
   it.effect("updates date field", () =>
     Effect.gen(function*() {
       const event = makeEvent({ eventId: "evt-1" })
@@ -374,6 +381,7 @@ describe("updateEvent - field update branches", () => {
       expect(captureUpdateDoc.operations?.date).toBe(1800000000000)
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates dueDate field", () =>
     Effect.gen(function*() {
       const event = makeEvent({ eventId: "evt-1" })
@@ -389,6 +397,7 @@ describe("updateEvent - field update branches", () => {
       expect(captureUpdateDoc.operations?.dueDate).toBe(1800003600000)
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates allDay field", () =>
     Effect.gen(function*() {
       const event = makeEvent({ eventId: "evt-1", allDay: false })
@@ -404,6 +413,7 @@ describe("updateEvent - field update branches", () => {
       expect(captureUpdateDoc.operations?.allDay).toBe(true)
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates location field", () =>
     Effect.gen(function*() {
       const event = makeEvent({ eventId: "evt-1" })
@@ -419,6 +429,7 @@ describe("updateEvent - field update branches", () => {
       expect(captureUpdateDoc.operations?.location).toBe("Building A, Room 101")
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates visibility field", () =>
     Effect.gen(function*() {
       const event = makeEvent({ eventId: "evt-1" })
@@ -434,6 +445,7 @@ describe("updateEvent - field update branches", () => {
       expect(captureUpdateDoc.operations?.visibility).toBe("private")
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates multiple fields at once", () =>
     Effect.gen(function*() {
       const event = makeEvent({ eventId: "evt-1" })
@@ -461,6 +473,7 @@ describe("updateEvent - field update branches", () => {
 })
 
 describe("updateEvent - description in-place only path (line 423, 427)", () => {
+  // test-revizorro: scheduled
   it.effect("returns updated=true without calling updateDoc when only description is updated in place", () =>
     Effect.gen(function*() {
       const event = makeEvent({
@@ -486,6 +499,7 @@ describe("updateEvent - description in-place only path (line 423, 427)", () => {
       expect(captureUpdateDoc.operations).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("calls updateDoc when description is updated in place AND other fields change", () =>
     Effect.gen(function*() {
       const event = makeEvent({
@@ -517,6 +531,7 @@ describe("updateEvent - description in-place only path (line 423, 427)", () => {
 // --- listEvents from/to filter branches (lines 222, 226) ---
 
 describe("listEvents - from/to date filters", () => {
+  // test-revizorro: scheduled
   it.effect("applies from filter when provided", () =>
     Effect.gen(function*() {
       const events = [makeEvent({ eventId: "evt-1", date: 1700100000000 })]
@@ -527,6 +542,7 @@ describe("listEvents - from/to date filters", () => {
       expect(result).toHaveLength(1)
     }))
 
+  // test-revizorro: scheduled
   it.effect("applies to filter when provided", () =>
     Effect.gen(function*() {
       const events = [makeEvent({ eventId: "evt-1", dueDate: 1700200000000 })]
@@ -537,6 +553,7 @@ describe("listEvents - from/to date filters", () => {
       expect(result).toHaveLength(1)
     }))
 
+  // test-revizorro: scheduled
   it.effect("applies both from and to filters", () =>
     Effect.gen(function*() {
       const events = [makeEvent({ eventId: "evt-1" })]
@@ -554,6 +571,7 @@ describe("listEvents - from/to date filters", () => {
 // --- getEvent externalParticipants (line 291) ---
 
 describe("getEvent - externalParticipants mapping", () => {
+  // test-revizorro: scheduled
   it.effect("maps externalParticipants from event", () =>
     Effect.gen(function*() {
       const event = makeEvent({
@@ -571,6 +589,7 @@ describe("getEvent - externalParticipants mapping", () => {
 // --- resolveEventInputs: no calendar fallback (line 189) ---
 
 describe("createEvent - no default calendar fallback", () => {
+  // test-revizorro: scheduled
   it.effect("uses empty ref when no calendar exists", () =>
     Effect.gen(function*() {
       const captureAddCollection: MockConfig["captureAddCollection"] = {}
@@ -589,6 +608,7 @@ describe("createEvent - no default calendar fallback", () => {
 // --- findPersonsByEmails: empty emails and no matching persons (lines 128, 136) ---
 
 describe("createEvent - findPersonsByEmails edge cases", () => {
+  // test-revizorro: scheduled
   it.effect("handles empty participants array (emails.length === 0)", () =>
     Effect.gen(function*() {
       const captureAddCollection: MockConfig["captureAddCollection"] = {}
@@ -603,6 +623,7 @@ describe("createEvent - findPersonsByEmails edge cases", () => {
       expect(captureAddCollection.attributes?.participants).toEqual([])
     }))
 
+  // test-revizorro: scheduled
   it.effect("handles channels found but no matching persons (personIds.length === 0)", () =>
     Effect.gen(function*() {
       const captureAddCollection: MockConfig["captureAddCollection"] = {}
@@ -627,6 +648,7 @@ describe("createEvent - findPersonsByEmails edge cases", () => {
 // --- listEventInstances: participantMap.get fallback (line 622) ---
 
 describe("listEventInstances - participantMap fallback", () => {
+  // test-revizorro: scheduled
   it.effect("falls back to empty array when participantMap has no entry for instance eventId", () =>
     Effect.gen(function*() {
       const recurringEvent = makeRecurringEvent({ eventId: "recur-1" })

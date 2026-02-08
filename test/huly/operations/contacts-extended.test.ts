@@ -262,6 +262,7 @@ const createTestLayer = (config: MockConfig) => {
 
 describe("Contacts Extended Coverage", () => {
   describe("getPerson by email (findPersonByEmail path)", () => {
+    // test-revizorro: scheduled
     it.effect("finds person by email when channel exists", () =>
       Effect.gen(function*() {
         const mockPerson = createMockPerson()
@@ -283,6 +284,7 @@ describe("Contacts Extended Coverage", () => {
         expect(result.email).toBe("john@example.com")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns PersonNotFoundError when email channel exists but person does not", () =>
       Effect.gen(function*() {
         const mockChannel = createMockChannel({
@@ -302,6 +304,7 @@ describe("Contacts Extended Coverage", () => {
         expect(error._tag).toBe("PersonNotFoundError")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns PersonNotFoundError when no matching email channel", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayer({
@@ -318,6 +321,7 @@ describe("Contacts Extended Coverage", () => {
   })
 
   describe("batchGetEmailsForPersons - duplicate channels", () => {
+    // test-revizorro: scheduled
     it.effect("keeps only first email for a person when multiple channels exist", () =>
       Effect.gen(function*() {
         const person = createMockPerson({
@@ -348,6 +352,7 @@ describe("Contacts Extended Coverage", () => {
   })
 
   describe("listPersons with nameSearch", () => {
+    // test-revizorro: scheduled
     it.effect("applies nameSearch filter", () =>
       Effect.gen(function*() {
         const person1 = createMockPerson({
@@ -371,6 +376,7 @@ describe("Contacts Extended Coverage", () => {
         expect(result.length).toBeGreaterThanOrEqual(1)
       }))
 
+    // test-revizorro: scheduled
     it.effect("ignores empty nameSearch", () =>
       Effect.gen(function*() {
         const person1 = createMockPerson()
@@ -389,6 +395,7 @@ describe("Contacts Extended Coverage", () => {
   })
 
   describe("updatePerson name update branches", () => {
+    // test-revizorro: scheduled
     it.effect("updates only lastName while keeping firstName", () =>
       Effect.gen(function*() {
         const mockPerson = createMockPerson({ name: "Doe,John" })
@@ -408,6 +415,7 @@ describe("Contacts Extended Coverage", () => {
         expect(capture.operations?.name).toBe("Smith,John")
       }))
 
+    // test-revizorro: scheduled
     it.effect("updates city to a non-null value", () =>
       Effect.gen(function*() {
         const mockPerson = createMockPerson({ city: "NYC" })
@@ -429,6 +437,7 @@ describe("Contacts Extended Coverage", () => {
   })
 
   describe("listEmployees", () => {
+    // test-revizorro: scheduled
     it.effect("returns employee summaries with emails", () =>
       Effect.gen(function*() {
         const emp = createMockEmployee({
@@ -456,6 +465,7 @@ describe("Contacts Extended Coverage", () => {
         expect(result[0].position).toBe("Developer")
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns employees without email when no channel exists", () =>
       Effect.gen(function*() {
         const emp = createMockEmployee({
@@ -476,6 +486,7 @@ describe("Contacts Extended Coverage", () => {
         expect(result[0].active).toBe(false)
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns employees with position undefined when not set", () =>
       Effect.gen(function*() {
         const emp = createMockEmployee({
@@ -495,6 +506,7 @@ describe("Contacts Extended Coverage", () => {
         expect(result[0].position).toBeUndefined()
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns empty array when no employees", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayer({ employees: [] })
@@ -506,6 +518,7 @@ describe("Contacts Extended Coverage", () => {
   })
 
   describe("listOrganizations", () => {
+    // test-revizorro: scheduled
     it.effect("returns organization summaries", () =>
       Effect.gen(function*() {
         const org = createMockOrganization({
@@ -527,6 +540,7 @@ describe("Contacts Extended Coverage", () => {
         expect(result[0].members).toBe(10)
       }))
 
+    // test-revizorro: scheduled
     it.effect("returns empty array when no organizations", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayer({ organizations: [] })
@@ -536,6 +550,7 @@ describe("Contacts Extended Coverage", () => {
         expect(result).toEqual([])
       }))
 
+    // test-revizorro: scheduled
     it.effect("respects limit", () =>
       Effect.gen(function*() {
         const orgs = [
@@ -553,6 +568,7 @@ describe("Contacts Extended Coverage", () => {
   })
 
   describe("createOrganization", () => {
+    // test-revizorro: scheduled
     it.effect("creates organization without members", () =>
       Effect.gen(function*() {
         const capture: MockConfig["captureCreateDoc"] = {}
@@ -571,6 +587,7 @@ describe("Contacts Extended Coverage", () => {
         expect(capture.data?.members).toBe(0)
       }))
 
+    // test-revizorro: scheduled
     it.effect("creates organization with member found by ID", () =>
       Effect.gen(function*() {
         const person = createMockPerson({
@@ -596,6 +613,7 @@ describe("Contacts Extended Coverage", () => {
         expect(captureAddCollection.attributes?.contact).toBe("person-1")
       }))
 
+    // test-revizorro: scheduled
     it.effect("creates organization with member found by email", () =>
       Effect.gen(function*() {
         const person = createMockPerson({
@@ -673,6 +691,7 @@ describe("Contacts Extended Coverage", () => {
         expect(captureAddCollection.attributes?.contact).toBe("person-email-1")
       }))
 
+    // test-revizorro: scheduled
     it.effect("skips member when neither ID nor email matches", () =>
       Effect.gen(function*() {
         const captureCreateDoc: MockConfig["captureCreateDoc"] = {}
@@ -695,6 +714,7 @@ describe("Contacts Extended Coverage", () => {
         expect(captureAddCollection.attributes).toBeUndefined()
       }))
 
+    // test-revizorro: scheduled
     it.effect("creates organization with empty members array", () =>
       Effect.gen(function*() {
         const captureCreateDoc: MockConfig["captureCreateDoc"] = {}

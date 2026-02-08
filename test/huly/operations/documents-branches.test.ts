@@ -164,6 +164,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
 // --- Branch coverage tests ---
 
 describe("listDocuments - titleSearch branch (line 196)", () => {
+  // test-revizorro: scheduled
   it.effect("applies titleSearch filter to query", () =>
     Effect.gen(function*() {
       const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })
@@ -180,6 +181,7 @@ describe("listDocuments - titleSearch branch (line 196)", () => {
       expect(captureQuery.query?.title).toEqual({ $like: "%design%" })
     }))
 
+  // test-revizorro: scheduled
   it.effect("skips titleSearch when whitespace-only", () =>
     Effect.gen(function*() {
       const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })
@@ -198,6 +200,7 @@ describe("listDocuments - titleSearch branch (line 196)", () => {
 })
 
 describe("listDocuments - contentSearch branch (line 200)", () => {
+  // test-revizorro: scheduled
   it.effect("applies contentSearch to $search query", () =>
     Effect.gen(function*() {
       const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })
@@ -214,6 +217,7 @@ describe("listDocuments - contentSearch branch (line 200)", () => {
       expect(captureQuery.query?.$search).toBe("implementation")
     }))
 
+  // test-revizorro: scheduled
   it.effect("skips contentSearch when whitespace-only", () =>
     Effect.gen(function*() {
       const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })
@@ -232,6 +236,7 @@ describe("listDocuments - contentSearch branch (line 200)", () => {
 })
 
 describe("updateDocument - in-place content update branch (lines 358-365)", () => {
+  // test-revizorro: scheduled
   it.effect("uses updateMarkup when document already has content", () =>
     Effect.gen(function*() {
       const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })
@@ -265,6 +270,7 @@ describe("updateDocument - in-place content update branch (lines 358-365)", () =
       expect(captureUpdateDoc.operations?.content).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("updates title alongside in-place content update", () =>
     Effect.gen(function*() {
       const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })

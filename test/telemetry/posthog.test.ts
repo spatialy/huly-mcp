@@ -18,6 +18,7 @@ describe("createPostHogTelemetry", () => {
   })
 
   describe("sessionStart", () => {
+    // test-revizorro: scheduled
     it("captures event with correct property mapping", () => {
       const telemetry = createPostHogTelemetry(false)
       telemetry.sessionStart({
@@ -40,6 +41,7 @@ describe("createPostHogTelemetry", () => {
       expect(call.properties.version).toBeTypeOf("string")
     })
 
+    // test-revizorro: scheduled
     it("maps http transport correctly", () => {
       const telemetry = createPostHogTelemetry(false)
       telemetry.sessionStart({
@@ -57,6 +59,7 @@ describe("createPostHogTelemetry", () => {
   })
 
   describe("firstListTools", () => {
+    // test-revizorro: scheduled
     it("captures only once; subsequent calls are noop", () => {
       const telemetry = createPostHogTelemetry(false)
 
@@ -70,6 +73,7 @@ describe("createPostHogTelemetry", () => {
       expect(calls).toHaveLength(1)
     })
 
+    // test-revizorro: scheduled
     it("captures with session_id and version in properties", () => {
       const telemetry = createPostHogTelemetry(false)
       telemetry.firstListTools()
@@ -82,6 +86,7 @@ describe("createPostHogTelemetry", () => {
   })
 
   describe("toolCalled", () => {
+    // test-revizorro: scheduled
     it("captures with correct property mapping", () => {
       const telemetry = createPostHogTelemetry(false)
       telemetry.toolCalled({
@@ -100,6 +105,7 @@ describe("createPostHogTelemetry", () => {
       })
     })
 
+    // test-revizorro: scheduled
     it("omits error_tag when not provided", () => {
       const telemetry = createPostHogTelemetry(false)
       telemetry.toolCalled({
@@ -112,6 +118,7 @@ describe("createPostHogTelemetry", () => {
       expect(call.properties).not.toHaveProperty("error_tag")
     })
 
+    // test-revizorro: scheduled
     it("includes error_tag when provided", () => {
       const telemetry = createPostHogTelemetry(false)
       telemetry.toolCalled({
@@ -128,6 +135,7 @@ describe("createPostHogTelemetry", () => {
   })
 
   describe("shutdown", () => {
+    // test-revizorro: scheduled
     it("captures session_end then calls client.shutdown with timeout", async () => {
       const telemetry = createPostHogTelemetry(false)
       await telemetry.shutdown()
@@ -140,12 +148,14 @@ describe("createPostHogTelemetry", () => {
       expect(mockShutdown).toHaveBeenCalledWith(2000)
     })
 
+    // test-revizorro: scheduled
     it("does not throw when client.shutdown rejects", async () => {
       mockShutdown.mockRejectedValueOnce(new Error("flush timeout"))
       const telemetry = createPostHogTelemetry(false)
       await expect(telemetry.shutdown()).resolves.toBeUndefined()
     })
 
+    // test-revizorro: scheduled
     it("logs shutdown error in debug mode", async () => {
       const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
       mockShutdown.mockRejectedValueOnce(new Error("flush timeout"))
@@ -161,6 +171,7 @@ describe("createPostHogTelemetry", () => {
   })
 
   describe("debug mode", () => {
+    // test-revizorro: scheduled
     it("logs sessionStart to console.error", () => {
       const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
       const telemetry = createPostHogTelemetry(true)
@@ -178,6 +189,7 @@ describe("createPostHogTelemetry", () => {
       stderrSpy.mockRestore()
     })
 
+    // test-revizorro: scheduled
     it("logs firstListTools to console.error", () => {
       const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
       const telemetry = createPostHogTelemetry(true)
@@ -188,6 +200,7 @@ describe("createPostHogTelemetry", () => {
       stderrSpy.mockRestore()
     })
 
+    // test-revizorro: scheduled
     it("logs toolCalled to console.error", () => {
       const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
       const telemetry = createPostHogTelemetry(true)
@@ -204,6 +217,7 @@ describe("createPostHogTelemetry", () => {
       stderrSpy.mockRestore()
     })
 
+    // test-revizorro: scheduled
     it("logs shutdown to console.error", async () => {
       const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
       const telemetry = createPostHogTelemetry(true)
@@ -216,6 +230,7 @@ describe("createPostHogTelemetry", () => {
   })
 
   describe("capture error handling", () => {
+    // test-revizorro: scheduled
     it("does not throw when client.capture throws", () => {
       mockCapture.mockImplementationOnce(() => {
         throw new Error("network down")
@@ -224,6 +239,7 @@ describe("createPostHogTelemetry", () => {
       expect(() => telemetry.firstListTools()).not.toThrow()
     })
 
+    // test-revizorro: scheduled
     it("logs capture error in debug mode", () => {
       const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
       mockCapture.mockImplementationOnce(() => {
@@ -238,6 +254,7 @@ describe("createPostHogTelemetry", () => {
       stderrSpy.mockRestore()
     })
 
+    // test-revizorro: scheduled
     it("does not log capture error when debug is off", () => {
       const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
       mockCapture.mockImplementationOnce(() => {
@@ -255,6 +272,7 @@ describe("createPostHogTelemetry", () => {
   })
 
   describe("session identity", () => {
+    // test-revizorro: scheduled
     it("uses consistent sessionId across all events", () => {
       const telemetry = createPostHogTelemetry(false)
       telemetry.sessionStart({
@@ -277,6 +295,7 @@ describe("createPostHogTelemetry", () => {
       expect(ids[0]).toMatch(/^[0-9a-f-]{36}$/)
     })
 
+    // test-revizorro: scheduled
     it("different instances get different session ids", () => {
       const t1 = createPostHogTelemetry(false)
       const t2 = createPostHogTelemetry(false)

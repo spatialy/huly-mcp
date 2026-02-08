@@ -14,6 +14,7 @@ import { Effect } from "effect"
 import { expect } from "vitest"
 
 describe("milestones - unreachable default branches", () => {
+  // test-revizorro: scheduled
   it.effect("all valid MilestoneStatus values are mapped (confirming exhaustiveness)", () =>
     Effect.gen(function*() {
       // Confirm all enum values are valid numbers (the switch covers all of them)

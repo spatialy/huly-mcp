@@ -25,6 +25,7 @@ const noopStorageClient: HulyStorageOperations = {
 }
 
 describe("handleToolCall - known tool execution (line 71)", () => {
+  // test-revizorro: scheduled
   it.effect("returns a response when tool is found in registry", () =>
     Effect.gen(function*() {
       // Pick a tool that we know exists - list_projects is simple and just needs findAll

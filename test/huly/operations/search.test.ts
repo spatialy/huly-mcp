@@ -32,6 +32,7 @@ const createTestLayer = (docs: Array<Doc>, captureQuery?: { query?: unknown; opt
 }
 
 describe("fulltextSearch", () => {
+  // test-revizorro: scheduled
   it.effect("returns mapped results with correct fields", () =>
     Effect.gen(function*() {
       const docs = [
@@ -58,6 +59,7 @@ describe("fulltextSearch", () => {
       expect(result.items[1].modifiedOn).toBe(1000)
     }))
 
+  // test-revizorro: scheduled
   it.effect("passes $search query to client.findAll", () =>
     Effect.gen(function*() {
       const captured: { query?: unknown; options?: unknown } = {}
@@ -68,6 +70,7 @@ describe("fulltextSearch", () => {
       expect(captured.query).toEqual({ $search: "hello world" })
     }))
 
+  // test-revizorro: scheduled
   it.effect("uses default limit of 50", () =>
     Effect.gen(function*() {
       const captured: { query?: unknown; options?: unknown } = {}
@@ -79,6 +82,7 @@ describe("fulltextSearch", () => {
       expect(opts.limit).toBe(50)
     }))
 
+  // test-revizorro: scheduled
   it.effect("enforces max limit of 200", () =>
     Effect.gen(function*() {
       const captured: { query?: unknown; options?: unknown } = {}
@@ -90,6 +94,7 @@ describe("fulltextSearch", () => {
       expect(opts.limit).toBe(200)
     }))
 
+  // test-revizorro: scheduled
   it.effect("sorts by modifiedOn descending", () =>
     Effect.gen(function*() {
       const captured: { query?: unknown; options?: unknown } = {}
@@ -101,6 +106,7 @@ describe("fulltextSearch", () => {
       expect(opts.sort?.modifiedOn).toBeDefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("returns empty results for no matches", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayer([])
@@ -112,6 +118,7 @@ describe("fulltextSearch", () => {
       expect(result.query).toBe("nonexistent")
     }))
 
+  // test-revizorro: scheduled
   it.effect("handles doc without space", () =>
     Effect.gen(function*() {
       const doc = makeDoc({ _id: "doc-no-space", _class: "core:class:Doc", modifiedOn: 1000 })
@@ -125,6 +132,7 @@ describe("fulltextSearch", () => {
       expect(result.items[0].space).toBeUndefined()
     }))
 
+  // test-revizorro: scheduled
   it.effect("searches against core.class.Doc", () =>
     Effect.gen(function*() {
       let calledClass: unknown
