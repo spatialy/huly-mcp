@@ -72,24 +72,6 @@ import {
   zeroAsUnset
 } from "./shared.js"
 
-// Re-export operations split into focused modules
-export {
-  createComponent,
-  deleteComponent,
-  getComponent,
-  listComponents,
-  setIssueComponent,
-  updateComponent
-} from "./components.js"
-export {
-  createIssueFromTemplate,
-  createIssueTemplate,
-  deleteIssueTemplate,
-  getIssueTemplate,
-  listIssueTemplates,
-  updateIssueTemplate
-} from "./issue-templates.js"
-
 type ListIssuesError =
   | HulyClientError
   | HulyError

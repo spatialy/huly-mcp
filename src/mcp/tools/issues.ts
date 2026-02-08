@@ -37,25 +37,22 @@ import {
   updateIssueTemplateParamsJsonSchema
 } from "../../domain/schemas.js"
 import {
-  addLabel,
   createComponent,
-  createIssue,
+  deleteComponent,
+  getComponent,
+  listComponents,
+  setIssueComponent,
+  updateComponent
+} from "../../huly/operations/components.js"
+import {
   createIssueFromTemplate,
   createIssueTemplate,
-  deleteComponent,
-  deleteIssue,
   deleteIssueTemplate,
-  getComponent,
-  getIssue,
   getIssueTemplate,
-  listComponents,
-  listIssues,
   listIssueTemplates,
-  setIssueComponent,
-  updateComponent,
-  updateIssue,
   updateIssueTemplate
-} from "../../huly/operations/issues.js"
+} from "../../huly/operations/issue-templates.js"
+import { addLabel, createIssue, deleteIssue, getIssue, listIssues, updateIssue } from "../../huly/operations/issues.js"
 import { createToolHandler, type RegisteredTool } from "./registry.js"
 
 const CATEGORY = "issues" as const
