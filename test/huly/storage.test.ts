@@ -1,20 +1,36 @@
 import { describe, it } from "@effect/vitest"
-import { Effect } from "effect"
+import type { Blob, Ref, WorkspaceUuid } from "@hcengineering/core"
+import { Effect, Layer } from "effect"
 import * as fs from "node:fs/promises"
 import * as os from "node:os"
 import * as path from "node:path"
-import { expect } from "vitest"
+import { expect, vi } from "vitest"
 
+import { HulyConfigService } from "../../src/config/config.js"
 import { FileUploadError, HulyConnectionError, InvalidFileDataError } from "../../src/huly/errors.js"
 import type { FileNotFoundError } from "../../src/huly/errors.js"
 import {
   decodeBase64,
   fetchFromUrl,
+  getBufferFromParams,
   HulyStorageClient,
   isBlockedUrl,
   readFromFilePath,
-  type UploadFileResult
+  type UploadFileResult,
+  validateContentType,
+  validateFileSize
 } from "../../src/huly/storage.js"
+
+const mockPut = vi.fn()
+const mockLoadServerConfig = vi.fn()
+const mockGetWorkspaceToken = vi.fn()
+const mockCreateStorageClient = vi.fn()
+
+vi.mock("@hcengineering/api-client", () => ({
+  loadServerConfig: (...args: Array<unknown>) => mockLoadServerConfig(...args),
+  getWorkspaceToken: (...args: Array<unknown>) => mockGetWorkspaceToken(...args),
+  createStorageClient: (...args: Array<unknown>) => mockCreateStorageClient(...args)
+}))
 
 describe("HulyStorageClient Service", () => {
   describe("testLayer", () => {
@@ -344,6 +360,16 @@ describe("readFromFilePath", () => {
         yield* Effect.tryPromise(() => fs.unlink(tmpFile).catch(() => {}))
       }
     }))
+
+  it.effect("returns InvalidFileDataError for non-ENOENT errors (e.g. reading a directory)", () =>
+    Effect.gen(function*() {
+      const tmpDir = os.tmpdir()
+      // Attempting to read a directory triggers EISDIR, not ENOENT
+      const error = yield* Effect.flip(readFromFilePath(tmpDir))
+
+      expect(error._tag).toBe("InvalidFileDataError")
+      expect((error as InvalidFileDataError).message).toContain("Failed to read file")
+    }))
 })
 
 describe("fetchFromUrl", () => {
@@ -377,6 +403,122 @@ describe("fetchFromUrl", () => {
       const error = yield* Effect.flip(fetchFromUrl("http://192.168.1.1/file.png"))
       expect(error._tag).toBe("FileFetchError")
       expect(error.reason).toContain("blocked")
+    }))
+
+  it.effect("returns FileFetchError for non-ok HTTP responses", () =>
+    Effect.gen(function*() {
+      const originalFetch = globalThis.fetch
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden"
+      })
+
+      try {
+        const error = yield* Effect.flip(
+          fetchFromUrl("https://example.com/secret-file.png")
+        )
+        expect(error._tag).toBe("FileFetchError")
+        expect(error.fileUrl).toBe("https://example.com/secret-file.png")
+        expect(error.reason).toContain("403")
+      } finally {
+        globalThis.fetch = originalFetch
+      }
+    }))
+
+  it.effect("returns buffer on successful fetch", () =>
+    Effect.gen(function*() {
+      const originalFetch = globalThis.fetch
+      const fileContent = Buffer.from("fetched file data")
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        arrayBuffer: () =>
+          Promise.resolve(fileContent.buffer.slice(
+            fileContent.byteOffset,
+            fileContent.byteOffset + fileContent.byteLength
+          ))
+      })
+
+      try {
+        const buffer = yield* fetchFromUrl("https://example.com/file.png")
+        expect(buffer.toString()).toBe("fetched file data")
+      } finally {
+        globalThis.fetch = originalFetch
+      }
+    }))
+})
+
+describe("validateFileSize", () => {
+  it.effect("accepts buffer within size limit", () =>
+    Effect.gen(function*() {
+      const buffer = Buffer.alloc(100, "x")
+      yield* validateFileSize(buffer, "small.txt")
+    }))
+
+  it.effect("rejects buffer exceeding size limit", () =>
+    Effect.gen(function*() {
+      // 100 MB + 1 byte exceeds the MAX_FILE_SIZE (100 * 1024 * 1024)
+      const buffer = Buffer.alloc(100 * 1024 * 1024 + 1, "x")
+      const error = yield* Effect.flip(validateFileSize(buffer, "huge.bin"))
+
+      expect(error._tag).toBe("FileTooLargeError")
+      expect(error.filename).toBe("huge.bin")
+      expect(error.size).toBe(100 * 1024 * 1024 + 1)
+    }))
+})
+
+describe("validateContentType", () => {
+  it.effect("accepts allowed content types", () =>
+    Effect.gen(function*() {
+      yield* validateContentType("image/png", "photo.png")
+      yield* validateContentType("application/pdf", "doc.pdf")
+      yield* validateContentType("text/plain", "readme.txt")
+      yield* validateContentType("application/octet-stream", "data.bin")
+    }))
+
+  it.effect("rejects disallowed content types", () =>
+    Effect.gen(function*() {
+      const error = yield* Effect.flip(
+        validateContentType("application/x-executable", "malware.exe")
+      )
+
+      expect(error._tag).toBe("InvalidContentTypeError")
+      expect(error.filename).toBe("malware.exe")
+      expect(error.contentType).toBe("application/x-executable")
+    }))
+})
+
+describe("getBufferFromParams", () => {
+  it.effect("reads from filePath", () =>
+    Effect.gen(function*() {
+      const tmpFile = path.join(os.tmpdir(), `test-gbfp-${Date.now()}.txt`)
+      yield* Effect.tryPromise(() => fs.writeFile(tmpFile, "filePath content"))
+
+      try {
+        const buffer = yield* getBufferFromParams({ _tag: "filePath", filePath: tmpFile })
+        expect(buffer.toString()).toBe("filePath content")
+      } finally {
+        yield* Effect.tryPromise(() => fs.unlink(tmpFile).catch(() => {}))
+      }
+    }))
+
+  it.effect("decodes base64 data", () =>
+    Effect.gen(function*() {
+      const original = "base64 content"
+      const base64 = Buffer.from(original).toString("base64")
+
+      const buffer = yield* getBufferFromParams({ _tag: "base64", data: base64 })
+      expect(buffer.toString()).toBe(original)
+    }))
+
+  it.effect("returns error for blocked URL", () =>
+    Effect.gen(function*() {
+      const error = yield* Effect.flip(
+        getBufferFromParams({ _tag: "fileUrl", fileUrl: "http://localhost/secret" })
+      )
+      expect(error._tag).toBe("FileFetchError")
     }))
 })
 
@@ -435,4 +577,113 @@ describe("isBlockedUrl", () => {
     expect(isBlockedUrl("not-a-url")).toBe(true)
     expect(isBlockedUrl("")).toBe(true)
   })
+})
+
+describe("HulyStorageClient.layer (real layer with mocked api-client)", () => {
+  const configLayer = HulyConfigService.testLayerToken({
+    url: "https://huly.example.com",
+    token: "test-token-123",
+    workspace: "test-ws"
+  })
+
+  const setupMocksForSuccess = () => {
+    mockLoadServerConfig.mockResolvedValue({
+      ACCOUNTS_URL: "https://accounts.huly.example.com",
+      COLLABORATOR_URL: "https://collab.huly.example.com",
+      FILES_URL: "/files",
+      UPLOAD_URL: "/upload"
+    })
+    mockGetWorkspaceToken.mockResolvedValue({
+      endpoint: "wss://huly.example.com",
+      token: "ws-token-abc",
+
+      workspaceId: "ws-uuid-123" as WorkspaceUuid,
+      info: {}
+    })
+    mockCreateStorageClient.mockReturnValue({
+      put: mockPut,
+      get: vi.fn(),
+      stat: vi.fn(),
+      partial: vi.fn(),
+      remove: vi.fn()
+    })
+  }
+
+  it.effect("connects and provides uploadFile and getFileUrl operations", () =>
+    Effect.gen(function*() {
+      setupMocksForSuccess()
+      mockPut.mockResolvedValue({
+        _id: "uploaded-blob-id" as Ref<Blob>,
+        contentType: "image/png",
+        size: 42
+      })
+
+      const layer = Layer.fresh(HulyStorageClient.layer).pipe(Layer.provide(configLayer))
+      const client = yield* HulyStorageClient.pipe(Effect.provide(layer))
+
+      const result = yield* client.uploadFile(
+        "photo.png",
+        Buffer.from("fake png data"),
+        "image/png"
+      )
+
+      expect(result.blobId).toBe("uploaded-blob-id")
+      expect(result.contentType).toBe("image/png")
+      expect(result.size).toBe(42)
+      expect(result.url).toContain("workspace=ws-uuid-123")
+      expect(result.url).toContain("file=uploaded-blob-id")
+      expect(result.url).toContain("https://huly.example.com/files")
+
+      expect(mockLoadServerConfig).toHaveBeenCalledWith("https://huly.example.com")
+      expect(mockGetWorkspaceToken).toHaveBeenCalledWith(
+        "https://huly.example.com",
+        expect.objectContaining({ token: "test-token-123", workspace: "test-ws" }),
+        expect.any(Object)
+      )
+      expect(mockCreateStorageClient).toHaveBeenCalledWith(
+        "https://huly.example.com/files",
+        "https://huly.example.com/upload",
+        "ws-token-abc",
+        "ws-uuid-123"
+      )
+    }))
+
+  it.effect("getFileUrl constructs correct URL without calling API", () =>
+    Effect.gen(function*() {
+      setupMocksForSuccess()
+
+      const layer = Layer.fresh(HulyStorageClient.layer).pipe(Layer.provide(configLayer))
+      const client = yield* HulyStorageClient.pipe(Effect.provide(layer))
+
+      const url = client.getFileUrl("some-blob-id")
+
+      expect(url).toBe("https://huly.example.com/files?workspace=ws-uuid-123&file=some-blob-id")
+    }))
+
+  it.effect("wraps upload errors in FileUploadError", () =>
+    Effect.gen(function*() {
+      setupMocksForSuccess()
+      mockPut.mockRejectedValue(new Error("S3 bucket full"))
+
+      const layer = Layer.fresh(HulyStorageClient.layer).pipe(Layer.provide(configLayer))
+      const client = yield* HulyStorageClient.pipe(Effect.provide(layer))
+
+      const error = yield* Effect.flip(
+        client.uploadFile("doc.pdf", Buffer.from("pdf data"), "application/pdf")
+      )
+
+      expect(error._tag).toBe("FileUploadError")
+      expect(error.message).toContain("S3 bucket full")
+    }))
+
+  it("fails layer construction when loadServerConfig rejects", async () => {
+    mockLoadServerConfig.mockRejectedValue(new Error("DNS resolution failed"))
+
+    const layer = Layer.fresh(HulyStorageClient.layer).pipe(Layer.provide(configLayer))
+    const exit = await Effect.runPromiseExit(
+      HulyStorageClient.pipe(Effect.provide(layer))
+    )
+
+    expect(exit._tag).toBe("Failure")
+  }, 10000)
 })

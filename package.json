@@ -25,6 +25,7 @@
     "build": "PKG_VERSION=$(node -p \"require('./package.json').version\") && esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:ws \"--define:PKG_VERSION=\\\"$PKG_VERSION\\\"\"",
     "typecheck": "tsc -p tsconfig.json --noEmit 2>&1 | { grep -E '^(src/|test/)' && exit 1 || exit 0; }",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "eslint src test --ext .ts && jscpd src",
     "lint:fix": "eslint src test --ext .ts --fix",

@@ -8,6 +8,7 @@
 import type http from "node:http"
 
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js"
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
 import { Effect, Exit, Layer } from "effect"
 import type { Express, Request, Response } from "express"
 import { describe, expect, it, vi } from "vitest"
@@ -18,7 +19,7 @@ import {
   HttpServerFactoryService,
   HttpTransportError,
   startHttpTransport
-} from "./http-transport.js"
+} from "../../src/mcp/http-transport.js"
 
 // Mock Express app for testing
 const createMockExpressApp = () => {
@@ -196,6 +197,26 @@ describe("HTTP Transport", () => {
       )
     })
 
+    it("should not send 500 when server factory throws and headers already sent", async () => {
+      const handlers = createMcpHandlers(() => {
+        throw new Error("Factory error")
+      })
+
+      const reqData = {
+        body: { jsonrpc: "2.0", method: "tools/list", id: 1 }
+      }
+      const req = reqData as Request
+
+      const res = createMockResponse()
+      // Simulate headers already sent
+      Object.defineProperty(res, "headersSent", { value: true })
+
+      await handlers.post(req, res)
+
+      expect(res.status).not.toHaveBeenCalled()
+      expect(res.json).not.toHaveBeenCalled()
+    })
+
     it("should return 500 when server factory throws", async () => {
       const handlers = createMcpHandlers(() => {
         throw new Error("Factory error")
@@ -320,7 +341,7 @@ describe("HTTP Transport", () => {
       const program = startHttpTransport(
         { port: 3000, host: "127.0.0.1" },
         () => mockMcpServer
-      ).pipe(Effect.scoped) // Provide Scope for acquireRelease
+      ).pipe(Effect.scoped)
 
       const result = await Effect.runPromiseExit(
         program.pipe(
@@ -333,6 +354,272 @@ describe("HTTP Transport", () => {
         const error = result.cause
         expect(error._tag).toBe("Fail")
       }
+    })
+
+    it("should log to stderr and continue when server close fails during release", async () => {
+      const { app } = createMockExpressApp()
+      const closeFn = vi.fn((cb?: (err?: Error) => void) => cb?.(new Error("close failed")))
+      // eslint-disable-next-line no-restricted-syntax -- test mock: partial http.Server
+      const mockHttpServer = {
+        close: closeFn
+      } as unknown as http.Server
+
+      const mockFactory: HttpServerFactory = {
+        createApp: vi.fn(() => app),
+        listen: vi.fn(() => Effect.succeed(mockHttpServer))
+      }
+
+      const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
+
+      const program = startHttpTransport(
+        { port: 3000, host: "127.0.0.1" },
+        createMockMcpServer
+      ).pipe(
+        Effect.scoped,
+        Effect.timeout(10),
+        Effect.ignore
+      )
+
+      await Effect.runPromise(
+        program.pipe(
+          Effect.provide(Layer.succeed(HttpServerFactoryService, mockFactory))
+        )
+      )
+
+      expect(closeFn).toHaveBeenCalled()
+      const closeErrorCall = stderrSpy.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("Server close error")
+      )
+      expect(closeErrorCall).toBeDefined()
+
+      stderrSpy.mockRestore()
+    })
+
+    it("should shut down when SIGINT is received", async () => {
+      const { app } = createMockExpressApp()
+      // eslint-disable-next-line no-restricted-syntax -- test mock: partial http.Server
+      const mockHttpServer = {
+        close: vi.fn((cb?: (err?: Error) => void) => cb?.())
+      } as unknown as http.Server
+
+      const mockFactory: HttpServerFactory = {
+        createApp: vi.fn(() => app),
+        listen: vi.fn(() => Effect.succeed(mockHttpServer))
+      }
+
+      const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
+
+      const program = startHttpTransport(
+        { port: 3000, host: "127.0.0.1" },
+        createMockMcpServer
+      ).pipe(Effect.scoped)
+
+      const fiber = Effect.runFork(
+        program.pipe(
+          Effect.provide(Layer.succeed(HttpServerFactoryService, mockFactory))
+        )
+      )
+
+      // Give the program time to register signal handlers
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      process.emit("SIGINT", "SIGINT")
+
+      const result = await fiber.pipe(Effect.runPromiseExit)
+
+      stderrSpy.mockRestore()
+
+      expect(Exit.isSuccess(result)).toBe(true)
+    })
+  })
+
+  describe("createMcpHandlers - close cleanup", () => {
+    it("should register close handler and call cleanup on close", async () => {
+      const mockServer = createMockMcpServer()
+      const handlers = createMcpHandlers(() => mockServer)
+
+      const closeHandlers: Array<() => void> = []
+      // eslint-disable-next-line no-restricted-syntax -- test mock: partial Response
+      const res = {
+        status: vi.fn().mockReturnThis(),
+        json: vi.fn().mockReturnThis(),
+        headersSent: false,
+        writeHead: vi.fn(),
+        write: vi.fn().mockReturnValue(true),
+        end: vi.fn(),
+        setHeader: vi.fn(),
+        getHeader: vi.fn(),
+        flushHeaders: vi.fn(),
+        on: vi.fn((event: string, handler: () => void) => {
+          if (event === "close") closeHandlers.push(handler)
+        })
+      } as unknown as Response
+
+      await handlers.post(
+        { body: { jsonrpc: "2.0", method: "tools/list", id: 1 } } as Request,
+        res
+      )
+
+      expect(closeHandlers).toHaveLength(1)
+      closeHandlers[0]()
+
+      expect(res.on).toHaveBeenCalledWith("close", expect.any(Function))
+    })
+
+    it("should log to stderr when transport.close rejects during cleanup", async () => {
+      const closeSpy = vi.spyOn(StreamableHTTPServerTransport.prototype, "close")
+        .mockRejectedValue(new Error("transport close boom"))
+
+      const mockServer = createMockMcpServer()
+      const handlers = createMcpHandlers(() => mockServer)
+
+      const closeHandlers: Array<() => void> = []
+      // eslint-disable-next-line no-restricted-syntax -- test mock: partial Response
+      const res = {
+        status: vi.fn().mockReturnThis(),
+        json: vi.fn().mockReturnThis(),
+        headersSent: false,
+        writeHead: vi.fn(),
+        write: vi.fn().mockReturnValue(true),
+        end: vi.fn(),
+        setHeader: vi.fn(),
+        getHeader: vi.fn(),
+        flushHeaders: vi.fn(),
+        on: vi.fn((event: string, handler: () => void) => {
+          if (event === "close") closeHandlers.push(handler)
+        })
+      } as unknown as Response
+
+      const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
+
+      await handlers.post(
+        { body: { jsonrpc: "2.0", method: "tools/list", id: 1 } } as Request,
+        res
+      )
+
+      closeHandlers[0]()
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      const transportCleanupCall = stderrSpy.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("Transport cleanup error")
+      )
+      expect(transportCleanupCall).toBeDefined()
+
+      stderrSpy.mockRestore()
+      closeSpy.mockRestore()
+    })
+
+    it("should log to stderr when server.close rejects during cleanup", async () => {
+      // eslint-disable-next-line no-restricted-syntax -- test mock: partial MCP Server
+      const mockServer = {
+        connect: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn().mockRejectedValue(new Error("server close failed")),
+        setRequestHandler: vi.fn()
+      } as unknown as Server
+
+      const handlers = createMcpHandlers(() => mockServer)
+
+      const closeHandlers: Array<() => void> = []
+      // eslint-disable-next-line no-restricted-syntax -- test mock: partial Response
+      const res = {
+        status: vi.fn().mockReturnThis(),
+        json: vi.fn().mockReturnThis(),
+        headersSent: false,
+        writeHead: vi.fn(),
+        write: vi.fn().mockReturnValue(true),
+        end: vi.fn(),
+        setHeader: vi.fn(),
+        getHeader: vi.fn(),
+        flushHeaders: vi.fn(),
+        on: vi.fn((event: string, handler: () => void) => {
+          if (event === "close") closeHandlers.push(handler)
+        })
+      } as unknown as Response
+
+      const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
+
+      await handlers.post(
+        { body: { jsonrpc: "2.0", method: "tools/list", id: 1 } } as Request,
+        res
+      )
+
+      closeHandlers[0]()
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      const serverCleanupCall = stderrSpy.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("Server cleanup error")
+      )
+      expect(serverCleanupCall).toBeDefined()
+
+      stderrSpy.mockRestore()
+    })
+  })
+
+  describe("defaultHttpServerFactory via defaultLayer", () => {
+    it("should succeed when app.listen calls back without error", async () => {
+      // eslint-disable-next-line no-restricted-syntax -- test mock: partial http.Server
+      const fakeHttpServer = { close: vi.fn() } as unknown as http.Server
+      // eslint-disable-next-line no-restricted-syntax -- test mock: partial Express app
+      const mockApp = {
+        get: vi.fn(),
+        post: vi.fn(),
+        delete: vi.fn(),
+        listen: vi.fn((_port: number, _host: string, cb: (error?: Error) => void) => {
+          // Callback must fire asynchronously so that `const server = app.listen(...)` completes first
+          setTimeout(() => cb(), 0)
+          return fakeHttpServer
+        })
+      } as unknown as Express
+
+      const program = Effect.gen(function*() {
+        const factory = yield* HttpServerFactoryService
+        return yield* factory.listen(mockApp, 3000, "127.0.0.1")
+      })
+
+      const result = await Effect.runPromise(
+        program.pipe(Effect.provide(HttpServerFactoryService.defaultLayer))
+      )
+
+      expect(result).toBe(fakeHttpServer)
+    })
+
+    it("should fail with HttpTransportError when app.listen calls back with error", async () => {
+      // eslint-disable-next-line no-restricted-syntax -- test mock: partial Express app
+      const mockApp = {
+        get: vi.fn(),
+        post: vi.fn(),
+        delete: vi.fn(),
+        listen: vi.fn((_port: number, _host: string, cb: (error?: Error) => void) => {
+          setTimeout(() => cb(new Error("EADDRINUSE")), 0)
+          // eslint-disable-next-line no-restricted-syntax -- test mock: partial http.Server
+          return { close: vi.fn() } as unknown as http.Server
+        })
+      } as unknown as Express
+
+      const program = Effect.gen(function*() {
+        const factory = yield* HttpServerFactoryService
+        return yield* factory.listen(mockApp, 3000, "127.0.0.1")
+      })
+
+      const result = await Effect.runPromiseExit(
+        program.pipe(Effect.provide(HttpServerFactoryService.defaultLayer))
+      )
+
+      expect(Exit.isFailure(result)).toBe(true)
+    })
+
+    it("should call createMcpExpressApp via createApp", async () => {
+      const program = Effect.gen(function*() {
+        const factory = yield* HttpServerFactoryService
+        return factory.createApp("0.0.0.0")
+      })
+
+      // createMcpExpressApp is real SDK code, but we can verify createApp returns an Express-like object
+      const result = await Effect.runPromise(
+        program.pipe(Effect.provide(HttpServerFactoryService.defaultLayer))
+      )
+
+      expect(result).toBeDefined()
     })
   })
 

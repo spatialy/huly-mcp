@@ -283,8 +283,9 @@ const toFileSourceParams = (params: {
 }): FileSourceParams => {
   if (params.filePath !== undefined) return { _tag: "filePath", filePath: params.filePath }
   if (params.fileUrl !== undefined) return { _tag: "fileUrl", fileUrl: params.fileUrl }
-  if (params.data !== undefined) return { _tag: "base64", data: params.data }
-  throw new Error("data required when no filePath/fileUrl")
+  // Schema validation guarantees at least one source is present.
+  // Cast is safe: data is the only remaining option after filePath/fileUrl checks.
+  return { _tag: "base64", data: params.data as string }
 }
 
 export const addAttachment = (

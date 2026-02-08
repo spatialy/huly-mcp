@@ -1,6 +1,6 @@
 import { type Data, type DocumentUpdate, generateId, type Ref, SortingOrder } from "@hcengineering/core"
 import { type Milestone as HulyMilestone, MilestoneStatus, type Project as HulyProject } from "@hcengineering/tracker"
-import { absurd, Effect } from "effect"
+import { Effect } from "effect"
 
 import type {
   CreateMilestoneParams,
@@ -56,37 +56,23 @@ type DeleteMilestoneError =
   | ProjectNotFoundError
   | MilestoneNotFoundError
 
-const milestoneStatusToString = (status: MilestoneStatus): MilestoneStatusStr => {
-  switch (status) {
-    case MilestoneStatus.Planned:
-      return "planned"
-    case MilestoneStatus.InProgress:
-      return "in-progress"
-    case MilestoneStatus.Completed:
-      return "completed"
-    case MilestoneStatus.Canceled:
-      return "canceled"
-    default:
-      absurd(status)
-      throw new Error("Invalid milestone status")
-  }
-}
+const milestoneStatusToStringMap = {
+  [MilestoneStatus.Planned]: "planned",
+  [MilestoneStatus.InProgress]: "in-progress",
+  [MilestoneStatus.Completed]: "completed",
+  [MilestoneStatus.Canceled]: "canceled"
+} as const satisfies Record<MilestoneStatus, MilestoneStatusStr>
 
-const stringToMilestoneStatus = (status: MilestoneStatusStr): MilestoneStatus => {
-  switch (status) {
-    case "planned":
-      return MilestoneStatus.Planned
-    case "in-progress":
-      return MilestoneStatus.InProgress
-    case "completed":
-      return MilestoneStatus.Completed
-    case "canceled":
-      return MilestoneStatus.Canceled
-    default:
-      absurd(status)
-      throw new Error("Invalid milestone status")
-  }
-}
+const milestoneStatusToString = (status: MilestoneStatus): MilestoneStatusStr => milestoneStatusToStringMap[status]
+
+const stringToMilestoneStatusMap = {
+  "planned": MilestoneStatus.Planned,
+  "in-progress": MilestoneStatus.InProgress,
+  "completed": MilestoneStatus.Completed,
+  "canceled": MilestoneStatus.Canceled
+} as const satisfies Record<MilestoneStatusStr, MilestoneStatus>
+
+const stringToMilestoneStatus = (status: MilestoneStatusStr): MilestoneStatus => stringToMilestoneStatusMap[status]
 
 const findMilestone = (
   client: HulyClient["Type"],

@@ -5,7 +5,6 @@
 import type { AuthOptions } from "@hcengineering/api-client"
 import { PlatformError } from "@hcengineering/platform"
 import { Effect, Redacted, Schedule } from "effect"
-import { absurd } from "effect/Function"
 
 import type { Auth } from "../config/config.js"
 import { HulyAuthError, HulyConnectionError } from "./errors.js"
@@ -44,16 +43,10 @@ export type ConnectionError = HulyConnectionError | HulyAuthError
 /**
  * Convert Auth union type to AuthOptions for API client.
  */
-export const authToOptions = (auth: Auth, workspace: string): AuthOptions => {
-  switch (auth._tag) {
-    case "token":
-      return { token: Redacted.value(auth.token), workspace }
-    case "password":
-      return { email: auth.email, password: Redacted.value(auth.password), workspace }
-    default:
-      return absurd(auth)
-  }
-}
+export const authToOptions = (auth: Auth, workspace: string): AuthOptions =>
+  auth._tag === "token"
+    ? { token: Redacted.value(auth.token), workspace }
+    : { email: auth.email, password: Redacted.value(auth.password), workspace }
 
 /**
  * Check if an error is an authentication error (should not be retried).

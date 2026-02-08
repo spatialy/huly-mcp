@@ -3,7 +3,7 @@ import type { Class, Doc, DocumentQuery, FindOptions, PersonUuid, Ref, Status, W
 import type { ProjectType } from "@hcengineering/task"
 import type { Issue as HulyIssue, Project as HulyProject } from "@hcengineering/tracker"
 import { IssuePriority } from "@hcengineering/tracker"
-import { absurd, Effect } from "effect"
+import { Effect } from "effect"
 
 import type { IssuePriority as IssuePriorityStr } from "../../domain/schemas/issues.js"
 import { MAX_LIMIT, type NonNegativeNumber } from "../../domain/schemas/shared.js"
@@ -254,41 +254,25 @@ export const findProjectAndIssue = (
     return { client, project, issue }
   })
 
-export const priorityToString = (priority: IssuePriority): IssuePriorityStr => {
-  switch (priority) {
-    case IssuePriority.Urgent:
-      return "urgent"
-    case IssuePriority.High:
-      return "high"
-    case IssuePriority.Medium:
-      return "medium"
-    case IssuePriority.Low:
-      return "low"
-    case IssuePriority.NoPriority:
-      return "no-priority"
-    default:
-      absurd(priority)
-      throw new Error("Invalid priority")
-  }
-}
+const priorityToStringMap = {
+  [IssuePriority.Urgent]: "urgent",
+  [IssuePriority.High]: "high",
+  [IssuePriority.Medium]: "medium",
+  [IssuePriority.Low]: "low",
+  [IssuePriority.NoPriority]: "no-priority"
+} as const satisfies Record<IssuePriority, IssuePriorityStr>
 
-export const stringToPriority = (priority: IssuePriorityStr): IssuePriority => {
-  switch (priority) {
-    case "urgent":
-      return IssuePriority.Urgent
-    case "high":
-      return IssuePriority.High
-    case "medium":
-      return IssuePriority.Medium
-    case "low":
-      return IssuePriority.Low
-    case "no-priority":
-      return IssuePriority.NoPriority
-    default:
-      absurd(priority)
-      throw new Error("Invalid priority")
-  }
-}
+export const priorityToString = (priority: IssuePriority): IssuePriorityStr => priorityToStringMap[priority]
+
+const stringToPriorityMap = {
+  "urgent": IssuePriority.Urgent,
+  "high": IssuePriority.High,
+  "medium": IssuePriority.Medium,
+  "low": IssuePriority.Low,
+  "no-priority": IssuePriority.NoPriority
+} as const satisfies Record<IssuePriorityStr, IssuePriority>
+
+export const stringToPriority = (priority: IssuePriorityStr): IssuePriority => stringToPriorityMap[priority]
 
 const DEFAULT_LIMIT = 50
 

@@ -9,7 +9,7 @@
  *
  * @module
  */
-import { absurd, Cause, Chunk, ParseResult } from "effect"
+import { Cause, Chunk, ParseResult } from "effect"
 
 import type { HulyDomainError } from "../huly/errors.js"
 
@@ -64,58 +64,48 @@ const createErrorResponse = (
 
 // --- Domain Error Mapping ---
 
-/**
- * Map a HulyDomainError to an MCP error response.
- * Uses switch statement because Effect's Match.tag has a 20-branch limit.
- */
+const INVALID_PARAMS_TAGS: ReadonlySet<HulyDomainError["_tag"]> = new Set<HulyDomainError["_tag"]>([
+  "IssueNotFoundError",
+  "ProjectNotFoundError",
+  "InvalidStatusError",
+  "PersonNotFoundError",
+  "InvalidFileDataError",
+  "FileNotFoundError",
+  "TeamspaceNotFoundError",
+  "DocumentNotFoundError",
+  "CommentNotFoundError",
+  "MilestoneNotFoundError",
+  "ChannelNotFoundError",
+  "MessageNotFoundError",
+  "ThreadReplyNotFoundError",
+  "EventNotFoundError",
+  "RecurringEventNotFoundError",
+  "ActivityMessageNotFoundError",
+  "ReactionNotFoundError",
+  "SavedMessageNotFoundError",
+  "AttachmentNotFoundError",
+  "ComponentNotFoundError",
+  "IssueTemplateNotFoundError",
+  "NotificationNotFoundError",
+  "NotificationContextNotFoundError",
+  "InvalidPersonUuidError",
+  "FileTooLargeError",
+  "InvalidContentTypeError"
+])
+
+const INTERNAL_ERROR_PREFIX: Partial<Record<HulyDomainError["_tag"], string>> = {
+  FileUploadError: "File upload error",
+  HulyConnectionError: "Connection error",
+  HulyAuthError: "Authentication error"
+}
+
 export const mapDomainErrorToMcp = (error: HulyDomainError): McpErrorResponseWithMeta => {
-  switch (error._tag) {
-    case "IssueNotFoundError":
-    case "ProjectNotFoundError":
-    case "InvalidStatusError":
-    case "PersonNotFoundError":
-    case "InvalidFileDataError":
-    case "FileNotFoundError":
-    case "TeamspaceNotFoundError":
-    case "DocumentNotFoundError":
-    case "CommentNotFoundError":
-    case "MilestoneNotFoundError":
-    case "ChannelNotFoundError":
-    case "MessageNotFoundError":
-    case "ThreadReplyNotFoundError":
-    case "EventNotFoundError":
-    case "RecurringEventNotFoundError":
-    case "ActivityMessageNotFoundError":
-    case "ReactionNotFoundError":
-    case "SavedMessageNotFoundError":
-    case "AttachmentNotFoundError":
-    case "ComponentNotFoundError":
-    case "IssueTemplateNotFoundError":
-    case "NotificationNotFoundError":
-    case "NotificationContextNotFoundError":
-    case "InvalidPersonUuidError":
-    case "FileTooLargeError":
-    case "InvalidContentTypeError":
-      return createErrorResponse(error.message, McpErrorCode.InvalidParams)
-
-    case "FileFetchError":
-      return createErrorResponse(error.message, McpErrorCode.InternalError, error._tag)
-
-    case "FileUploadError":
-      return createErrorResponse(`File upload error: ${error.message}`, McpErrorCode.InternalError, error._tag)
-
-    case "HulyConnectionError":
-      return createErrorResponse(`Connection error: ${error.message}`, McpErrorCode.InternalError, error._tag)
-
-    case "HulyAuthError":
-      return createErrorResponse(`Authentication error: ${error.message}`, McpErrorCode.InternalError, error._tag)
-
-    case "HulyError":
-      return createErrorResponse(error.message, McpErrorCode.InternalError, error._tag)
-
-    default:
-      return absurd(error)
+  if (INVALID_PARAMS_TAGS.has(error._tag)) {
+    return createErrorResponse(error.message, McpErrorCode.InvalidParams)
   }
+  const prefix = INTERNAL_ERROR_PREFIX[error._tag]
+  const message = prefix !== undefined ? `${prefix}: ${error.message}` : error.message
+  return createErrorResponse(message, McpErrorCode.InternalError, error._tag)
 }
 
 // --- Parse Error Mapping ---

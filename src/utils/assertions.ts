@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules */
 import { Effect, Option } from "effect"
 
 class AssertionError extends Error {

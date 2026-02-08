@@ -12,14 +12,17 @@ import { expect } from "vitest"
 import { HulyClient, type HulyClientOperations } from "../../../src/huly/client.js"
 import type { IssueNotFoundError, ProjectNotFoundError } from "../../../src/huly/errors.js"
 import {
+  createWorkSlot,
+  getDetailedTimeReport,
   getTimeReport,
   listTimeSpendReports,
+  listWorkSlots,
   logTime,
   startTimer,
   stopTimer
 } from "../../../src/huly/operations/time.js"
 
-import { contact, tracker } from "../../../src/huly/huly-plugins.js"
+import { contact, time, tracker } from "../../../src/huly/huly-plugins.js"
 
 // --- Mock Data Builders ---
 
@@ -113,6 +116,25 @@ const makePerson = (overrides?: Partial<Person>): Person => {
   return result
 }
 
+const makeChannel = (overrides?: Partial<Channel>): Channel => {
+  const result: Channel = {
+    _id: "channel-1" as Ref<Channel>,
+    _class: contact.class.Channel,
+    space: "space-1" as Ref<Space>,
+    attachedTo: "person-1" as Ref<Doc>,
+    attachedToClass: contact.class.Person,
+    collection: "channels",
+    provider: contact.channelProvider.Email,
+    value: "john@example.com",
+    modifiedBy: "user-1" as Ref<Doc>,
+    modifiedOn: Date.now(),
+    createdBy: "user-1" as Ref<Doc>,
+    createdOn: Date.now(),
+    ...overrides
+  }
+  return result
+}
+
 // --- Test Helpers ---
 
 interface MockConfig {
@@ -152,6 +174,15 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       if (q.space) {
         filtered = filtered.filter(r => String(r.space) === String(q.space))
       }
+      if (q.date) {
+        const dateFilter = q.date as { $gte?: number; $lte?: number }
+        if (dateFilter.$gte !== undefined) {
+          filtered = filtered.filter(r => r.date !== null && r.date >= dateFilter.$gte!)
+        }
+        if (dateFilter.$lte !== undefined) {
+          filtered = filtered.filter(r => r.date !== null && r.date <= dateFilter.$lte!)
+        }
+      }
       // Add $lookup data if lookup is requested
       if (opts?.lookup) {
         filtered = filtered.map(report => {
@@ -173,7 +204,8 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       return Effect.succeed(toFindResult(filtered as Array<Doc>))
     }
     if (_class === contact.class.Channel) {
-      const value = (query as Record<string, unknown>).value as string
+      const q = query as Record<string, unknown>
+      const value = q.value as string
       const filtered = channels.filter(c => c.value === value)
       return Effect.succeed(toFindResult(filtered as Array<Doc>))
     }
@@ -185,6 +217,11 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         return Effect.succeed(toFindResult(filtered as Array<Doc>))
       }
       return Effect.succeed(toFindResult(persons as Array<Doc>))
+    }
+    // Handle WorkSlot queries
+    if (_class === time.class.WorkSlot) {
+      // Return empty by default; override via workSlots in specific tests
+      return Effect.succeed(toFindResult([]))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -344,6 +381,32 @@ describe("logTime", () => {
         }).pipe(Effect.provide(testLayer))
 
         expect(captureUpdateDoc.operations?.remainingTime).toBe(0)
+      }))
+
+    it.effect("does not set remainingTime when it is zero", () =>
+      Effect.gen(function*() {
+        const project = makeProject({ identifier: "TEST" })
+        const issue = makeIssue({ identifier: "TEST-1", remainingTime: 0 })
+
+        const captureUpdateDoc: MockConfig["captureUpdateDoc"] = {}
+
+        const testLayer = createTestLayerWithMocks({
+          projects: [project],
+          issues: [issue],
+          captureUpdateDoc
+        })
+
+        yield* logTime({
+          project: "TEST",
+          identifier: "TEST-1",
+          value: 10
+        }).pipe(Effect.provide(testLayer))
+
+        expect(captureUpdateDoc.operations?.remainingTime).toBeUndefined()
+        expect(captureUpdateDoc.operations?.$inc).toEqual({
+          reportedTime: 10,
+          reports: 1
+        })
       }))
 
     it.effect("uses empty description when not provided", () =>
@@ -542,6 +605,53 @@ describe("getTimeReport", () => {
 
         expect(result.reports[0].employee).toBe("Jane Developer")
       }))
+
+    it.effect("returns undefined employee when person not found in map", () =>
+      Effect.gen(function*() {
+        const project = makeProject({ identifier: "TEST" })
+        const issue = makeIssue({ identifier: "TEST-1" })
+        const report = makeTimeSpendReport({
+          attachedTo: "issue-1" as Ref<HulyIssue>,
+          employee: "person-unknown" as Ref<Person>
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          projects: [project],
+          issues: [issue],
+          reports: [report],
+          persons: []
+        })
+
+        const result = yield* getTimeReport({
+          project: "TEST",
+          identifier: "TEST-1"
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result.reports[0].employee).toBeUndefined()
+      }))
+
+    it.effect("returns undefined employee when report has no employee", () =>
+      Effect.gen(function*() {
+        const project = makeProject({ identifier: "TEST" })
+        const issue = makeIssue({ identifier: "TEST-1" })
+        const report = makeTimeSpendReport({
+          attachedTo: "issue-1" as Ref<HulyIssue>,
+          employee: null
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          projects: [project],
+          issues: [issue],
+          reports: [report]
+        })
+
+        const result = yield* getTimeReport({
+          project: "TEST",
+          identifier: "TEST-1"
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result.reports[0].employee).toBeUndefined()
+      }))
   })
 
   describe("error handling", () => {
@@ -666,6 +776,753 @@ describe("listTimeSpendReports", () => {
         expect(result[0].identifier).toBe("TEST-42")
       }))
   })
+
+  describe("date filtering", () => {
+    it.effect("filters by from date only", () =>
+      Effect.gen(function*() {
+        const report1 = makeTimeSpendReport({
+          _id: "report-1" as Ref<HulyTimeSpendReport>,
+          date: 1000
+        })
+        const report2 = makeTimeSpendReport({
+          _id: "report-2" as Ref<HulyTimeSpendReport>,
+          date: 2000
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          reports: [report1, report2]
+        })
+
+        const result = yield* listTimeSpendReports({
+          from: 1500
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe("report-2")
+      }))
+
+    it.effect("filters by to date only", () =>
+      Effect.gen(function*() {
+        const report1 = makeTimeSpendReport({
+          _id: "report-1" as Ref<HulyTimeSpendReport>,
+          date: 1000
+        })
+        const report2 = makeTimeSpendReport({
+          _id: "report-2" as Ref<HulyTimeSpendReport>,
+          date: 2000
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          reports: [report1, report2]
+        })
+
+        const result = yield* listTimeSpendReports({
+          to: 1500
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe("report-1")
+      }))
+
+    it.effect("filters by both from and to", () =>
+      Effect.gen(function*() {
+        const report1 = makeTimeSpendReport({
+          _id: "report-1" as Ref<HulyTimeSpendReport>,
+          date: 1000
+        })
+        const report2 = makeTimeSpendReport({
+          _id: "report-2" as Ref<HulyTimeSpendReport>,
+          date: 2000
+        })
+        const report3 = makeTimeSpendReport({
+          _id: "report-3" as Ref<HulyTimeSpendReport>,
+          date: 3000
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          reports: [report1, report2, report3]
+        })
+
+        const result = yield* listTimeSpendReports({
+          from: 1500,
+          to: 2500
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe("report-2")
+      }))
+  })
+
+  describe("employee lookup", () => {
+    it.effect("includes employee name from lookup", () =>
+      Effect.gen(function*() {
+        const issue = makeIssue({ _id: "issue-1" as Ref<HulyIssue>, identifier: "TEST-1" })
+        const person = makePerson({ _id: "person-1" as Ref<Person>, name: "Alice Smith" })
+        const report = makeTimeSpendReport({
+          attachedTo: "issue-1" as Ref<HulyIssue>,
+          employee: "person-1" as Ref<Person>
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          issues: [issue],
+          reports: [report],
+          persons: [person]
+        })
+
+        const result = yield* listTimeSpendReports({}).pipe(Effect.provide(testLayer))
+
+        expect(result[0].employee).toBe("Alice Smith")
+      }))
+
+    it.effect("returns undefined employee when no lookup match", () =>
+      Effect.gen(function*() {
+        const report = makeTimeSpendReport({
+          employee: null
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          reports: [report]
+        })
+
+        const result = yield* listTimeSpendReports({}).pipe(Effect.provide(testLayer))
+
+        expect(result[0].employee).toBeUndefined()
+      }))
+
+    it.effect("returns undefined identifier when issue not in lookup", () =>
+      Effect.gen(function*() {
+        const report = makeTimeSpendReport({
+          attachedTo: "issue-deleted" as Ref<HulyIssue>
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          issues: [],
+          reports: [report]
+        })
+
+        const result = yield* listTimeSpendReports({}).pipe(Effect.provide(testLayer))
+
+        expect(result[0].identifier).toBeUndefined()
+      }))
+  })
+})
+
+describe("getDetailedTimeReport", () => {
+  describe("basic functionality", () => {
+    it.effect("returns detailed breakdown by issue and employee", () =>
+      Effect.gen(function*() {
+        const project = makeProject({ identifier: "TEST", _id: "project-1" as Ref<HulyProject> })
+        const issue1 = makeIssue({ _id: "issue-1" as Ref<HulyIssue>, identifier: "TEST-1", title: "Issue One" })
+        const issue2 = makeIssue({ _id: "issue-2" as Ref<HulyIssue>, identifier: "TEST-2", title: "Issue Two" })
+        const person = makePerson({ _id: "person-1" as Ref<Person>, name: "Alice" })
+
+        const report1 = makeTimeSpendReport({
+          _id: "r1" as Ref<HulyTimeSpendReport>,
+          attachedTo: "issue-1" as Ref<HulyIssue>,
+          space: "project-1" as Ref<Space>,
+          employee: "person-1" as Ref<Person>,
+          value: 60,
+          date: 1000,
+          description: "Work on issue 1"
+        })
+        const report2 = makeTimeSpendReport({
+          _id: "r2" as Ref<HulyTimeSpendReport>,
+          attachedTo: "issue-2" as Ref<HulyIssue>,
+          space: "project-1" as Ref<Space>,
+          employee: "person-1" as Ref<Person>,
+          value: 30,
+          date: 2000,
+          description: "Work on issue 2"
+        })
+        const report3 = makeTimeSpendReport({
+          _id: "r3" as Ref<HulyTimeSpendReport>,
+          attachedTo: "issue-1" as Ref<HulyIssue>,
+          space: "project-1" as Ref<Space>,
+          employee: null,
+          value: 15,
+          date: 3000,
+          description: "Anonymous work"
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          projects: [project],
+          issues: [issue1, issue2],
+          reports: [report1, report2, report3],
+          persons: [person]
+        })
+
+        const result = yield* getDetailedTimeReport({
+          project: "TEST"
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result.project).toBe("TEST")
+        expect(result.totalTime).toBe(105)
+        expect(result.byIssue).toHaveLength(2)
+        expect(result.byEmployee).toHaveLength(2)
+
+        const issue1Entry = result.byIssue.find(e => e.identifier === "TEST-1")
+        expect(issue1Entry).toBeDefined()
+        expect(issue1Entry!.totalTime).toBe(75)
+        expect(issue1Entry!.reports).toHaveLength(2)
+
+        const issue2Entry = result.byIssue.find(e => e.identifier === "TEST-2")
+        expect(issue2Entry).toBeDefined()
+        expect(issue2Entry!.totalTime).toBe(30)
+        expect(issue2Entry!.reports).toHaveLength(1)
+
+        const aliceEntry = result.byEmployee.find(e => e.employeeName === "Alice")
+        expect(aliceEntry).toBeDefined()
+        expect(aliceEntry!.totalTime).toBe(90)
+
+        const unassignedEntry = result.byEmployee.find(e => e.employeeName === undefined)
+        expect(unassignedEntry).toBeDefined()
+        expect(unassignedEntry!.totalTime).toBe(15)
+      }))
+
+    it.effect("returns empty report when no time entries", () =>
+      Effect.gen(function*() {
+        const project = makeProject({ identifier: "TEST", _id: "project-1" as Ref<HulyProject> })
+
+        const testLayer = createTestLayerWithMocks({
+          projects: [project],
+          reports: []
+        })
+
+        const result = yield* getDetailedTimeReport({
+          project: "TEST"
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result.project).toBe("TEST")
+        expect(result.totalTime).toBe(0)
+        expect(result.byIssue).toHaveLength(0)
+        expect(result.byEmployee).toHaveLength(0)
+      }))
+
+    it.effect("handles reports with missing issue lookups", () =>
+      Effect.gen(function*() {
+        const project = makeProject({ identifier: "TEST", _id: "project-1" as Ref<HulyProject> })
+        const report = makeTimeSpendReport({
+          _id: "r1" as Ref<HulyTimeSpendReport>,
+          attachedTo: "issue-deleted" as Ref<HulyIssue>,
+          space: "project-1" as Ref<Space>,
+          employee: null,
+          value: 20,
+          description: "Orphaned report"
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          projects: [project],
+          issues: [],
+          reports: [report]
+        })
+
+        const result = yield* getDetailedTimeReport({
+          project: "TEST"
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result.totalTime).toBe(20)
+        expect(result.byIssue).toHaveLength(1)
+        expect(result.byIssue[0].identifier).toBeUndefined()
+        expect(result.byIssue[0].issueTitle).toBe("Unknown")
+      }))
+  })
+
+  describe("date filtering", () => {
+    it.effect("filters by from date", () =>
+      Effect.gen(function*() {
+        const project = makeProject({ identifier: "TEST", _id: "project-1" as Ref<HulyProject> })
+        const report1 = makeTimeSpendReport({
+          _id: "r1" as Ref<HulyTimeSpendReport>,
+          space: "project-1" as Ref<Space>,
+          date: 1000,
+          value: 10
+        })
+        const report2 = makeTimeSpendReport({
+          _id: "r2" as Ref<HulyTimeSpendReport>,
+          space: "project-1" as Ref<Space>,
+          date: 3000,
+          value: 20
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          projects: [project],
+          reports: [report1, report2]
+        })
+
+        const result = yield* getDetailedTimeReport({
+          project: "TEST",
+          from: 2000
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result.totalTime).toBe(20)
+      }))
+
+    it.effect("filters by to date", () =>
+      Effect.gen(function*() {
+        const project = makeProject({ identifier: "TEST", _id: "project-1" as Ref<HulyProject> })
+        const report1 = makeTimeSpendReport({
+          _id: "r1" as Ref<HulyTimeSpendReport>,
+          space: "project-1" as Ref<Space>,
+          date: 1000,
+          value: 10
+        })
+        const report2 = makeTimeSpendReport({
+          _id: "r2" as Ref<HulyTimeSpendReport>,
+          space: "project-1" as Ref<Space>,
+          date: 3000,
+          value: 20
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          projects: [project],
+          reports: [report1, report2]
+        })
+
+        const result = yield* getDetailedTimeReport({
+          project: "TEST",
+          to: 2000
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result.totalTime).toBe(10)
+      }))
+
+    it.effect("filters by from and to date", () =>
+      Effect.gen(function*() {
+        const project = makeProject({ identifier: "TEST", _id: "project-1" as Ref<HulyProject> })
+        const report1 = makeTimeSpendReport({
+          _id: "r1" as Ref<HulyTimeSpendReport>,
+          space: "project-1" as Ref<Space>,
+          date: 1000,
+          value: 10
+        })
+        const report2 = makeTimeSpendReport({
+          _id: "r2" as Ref<HulyTimeSpendReport>,
+          space: "project-1" as Ref<Space>,
+          date: 2000,
+          value: 20
+        })
+        const report3 = makeTimeSpendReport({
+          _id: "r3" as Ref<HulyTimeSpendReport>,
+          space: "project-1" as Ref<Space>,
+          date: 3000,
+          value: 30
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          projects: [project],
+          reports: [report1, report2, report3]
+        })
+
+        const result = yield* getDetailedTimeReport({
+          project: "TEST",
+          from: 1500,
+          to: 2500
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result.totalTime).toBe(20)
+      }))
+  })
+
+  describe("error handling", () => {
+    it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
+      Effect.gen(function*() {
+        const testLayer = createTestLayerWithMocks({
+          projects: [],
+          reports: []
+        })
+
+        const error = yield* Effect.flip(
+          getDetailedTimeReport({
+            project: "NONEXISTENT"
+          }).pipe(Effect.provide(testLayer))
+        )
+
+        expect(error._tag).toBe("ProjectNotFoundError")
+        expect((error as ProjectNotFoundError).identifier).toBe("NONEXISTENT")
+      }))
+  })
+
+  describe("aggregation", () => {
+    it.effect("aggregates multiple reports for same issue", () =>
+      Effect.gen(function*() {
+        const project = makeProject({ identifier: "TEST", _id: "project-1" as Ref<HulyProject> })
+        const issue = makeIssue({ _id: "issue-1" as Ref<HulyIssue>, identifier: "TEST-1", title: "Issue One" })
+
+        const report1 = makeTimeSpendReport({
+          _id: "r1" as Ref<HulyTimeSpendReport>,
+          attachedTo: "issue-1" as Ref<HulyIssue>,
+          space: "project-1" as Ref<Space>,
+          employee: null,
+          value: 10
+        })
+        const report2 = makeTimeSpendReport({
+          _id: "r2" as Ref<HulyTimeSpendReport>,
+          attachedTo: "issue-1" as Ref<HulyIssue>,
+          space: "project-1" as Ref<Space>,
+          employee: null,
+          value: 25
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          projects: [project],
+          issues: [issue],
+          reports: [report1, report2]
+        })
+
+        const result = yield* getDetailedTimeReport({
+          project: "TEST"
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result.byIssue).toHaveLength(1)
+        expect(result.byIssue[0].totalTime).toBe(35)
+        expect(result.byIssue[0].reports).toHaveLength(2)
+      }))
+
+    it.effect("aggregates multiple reports for same employee", () =>
+      Effect.gen(function*() {
+        const project = makeProject({ identifier: "TEST", _id: "project-1" as Ref<HulyProject> })
+        const issue1 = makeIssue({ _id: "issue-1" as Ref<HulyIssue>, identifier: "TEST-1" })
+        const issue2 = makeIssue({ _id: "issue-2" as Ref<HulyIssue>, identifier: "TEST-2" })
+        const person = makePerson({ _id: "person-1" as Ref<Person>, name: "Bob" })
+
+        const report1 = makeTimeSpendReport({
+          _id: "r1" as Ref<HulyTimeSpendReport>,
+          attachedTo: "issue-1" as Ref<HulyIssue>,
+          space: "project-1" as Ref<Space>,
+          employee: "person-1" as Ref<Person>,
+          value: 40
+        })
+        const report2 = makeTimeSpendReport({
+          _id: "r2" as Ref<HulyTimeSpendReport>,
+          attachedTo: "issue-2" as Ref<HulyIssue>,
+          space: "project-1" as Ref<Space>,
+          employee: "person-1" as Ref<Person>,
+          value: 50
+        })
+
+        const testLayer = createTestLayerWithMocks({
+          projects: [project],
+          issues: [issue1, issue2],
+          reports: [report1, report2],
+          persons: [person]
+        })
+
+        const result = yield* getDetailedTimeReport({
+          project: "TEST"
+        }).pipe(Effect.provide(testLayer))
+
+        expect(result.byEmployee).toHaveLength(1)
+        expect(result.byEmployee[0].employeeName).toBe("Bob")
+        expect(result.byEmployee[0].totalTime).toBe(90)
+      }))
+  })
+})
+
+describe("listWorkSlots", () => {
+  const makeWorkSlotFindAll = (slots: Array<Record<string, unknown>>, config?: MockConfig) => {
+    const persons = config?.persons ?? []
+    const channels = config?.channels ?? []
+
+    const findAllImpl: HulyClientOperations["findAll"] = ((_class: unknown, query: unknown) => {
+      if (_class === time.class.WorkSlot) {
+        const q = query as Record<string, unknown>
+        let filtered = [...slots]
+        if (q.user) {
+          filtered = filtered.filter(s => s.user === q.user)
+        }
+        if (q.date) {
+          const dateFilter = q.date as { $gte?: number; $lte?: number }
+          if (dateFilter.$gte !== undefined) {
+            filtered = filtered.filter(s => (s.date as number) >= dateFilter.$gte!)
+          }
+          if (dateFilter.$lte !== undefined) {
+            filtered = filtered.filter(s => (s.date as number) <= dateFilter.$lte!)
+          }
+        }
+        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      }
+      if (_class === contact.class.Channel) {
+        const q = query as Record<string, unknown>
+        const value = q.value as string
+        const filtered = channels.filter(c => c.value === value)
+        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      }
+      return Effect.succeed(toFindResult([]))
+    }) as HulyClientOperations["findAll"]
+
+    const findOneImpl: HulyClientOperations["findOne"] = ((_class: unknown, query: unknown) => {
+      if (_class === contact.class.Person) {
+        const id = (query as Record<string, unknown>)._id as string
+        const found = persons.find(p => p._id === id)
+        return Effect.succeed(found as Doc | undefined)
+      }
+      return Effect.succeed(undefined)
+    }) as HulyClientOperations["findOne"]
+
+    return HulyClient.testLayer({
+      findAll: findAllImpl,
+      findOne: findOneImpl
+    })
+  }
+
+  describe("basic functionality", () => {
+    it.effect("returns work slots", () =>
+      Effect.gen(function*() {
+        const slots = [
+          {
+            _id: "slot-1",
+            attachedTo: "todo-1",
+            date: 1000,
+            dueDate: 2000,
+            title: "Morning work"
+          },
+          {
+            _id: "slot-2",
+            attachedTo: "todo-2",
+            date: 3000,
+            dueDate: 4000,
+            title: "Afternoon work"
+          }
+        ]
+
+        const testLayer = makeWorkSlotFindAll(slots)
+
+        const result = yield* listWorkSlots({}).pipe(Effect.provide(testLayer))
+
+        expect(result).toHaveLength(2)
+        expect(result[0].id).toBe("slot-1")
+        expect(result[0].todoId).toBe("todo-1")
+        expect(result[0].date).toBe(1000)
+        expect(result[0].dueDate).toBe(2000)
+        expect(result[0].title).toBe("Morning work")
+      }))
+
+    it.effect("returns empty when no slots", () =>
+      Effect.gen(function*() {
+        const testLayer = makeWorkSlotFindAll([])
+
+        const result = yield* listWorkSlots({}).pipe(Effect.provide(testLayer))
+
+        expect(result).toHaveLength(0)
+      }))
+  })
+
+  describe("employee filtering", () => {
+    it.effect("filters by employee ID (person found directly)", () =>
+      Effect.gen(function*() {
+        const person = makePerson({ _id: "person-1" as Ref<Person>, name: "Alice" })
+        const slots = [
+          {
+            _id: "slot-1",
+            attachedTo: "todo-1",
+            date: 1000,
+            dueDate: 2000,
+            title: "Alice's work",
+            user: "person-1"
+          },
+          {
+            _id: "slot-2",
+            attachedTo: "todo-2",
+            date: 3000,
+            dueDate: 4000,
+            title: "Bob's work",
+            user: "person-2"
+          }
+        ]
+
+        const testLayer = makeWorkSlotFindAll(slots, { persons: [person] })
+
+        const result = yield* listWorkSlots({ employeeId: "person-1" }).pipe(Effect.provide(testLayer))
+
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe("slot-1")
+      }))
+
+    it.effect("filters by employee email via channel lookup", () =>
+      Effect.gen(function*() {
+        const channel = makeChannel({
+          value: "alice@example.com",
+          attachedTo: "person-1" as Ref<Doc>
+        })
+        const slots = [
+          {
+            _id: "slot-1",
+            attachedTo: "todo-1",
+            date: 1000,
+            dueDate: 2000,
+            title: "Alice's work",
+            user: "person-1"
+          },
+          {
+            _id: "slot-2",
+            attachedTo: "todo-2",
+            date: 3000,
+            dueDate: 4000,
+            title: "Bob's work",
+            user: "person-2"
+          }
+        ]
+
+        const testLayer = makeWorkSlotFindAll(slots, {
+          persons: [],
+          channels: [channel]
+        })
+
+        const result = yield* listWorkSlots({ employeeId: "alice@example.com" }).pipe(Effect.provide(testLayer))
+
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe("slot-1")
+      }))
+
+    it.effect("returns all slots when employee not found by ID or channel", () =>
+      Effect.gen(function*() {
+        const slots = [
+          {
+            _id: "slot-1",
+            attachedTo: "todo-1",
+            date: 1000,
+            dueDate: 2000,
+            title: "Work"
+          }
+        ]
+
+        const testLayer = makeWorkSlotFindAll(slots, { persons: [], channels: [] })
+
+        const result = yield* listWorkSlots({ employeeId: "unknown-id" }).pipe(Effect.provide(testLayer))
+
+        // When no person or channel is found, query.user is never set, so all slots returned
+        expect(result).toHaveLength(1)
+      }))
+  })
+
+  describe("date filtering", () => {
+    it.effect("filters by from date", () =>
+      Effect.gen(function*() {
+        const slots = [
+          { _id: "slot-1", attachedTo: "todo-1", date: 1000, dueDate: 2000, title: "Early" },
+          { _id: "slot-2", attachedTo: "todo-2", date: 3000, dueDate: 4000, title: "Late" }
+        ]
+
+        const testLayer = makeWorkSlotFindAll(slots)
+
+        const result = yield* listWorkSlots({ from: 2000 }).pipe(Effect.provide(testLayer))
+
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe("slot-2")
+      }))
+
+    it.effect("filters by to date", () =>
+      Effect.gen(function*() {
+        const slots = [
+          { _id: "slot-1", attachedTo: "todo-1", date: 1000, dueDate: 2000, title: "Early" },
+          { _id: "slot-2", attachedTo: "todo-2", date: 3000, dueDate: 4000, title: "Late" }
+        ]
+
+        const testLayer = makeWorkSlotFindAll(slots)
+
+        const result = yield* listWorkSlots({ to: 2000 }).pipe(Effect.provide(testLayer))
+
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe("slot-1")
+      }))
+
+    it.effect("filters by both from and to", () =>
+      Effect.gen(function*() {
+        const slots = [
+          { _id: "slot-1", attachedTo: "todo-1", date: 1000, dueDate: 2000, title: "Early" },
+          { _id: "slot-2", attachedTo: "todo-2", date: 3000, dueDate: 4000, title: "Middle" },
+          { _id: "slot-3", attachedTo: "todo-3", date: 5000, dueDate: 6000, title: "Late" }
+        ]
+
+        const testLayer = makeWorkSlotFindAll(slots)
+
+        const result = yield* listWorkSlots({ from: 2000, to: 4000 }).pipe(Effect.provide(testLayer))
+
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe("slot-2")
+      }))
+  })
+})
+
+describe("createWorkSlot", () => {
+  it.effect("creates a work slot", () =>
+    Effect.gen(function*() {
+      const captureAddCollection: MockConfig["captureAddCollection"] = {}
+
+      const addCollectionImpl: HulyClientOperations["addCollection"] = ((
+        _class: unknown,
+        _space: unknown,
+        _attachedTo: unknown,
+        _attachedToClass: unknown,
+        _collection: unknown,
+        attributes: unknown,
+        id?: unknown
+      ) => {
+        captureAddCollection.attributes = attributes as Record<string, unknown>
+        captureAddCollection.id = id as string
+        return Effect.succeed((id ?? "new-slot-id") as Ref<Doc>)
+      }) as HulyClientOperations["addCollection"]
+
+      const testLayer = HulyClient.testLayer({
+        addCollection: addCollectionImpl
+      })
+
+      const result = yield* createWorkSlot({
+        todoId: "todo-123",
+        date: 1000,
+        dueDate: 2000
+      }).pipe(Effect.provide(testLayer))
+
+      expect(result.slotId).toBeDefined()
+      expect(typeof result.slotId).toBe("string")
+      expect(result.slotId.length).toBeGreaterThan(0)
+      expect(captureAddCollection.attributes?.date).toBe(1000)
+      expect(captureAddCollection.attributes?.dueDate).toBe(2000)
+      expect(captureAddCollection.attributes?.allDay).toBe(false)
+      expect(captureAddCollection.attributes?.visibility).toBe("public")
+    }))
+
+  it.effect("passes correct class and space references", () =>
+    Effect.gen(function*() {
+      let capturedClass: unknown
+      let capturedSpace: unknown
+      let capturedAttachedTo: unknown
+      let capturedAttachedToClass: unknown
+      let capturedCollection: unknown
+
+      const addCollectionImpl: HulyClientOperations["addCollection"] = ((
+        _class: unknown,
+        space: unknown,
+        attachedTo: unknown,
+        attachedToClass: unknown,
+        collection: unknown,
+        _attributes: unknown,
+        id?: unknown
+      ) => {
+        capturedClass = _class
+        capturedSpace = space
+        capturedAttachedTo = attachedTo
+        capturedAttachedToClass = attachedToClass
+        capturedCollection = collection
+        return Effect.succeed((id ?? "new-slot-id") as Ref<Doc>)
+      }) as HulyClientOperations["addCollection"]
+
+      const testLayer = HulyClient.testLayer({
+        addCollection: addCollectionImpl
+      })
+
+      yield* createWorkSlot({
+        todoId: "todo-abc",
+        date: 5000,
+        dueDate: 6000
+      }).pipe(Effect.provide(testLayer))
+
+      expect(capturedClass).toBe(time.class.WorkSlot)
+      expect(capturedSpace).toBe(time.space.ToDos)
+      expect(capturedAttachedTo).toBe("todo-abc")
+      expect(capturedAttachedToClass).toBe(time.class.ToDo)
+      expect(capturedCollection).toBe("workslots")
+    }))
 })
 
 describe("startTimer", () => {

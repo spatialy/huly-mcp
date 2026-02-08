@@ -1,19 +1,41 @@
 import { describe, it } from "@effect/vitest"
-import { Effect, Match } from "effect"
+import { Effect, Match, Schema } from "effect"
 import { expect } from "vitest"
 import {
+  ActivityMessageNotFoundError,
+  AttachmentNotFoundError,
+  BYTES_PER_MB,
+  ChannelNotFoundError,
+  CommentNotFoundError,
+  ComponentNotFoundError,
+  DocumentNotFoundError,
+  EventNotFoundError,
   FileFetchError,
   FileNotFoundError,
+  FileTooLargeError,
   FileUploadError,
   HulyAuthError,
   HulyConnectionError,
   type HulyDomainError,
+  HulyDomainError as HulyDomainErrorSchema,
   HulyError,
+  InvalidContentTypeError,
   InvalidFileDataError,
+  InvalidPersonUuidError,
   InvalidStatusError,
   IssueNotFoundError,
+  IssueTemplateNotFoundError,
+  MessageNotFoundError,
+  MilestoneNotFoundError,
+  NotificationContextNotFoundError,
+  NotificationNotFoundError,
   PersonNotFoundError,
-  ProjectNotFoundError
+  ProjectNotFoundError,
+  ReactionNotFoundError,
+  RecurringEventNotFoundError,
+  SavedMessageNotFoundError,
+  TeamspaceNotFoundError,
+  ThreadReplyNotFoundError
 } from "../../src/huly/errors.js"
 
 describe("Huly Errors", () => {
@@ -151,6 +173,352 @@ describe("Huly Errors", () => {
       }))
   })
 
+  describe("TeamspaceNotFoundError", () => {
+    it.effect("creates with identifier", () =>
+      Effect.gen(function*() {
+        const error = new TeamspaceNotFoundError({ identifier: "my-teamspace" })
+        expect(error._tag).toBe("TeamspaceNotFoundError")
+        expect(error.identifier).toBe("my-teamspace")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new TeamspaceNotFoundError({ identifier: "my-teamspace" })
+        expect(error.message).toBe("Teamspace 'my-teamspace' not found")
+      }))
+  })
+
+  describe("DocumentNotFoundError", () => {
+    it.effect("creates with identifier and teamspace", () =>
+      Effect.gen(function*() {
+        const error = new DocumentNotFoundError({ identifier: "doc-1", teamspace: "engineering" })
+        expect(error._tag).toBe("DocumentNotFoundError")
+        expect(error.identifier).toBe("doc-1")
+        expect(error.teamspace).toBe("engineering")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new DocumentNotFoundError({ identifier: "doc-1", teamspace: "engineering" })
+        expect(error.message).toBe("Document 'doc-1' not found in teamspace 'engineering'")
+      }))
+  })
+
+  describe("CommentNotFoundError", () => {
+    it.effect("creates with commentId, issueIdentifier, and project", () =>
+      Effect.gen(function*() {
+        const error = new CommentNotFoundError({ commentId: "c-42", issueIdentifier: "HULY-99", project: "HULY" })
+        expect(error._tag).toBe("CommentNotFoundError")
+        expect(error.commentId).toBe("c-42")
+        expect(error.issueIdentifier).toBe("HULY-99")
+        expect(error.project).toBe("HULY")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new CommentNotFoundError({ commentId: "c-42", issueIdentifier: "HULY-99", project: "HULY" })
+        expect(error.message).toBe("Comment 'c-42' not found on issue 'HULY-99' in project 'HULY'")
+      }))
+  })
+
+  describe("MilestoneNotFoundError", () => {
+    it.effect("creates with identifier and project", () =>
+      Effect.gen(function*() {
+        const error = new MilestoneNotFoundError({ identifier: "v1.0", project: "HULY" })
+        expect(error._tag).toBe("MilestoneNotFoundError")
+        expect(error.identifier).toBe("v1.0")
+        expect(error.project).toBe("HULY")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new MilestoneNotFoundError({ identifier: "v1.0", project: "HULY" })
+        expect(error.message).toBe("Milestone 'v1.0' not found in project 'HULY'")
+      }))
+  })
+
+  describe("ChannelNotFoundError", () => {
+    it.effect("creates with identifier", () =>
+      Effect.gen(function*() {
+        const error = new ChannelNotFoundError({ identifier: "general" })
+        expect(error._tag).toBe("ChannelNotFoundError")
+        expect(error.identifier).toBe("general")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new ChannelNotFoundError({ identifier: "general" })
+        expect(error.message).toBe("Channel 'general' not found")
+      }))
+  })
+
+  describe("MessageNotFoundError", () => {
+    it.effect("creates with messageId and channel", () =>
+      Effect.gen(function*() {
+        const error = new MessageNotFoundError({ messageId: "msg-1", channel: "general" })
+        expect(error._tag).toBe("MessageNotFoundError")
+        expect(error.messageId).toBe("msg-1")
+        expect(error.channel).toBe("general")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new MessageNotFoundError({ messageId: "msg-1", channel: "general" })
+        expect(error.message).toBe("Message 'msg-1' not found in channel 'general'")
+      }))
+  })
+
+  describe("ThreadReplyNotFoundError", () => {
+    it.effect("creates with replyId and messageId", () =>
+      Effect.gen(function*() {
+        const error = new ThreadReplyNotFoundError({ replyId: "reply-5", messageId: "msg-1" })
+        expect(error._tag).toBe("ThreadReplyNotFoundError")
+        expect(error.replyId).toBe("reply-5")
+        expect(error.messageId).toBe("msg-1")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new ThreadReplyNotFoundError({ replyId: "reply-5", messageId: "msg-1" })
+        expect(error.message).toBe("Thread reply 'reply-5' not found on message 'msg-1'")
+      }))
+  })
+
+  describe("EventNotFoundError", () => {
+    it.effect("creates with eventId", () =>
+      Effect.gen(function*() {
+        const error = new EventNotFoundError({ eventId: "evt-100" })
+        expect(error._tag).toBe("EventNotFoundError")
+        expect(error.eventId).toBe("evt-100")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new EventNotFoundError({ eventId: "evt-100" })
+        expect(error.message).toBe("Event 'evt-100' not found")
+      }))
+  })
+
+  describe("RecurringEventNotFoundError", () => {
+    it.effect("creates with eventId", () =>
+      Effect.gen(function*() {
+        const error = new RecurringEventNotFoundError({ eventId: "rec-200" })
+        expect(error._tag).toBe("RecurringEventNotFoundError")
+        expect(error.eventId).toBe("rec-200")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new RecurringEventNotFoundError({ eventId: "rec-200" })
+        expect(error.message).toBe("Recurring event 'rec-200' not found")
+      }))
+  })
+
+  describe("ActivityMessageNotFoundError", () => {
+    it.effect("creates with messageId", () =>
+      Effect.gen(function*() {
+        const error = new ActivityMessageNotFoundError({ messageId: "act-10" })
+        expect(error._tag).toBe("ActivityMessageNotFoundError")
+        expect(error.messageId).toBe("act-10")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new ActivityMessageNotFoundError({ messageId: "act-10" })
+        expect(error.message).toBe("Activity message 'act-10' not found")
+      }))
+  })
+
+  describe("ReactionNotFoundError", () => {
+    it.effect("creates with messageId and emoji", () =>
+      Effect.gen(function*() {
+        const error = new ReactionNotFoundError({ messageId: "msg-7", emoji: "thumbsup" })
+        expect(error._tag).toBe("ReactionNotFoundError")
+        expect(error.messageId).toBe("msg-7")
+        expect(error.emoji).toBe("thumbsup")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new ReactionNotFoundError({ messageId: "msg-7", emoji: "thumbsup" })
+        expect(error.message).toBe("Reaction 'thumbsup' not found on message 'msg-7'")
+      }))
+  })
+
+  describe("SavedMessageNotFoundError", () => {
+    it.effect("creates with messageId", () =>
+      Effect.gen(function*() {
+        const error = new SavedMessageNotFoundError({ messageId: "msg-saved-1" })
+        expect(error._tag).toBe("SavedMessageNotFoundError")
+        expect(error.messageId).toBe("msg-saved-1")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new SavedMessageNotFoundError({ messageId: "msg-saved-1" })
+        expect(error.message).toBe("Saved message for 'msg-saved-1' not found")
+      }))
+  })
+
+  describe("AttachmentNotFoundError", () => {
+    it.effect("creates with attachmentId", () =>
+      Effect.gen(function*() {
+        const error = new AttachmentNotFoundError({ attachmentId: "att-3" })
+        expect(error._tag).toBe("AttachmentNotFoundError")
+        expect(error.attachmentId).toBe("att-3")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new AttachmentNotFoundError({ attachmentId: "att-3" })
+        expect(error.message).toBe("Attachment 'att-3' not found")
+      }))
+  })
+
+  describe("ComponentNotFoundError", () => {
+    it.effect("creates with identifier and project", () =>
+      Effect.gen(function*() {
+        const error = new ComponentNotFoundError({ identifier: "frontend", project: "HULY" })
+        expect(error._tag).toBe("ComponentNotFoundError")
+        expect(error.identifier).toBe("frontend")
+        expect(error.project).toBe("HULY")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new ComponentNotFoundError({ identifier: "frontend", project: "HULY" })
+        expect(error.message).toBe("Component 'frontend' not found in project 'HULY'")
+      }))
+  })
+
+  describe("IssueTemplateNotFoundError", () => {
+    it.effect("creates with identifier and project", () =>
+      Effect.gen(function*() {
+        const error = new IssueTemplateNotFoundError({ identifier: "bug-report", project: "HULY" })
+        expect(error._tag).toBe("IssueTemplateNotFoundError")
+        expect(error.identifier).toBe("bug-report")
+        expect(error.project).toBe("HULY")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new IssueTemplateNotFoundError({ identifier: "bug-report", project: "HULY" })
+        expect(error.message).toBe("Issue template 'bug-report' not found in project 'HULY'")
+      }))
+  })
+
+  describe("NotificationNotFoundError", () => {
+    it.effect("creates with notificationId", () =>
+      Effect.gen(function*() {
+        const error = new NotificationNotFoundError({ notificationId: "notif-55" })
+        expect(error._tag).toBe("NotificationNotFoundError")
+        expect(error.notificationId).toBe("notif-55")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new NotificationNotFoundError({ notificationId: "notif-55" })
+        expect(error.message).toBe("Notification 'notif-55' not found")
+      }))
+  })
+
+  describe("NotificationContextNotFoundError", () => {
+    it.effect("creates with contextId", () =>
+      Effect.gen(function*() {
+        const error = new NotificationContextNotFoundError({ contextId: "ctx-77" })
+        expect(error._tag).toBe("NotificationContextNotFoundError")
+        expect(error.contextId).toBe("ctx-77")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new NotificationContextNotFoundError({ contextId: "ctx-77" })
+        expect(error.message).toBe("Notification context 'ctx-77' not found")
+      }))
+  })
+
+  describe("InvalidPersonUuidError", () => {
+    it.effect("creates with uuid", () =>
+      Effect.gen(function*() {
+        const error = new InvalidPersonUuidError({ uuid: "not-a-uuid" })
+        expect(error._tag).toBe("InvalidPersonUuidError")
+        expect(error.uuid).toBe("not-a-uuid")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new InvalidPersonUuidError({ uuid: "not-a-uuid" })
+        expect(error.message).toBe("Invalid PersonUuid format: 'not-a-uuid'")
+      }))
+  })
+
+  describe("FileTooLargeError", () => {
+    it.effect("creates with filename, size, and maxSize", () =>
+      Effect.gen(function*() {
+        const error = new FileTooLargeError({
+          filename: "big.zip",
+          size: 15 * BYTES_PER_MB,
+          maxSize: 10 * BYTES_PER_MB
+        })
+        expect(error._tag).toBe("FileTooLargeError")
+        expect(error.filename).toBe("big.zip")
+        expect(error.size).toBe(15 * BYTES_PER_MB)
+        expect(error.maxSize).toBe(10 * BYTES_PER_MB)
+      }))
+
+    it.effect("generates message with MB conversion", () =>
+      Effect.gen(function*() {
+        const error = new FileTooLargeError({
+          filename: "big.zip",
+          size: 15 * BYTES_PER_MB,
+          maxSize: 10 * BYTES_PER_MB
+        })
+        expect(error.message).toBe("File 'big.zip' is too large (15.00MB). Maximum allowed: 10MB")
+      }))
+
+    it.effect("formats fractional MB with two decimal places", () =>
+      Effect.gen(function*() {
+        const error = new FileTooLargeError({
+          filename: "photo.jpg",
+          size: 5.5 * BYTES_PER_MB,
+          maxSize: 5 * BYTES_PER_MB
+        })
+        expect(error.message).toBe("File 'photo.jpg' is too large (5.50MB). Maximum allowed: 5MB")
+      }))
+  })
+
+  describe("InvalidContentTypeError", () => {
+    it.effect("creates with filename and contentType", () =>
+      Effect.gen(function*() {
+        const error = new InvalidContentTypeError({ filename: "script.exe", contentType: "application/x-msdownload" })
+        expect(error._tag).toBe("InvalidContentTypeError")
+        expect(error.filename).toBe("script.exe")
+        expect(error.contentType).toBe("application/x-msdownload")
+      }))
+
+    it.effect("generates message from fields", () =>
+      Effect.gen(function*() {
+        const error = new InvalidContentTypeError({ filename: "script.exe", contentType: "application/x-msdownload" })
+        expect(error.message).toBe("Invalid content type 'application/x-msdownload' for file 'script.exe'")
+      }))
+  })
+
+  describe("BYTES_PER_MB", () => {
+    it.effect("equals 1024 * 1024", () =>
+      Effect.gen(function*() {
+        expect(BYTES_PER_MB).toBe(1048576)
+      }))
+  })
+
+  describe("HulyDomainError Schema", () => {
+    it.effect("decodes a valid error via Schema.Union", () =>
+      Effect.gen(function*() {
+        const error = new ProjectNotFoundError({ identifier: "X" })
+        const decoded = yield* Schema.decode(HulyDomainErrorSchema)(error)
+        expect(decoded._tag).toBe("ProjectNotFoundError")
+      }))
+  })
+
   describe("Effect integration", () => {
     it.effect("errors are yieldable", () =>
       Effect.gen(function*() {
@@ -174,7 +542,7 @@ describe("Huly Errors", () => {
         expect(result).toBe("Recovered: HULY-1")
       }))
 
-    it.effect("can pattern match with Match", () =>
+    it.effect("can pattern match with Match exhaustive over all error types", () =>
       Effect.gen(function*() {
         const matchError = Match.type<HulyDomainError>().pipe(
           Match.tag("IssueNotFoundError", (e) => `issue:${e.identifier}`),
@@ -188,6 +556,26 @@ describe("Huly Errors", () => {
           Match.tag("HulyConnectionError", () => "connection"),
           Match.tag("HulyAuthError", () => "auth"),
           Match.tag("HulyError", () => "generic"),
+          Match.tag("TeamspaceNotFoundError", (e) => `teamspace:${e.identifier}`),
+          Match.tag("DocumentNotFoundError", (e) => `document:${e.identifier}`),
+          Match.tag("CommentNotFoundError", (e) => `comment:${e.commentId}`),
+          Match.tag("MilestoneNotFoundError", (e) => `milestone:${e.identifier}`),
+          Match.tag("ChannelNotFoundError", (e) => `channel:${e.identifier}`),
+          Match.tag("MessageNotFoundError", (e) => `message:${e.messageId}`),
+          Match.tag("ThreadReplyNotFoundError", (e) => `reply:${e.replyId}`),
+          Match.tag("EventNotFoundError", (e) => `event:${e.eventId}`),
+          Match.tag("RecurringEventNotFoundError", (e) => `recurring:${e.eventId}`),
+          Match.tag("ActivityMessageNotFoundError", (e) => `activity:${e.messageId}`),
+          Match.tag("ReactionNotFoundError", (e) => `reaction:${e.emoji}`),
+          Match.tag("SavedMessageNotFoundError", (e) => `saved:${e.messageId}`),
+          Match.tag("AttachmentNotFoundError", (e) => `attachment:${e.attachmentId}`),
+          Match.tag("ComponentNotFoundError", (e) => `component:${e.identifier}`),
+          Match.tag("IssueTemplateNotFoundError", (e) => `template:${e.identifier}`),
+          Match.tag("NotificationNotFoundError", (e) => `notification:${e.notificationId}`),
+          Match.tag("NotificationContextNotFoundError", (e) => `notifctx:${e.contextId}`),
+          Match.tag("InvalidPersonUuidError", (e) => `uuid:${e.uuid}`),
+          Match.tag("FileTooLargeError", (e) => `toolarge:${e.filename}`),
+          Match.tag("InvalidContentTypeError", (e) => `contenttype:${e.contentType}`),
           Match.exhaustive
         )
 
@@ -204,6 +592,34 @@ describe("Huly Errors", () => {
         expect(matchError(new HulyConnectionError({ message: "fail" }))).toBe("connection")
         expect(matchError(new HulyAuthError({ message: "denied" }))).toBe("auth")
         expect(matchError(new HulyError({ message: "oops" }))).toBe("generic")
+        expect(matchError(new TeamspaceNotFoundError({ identifier: "ts-1" }))).toBe("teamspace:ts-1")
+        expect(matchError(new DocumentNotFoundError({ identifier: "doc-1", teamspace: "eng" }))).toBe("document:doc-1")
+        expect(
+          matchError(new CommentNotFoundError({ commentId: "c-1", issueIdentifier: "H-1", project: "P" }))
+        ).toBe("comment:c-1")
+        expect(matchError(new MilestoneNotFoundError({ identifier: "m-1", project: "P" }))).toBe("milestone:m-1")
+        expect(matchError(new ChannelNotFoundError({ identifier: "ch-1" }))).toBe("channel:ch-1")
+        expect(matchError(new MessageNotFoundError({ messageId: "msg-1", channel: "ch-1" }))).toBe("message:msg-1")
+        expect(matchError(new ThreadReplyNotFoundError({ replyId: "r-1", messageId: "msg-1" }))).toBe("reply:r-1")
+        expect(matchError(new EventNotFoundError({ eventId: "e-1" }))).toBe("event:e-1")
+        expect(matchError(new RecurringEventNotFoundError({ eventId: "re-1" }))).toBe("recurring:re-1")
+        expect(matchError(new ActivityMessageNotFoundError({ messageId: "am-1" }))).toBe("activity:am-1")
+        expect(matchError(new ReactionNotFoundError({ messageId: "msg-1", emoji: "heart" }))).toBe("reaction:heart")
+        expect(matchError(new SavedMessageNotFoundError({ messageId: "sm-1" }))).toBe("saved:sm-1")
+        expect(matchError(new AttachmentNotFoundError({ attachmentId: "att-1" }))).toBe("attachment:att-1")
+        expect(matchError(new ComponentNotFoundError({ identifier: "cmp-1", project: "P" }))).toBe("component:cmp-1")
+        expect(matchError(new IssueTemplateNotFoundError({ identifier: "tpl-1", project: "P" }))).toBe("template:tpl-1")
+        expect(matchError(new NotificationNotFoundError({ notificationId: "n-1" }))).toBe("notification:n-1")
+        expect(matchError(new NotificationContextNotFoundError({ contextId: "nc-1" }))).toBe("notifctx:nc-1")
+        expect(matchError(new InvalidPersonUuidError({ uuid: "bad-uuid" }))).toBe("uuid:bad-uuid")
+        expect(
+          matchError(
+            new FileTooLargeError({ filename: "big.zip", size: 15 * BYTES_PER_MB, maxSize: 10 * BYTES_PER_MB })
+          )
+        ).toBe("toolarge:big.zip")
+        expect(
+          matchError(new InvalidContentTypeError({ filename: "f.exe", contentType: "application/x-msdownload" }))
+        ).toBe("contenttype:application/x-msdownload")
       }))
   })
 })
