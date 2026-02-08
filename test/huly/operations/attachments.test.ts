@@ -175,12 +175,12 @@ const createTestLayer = (config: MockConfig) => {
     if (_class === attachment.class.Attachment) {
       const q = query as Record<string, unknown>
       const found = attachments.find(a => a._id === q._id)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === tracker.class.Project) {
       const q = query as Record<string, unknown>
       const found = projects.find(p => p.identifier === q.identifier)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === tracker.class.Issue) {
       const q = query as Record<string, unknown>
@@ -188,7 +188,7 @@ const createTestLayer = (config: MockConfig) => {
         (q.identifier && i.identifier === q.identifier && i.space === q.space)
         || (q.number !== undefined && i.number === q.number && i.space === q.space)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === documentPlugin.class.Teamspace) {
       const q = query as Record<string, unknown>
@@ -196,7 +196,7 @@ const createTestLayer = (config: MockConfig) => {
         (q.name && ts.name === q.name)
         || (q._id && ts._id === q._id)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === documentPlugin.class.Document) {
       const q = query as Record<string, unknown>
@@ -204,7 +204,7 @@ const createTestLayer = (config: MockConfig) => {
         (q.space && q.title && d.space === q.space && d.title === q.title)
         || (q.space && q._id && d.space === q.space && d._id === q._id)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]

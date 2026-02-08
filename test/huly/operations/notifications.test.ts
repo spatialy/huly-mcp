@@ -153,7 +153,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
     if (_class === notification.class.InboxNotification) {
       const q = query as { _id?: Ref<HulyInboxNotification> }
       const found = notifications.find(n => n._id === q._id)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === notification.class.DocNotifyContext) {
       const q = query as { _id?: Ref<HulyDocNotifyContext>; objectId?: Ref<Doc>; objectClass?: Ref<Class<Doc>> }
@@ -162,12 +162,12 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         && (!q.objectId || c.objectId === q.objectId)
         && (!q.objectClass || c.objectClass === q.objectClass)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === notification.class.NotificationProviderSetting) {
       const q = query as { attachedTo?: Ref<NotificationProvider> }
       const found = settings.find(s => s.attachedTo === q.attachedTo)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]

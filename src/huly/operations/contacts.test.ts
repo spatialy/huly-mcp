@@ -116,7 +116,7 @@ const createTestLayer = (config: MockConfig) => {
     if (_class === contact.class.Person) {
       const q = query as Record<string, unknown>
       const found = persons.find(p => p._id === q._id)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]

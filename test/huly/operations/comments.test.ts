@@ -126,7 +126,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         const direction = opts.sort.createdOn
         filtered = filtered.sort((a, b) => direction * ((a.createdOn ?? 0) - (b.createdOn ?? 0)))
       }
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -135,7 +135,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
     if (_class === tracker.class.Project) {
       const identifier = (query as Record<string, unknown>).identifier as string
       const found = projects.find(p => p.identifier === identifier)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === tracker.class.Issue) {
       const q = query as Record<string, unknown>
@@ -144,12 +144,12 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         || (q.number && i.number === q.number)
         || (q.space && i.space === q.space && !q.identifier && !q.number)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === chunter.class.ChatMessage) {
       const q = query as Record<string, unknown>
       const found = messages.find(m => m._id === q._id && m.attachedTo === q.attachedTo)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]

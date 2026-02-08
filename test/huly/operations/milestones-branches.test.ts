@@ -9,7 +9,7 @@
  * This file is a placeholder acknowledging the gap.
  */
 import { describe, it } from "@effect/vitest"
-import { type Doc, type PersonId, type Ref, type Space, toFindResult } from "@hcengineering/core"
+import { type PersonId, type Ref, type Space, toFindResult } from "@hcengineering/core"
 import type { ProjectType } from "@hcengineering/task"
 import { type Milestone as HulyMilestone, MilestoneStatus, type Project as HulyProject } from "@hcengineering/tracker"
 import { Effect } from "effect"
@@ -83,14 +83,14 @@ describe("milestones - status mapping exhaustiveness", () => {
           if (opts?.limit) {
             result = result.slice(0, opts.limit)
           }
-          return Effect.succeed(toFindResult(result as Array<Doc>))
+          return Effect.succeed(toFindResult(result))
         }
         return Effect.succeed(toFindResult([]))
       }) as HulyClientOperations["findAll"]
 
       const findOneImpl: HulyClientOperations["findOne"] = ((_class: unknown, _query: unknown) => {
         if (_class === tracker.class.Project) {
-          return Effect.succeed(project as Doc | undefined)
+          return Effect.succeed(project)
         }
         return Effect.succeed(undefined)
       }) as HulyClientOperations["findOne"]

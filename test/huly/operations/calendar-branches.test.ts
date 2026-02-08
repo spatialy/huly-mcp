@@ -95,7 +95,7 @@ const createTestLayer = (config: MockConfig) => {
     if (_class === calendar.class.ReccuringEvent) {
       const q = query as Record<string, unknown>
       const found = recurringEvents.find(e => e.eventId === q.eventId)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]
@@ -109,7 +109,7 @@ const createTestLayer = (config: MockConfig) => {
   ) as HulyClientOperations["uploadMarkup"]
 
   const updateMarkupImpl: HulyClientOperations["updateMarkup"] = (
-    () => Effect.succeed(undefined as void)
+    () => Effect.succeed(undefined)
   ) as HulyClientOperations["updateMarkup"]
 
   return HulyClient.testLayer({

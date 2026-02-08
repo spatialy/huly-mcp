@@ -164,12 +164,12 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       const inQuery = q._id as { $in?: Array<Ref<Status>> } | undefined
       if (inQuery?.$in) {
         const filtered = statuses.filter(s => inQuery.$in!.includes(s._id))
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
-      return Effect.succeed(toFindResult(statuses as Array<Doc>))
+      return Effect.succeed(toFindResult(statuses))
     }
     if (_class === tracker.class.Issue) {
-      return Effect.succeed(toFindResult(issues as Array<Doc>))
+      return Effect.succeed(toFindResult(issues))
     }
     if (_class === contact.class.Channel) {
       const q = query as Record<string, unknown>
@@ -183,10 +183,10 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       if (q.provider !== undefined) {
         filtered = filtered.filter(c => c.provider === q.provider)
       }
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     if (_class === contact.class.Person) {
-      return Effect.succeed(toFindResult(persons as Array<Doc>))
+      return Effect.succeed(toFindResult(persons))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -208,9 +208,9 @@ const createTestLayerWithMocks = (config: MockConfig) => {
             }
           }
         }
-        return Effect.succeed(projectWithLookup as Doc)
+        return Effect.succeed(projectWithLookup)
       }
-      return Effect.succeed(found as Doc)
+      return Effect.succeed(found)
     }
     if (_class === tracker.class.Issue) {
       const q = query as Record<string, unknown>
@@ -218,21 +218,21 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         (q.identifier && i.identifier === q.identifier)
         || (q.number && i.number === q.number)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === contact.class.Channel) {
       const q = query as Record<string, unknown>
       const value = q.value as string | { $like: string } | undefined
       if (typeof value === "string") {
         const found = channels.find(c => c.value === value && (q.provider === undefined || c.provider === q.provider))
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       if (value && typeof value === "object" && "$like" in value) {
         const pattern = value.$like.replace(/%/g, "")
         const found = channels.find(c =>
           c.value.includes(pattern) && (q.provider === undefined || c.provider === q.provider)
         )
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       return Effect.succeed(undefined)
     }
@@ -240,17 +240,17 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       const q = query as Record<string, unknown>
       if (q._id) {
         const found = persons.find(p => p._id === q._id)
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       if (q.name) {
         if (typeof q.name === "string") {
           const found = persons.find(p => p.name === q.name)
-          return Effect.succeed(found as Doc | undefined)
+          return Effect.succeed(found)
         }
         if (typeof q.name === "object" && "$like" in (q.name as Record<string, unknown>)) {
           const pattern = (q.name as Record<string, string>).$like.replace(/%/g, "")
           const found = persons.find(p => p.name.includes(pattern))
-          return Effect.succeed(found as Doc | undefined)
+          return Effect.succeed(found)
         }
       }
       return Effect.succeed(undefined)
@@ -641,9 +641,9 @@ describe("shared.ts", () => {
                     statuses: undefined
                   }
                 }
-              } as Doc)
+              })
             }
-            return Effect.succeed(project as Doc)
+            return Effect.succeed(project)
           }
           return Effect.succeed(undefined)
         }) as HulyClientOperations["findOne"]
@@ -714,18 +714,18 @@ describe("shared.ts", () => {
         const findOneImpl: HulyClientOperations["findOne"] = ((_class: unknown, query: unknown) => {
           if (_class === tracker.class.Project) {
             const q = query as Record<string, unknown>
-            if (q.identifier === "PROJ") return Effect.succeed(project as Doc)
+            if (q.identifier === "PROJ") return Effect.succeed(project)
             return Effect.succeed(undefined)
           }
           if (_class === tracker.class.Issue) {
             const q = query as Record<string, unknown>
             if (q.identifier !== undefined) {
               const found = [issue].find(i => i.identifier === q.identifier)
-              return Effect.succeed(found as Doc | undefined)
+              return Effect.succeed(found)
             }
             if (q.number !== undefined) {
               const found = [issue].find(i => i.number === q.number)
-              return Effect.succeed(found as Doc | undefined)
+              return Effect.succeed(found)
             }
             return Effect.succeed(undefined)
           }
@@ -791,18 +791,18 @@ describe("shared.ts", () => {
         const findOneImpl: HulyClientOperations["findOne"] = ((_class: unknown, query: unknown) => {
           if (_class === tracker.class.Project) {
             const q = query as Record<string, unknown>
-            if (q.identifier === "TEST") return Effect.succeed(project as Doc)
+            if (q.identifier === "TEST") return Effect.succeed(project)
             return Effect.succeed(undefined)
           }
           if (_class === tracker.class.Issue) {
             const q = query as Record<string, unknown>
             if (q.identifier !== undefined) {
               const found = [issue].find(i => i.identifier === q.identifier)
-              return Effect.succeed(found as Doc | undefined)
+              return Effect.succeed(found)
             }
             if (q.number !== undefined) {
               const found = [issue].find(i => i.number === q.number)
-              return Effect.succeed(found as Doc | undefined)
+              return Effect.succeed(found)
             }
             return Effect.succeed(undefined)
           }

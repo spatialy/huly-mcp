@@ -1,5 +1,5 @@
 import { describe, it } from "@effect/vitest"
-import { type Doc, type PersonId, type Ref, SortingOrder, type Space, toFindResult } from "@hcengineering/core"
+import { type PersonId, type Ref, SortingOrder, type Space, toFindResult } from "@hcengineering/core"
 import { type Project as HulyProject } from "@hcengineering/tracker"
 import { Effect } from "effect"
 import { expect } from "vitest"
@@ -63,7 +63,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       const limited = filtered.slice(0, limit)
 
       // Return with total
-      const result = toFindResult(limited as Array<Doc>)
+      const result = toFindResult(limited)
       ;(result as { total?: number }).total = filtered.length
       return Effect.succeed(result)
     }

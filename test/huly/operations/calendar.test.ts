@@ -118,22 +118,22 @@ const createTestLayer = (config: MockConfig) => {
 
   const findAllImpl: HulyClientOperations["findAll"] = ((_class: unknown, query: unknown, _options: unknown) => {
     if (_class === calendar.class.Event) {
-      return Effect.succeed(toFindResult(events as Array<Doc>))
+      return Effect.succeed(toFindResult(events))
     }
     if (_class === calendar.class.ReccuringEvent) {
-      return Effect.succeed(toFindResult(recurringEvents as Array<Doc>))
+      return Effect.succeed(toFindResult(recurringEvents))
     }
     if (_class === calendar.class.ReccuringInstance) {
-      return Effect.succeed(toFindResult(recurringInstances as Array<Doc>))
+      return Effect.succeed(toFindResult(recurringInstances))
     }
     if (_class === contact.class.Person) {
       const q = query as Record<string, unknown>
       if (q._id && typeof q._id === "object" && "$in" in (q._id as Record<string, unknown>)) {
         const ids = (q._id as Record<string, Array<string>>).$in
         const matched = persons.filter(p => ids.includes(p._id))
-        return Effect.succeed(toFindResult(matched as Array<Doc>))
+        return Effect.succeed(toFindResult(matched))
       }
-      return Effect.succeed(toFindResult(persons as Array<Doc>))
+      return Effect.succeed(toFindResult(persons))
     }
     if (_class === contact.class.Channel) {
       return Effect.succeed(toFindResult([]))
@@ -145,15 +145,15 @@ const createTestLayer = (config: MockConfig) => {
     if (_class === calendar.class.Event) {
       const q = query as Record<string, unknown>
       const found = events.find(e => e.eventId === q.eventId)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === calendar.class.ReccuringEvent) {
       const q = query as Record<string, unknown>
       const found = recurringEvents.find(e => e.eventId === q.eventId)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === calendar.class.Calendar) {
-      return Effect.succeed({ _id: "cal-1" } as Doc | undefined)
+      return Effect.succeed({ _id: "cal-1" })
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]
@@ -211,7 +211,7 @@ const createTestLayer = (config: MockConfig) => {
     if (config.captureUpdateMarkup) {
       config.captureUpdateMarkup.called = true
     }
-    return Effect.succeed(undefined as void)
+    return Effect.succeed(undefined)
   }) as HulyClientOperations["updateMarkup"]
 
   return HulyClient.testLayer({

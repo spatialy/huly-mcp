@@ -334,13 +334,13 @@ describe("createIssueFromTemplate - person not found for template assignee (issu
       const findOneImpl: HulyClientOperations["findOne"] = ((_class: unknown, query: unknown) => {
         if (_class === tracker.class.Project) {
           const q = query as Record<string, unknown>
-          if (q.identifier === "TEST") return Effect.succeed(project as Doc)
+          if (q.identifier === "TEST") return Effect.succeed(project)
           return Effect.succeed(undefined)
         }
         if (_class === tracker.class.IssueTemplate) {
           const q = query as Record<string, unknown>
           if (q.title === "Bug Report" || q._id === template._id) {
-            return Effect.succeed(template as Doc)
+            return Effect.succeed(template)
           }
           return Effect.succeed(undefined)
         }

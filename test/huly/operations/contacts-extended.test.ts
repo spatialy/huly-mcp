@@ -140,7 +140,7 @@ const createTestLayer = (config: MockConfig) => {
       if (opts.limit !== undefined) {
         filtered = filtered.slice(0, opts.limit)
       }
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     if (_class === contact.class.Channel) {
       const q = query as Record<string, unknown>
@@ -165,7 +165,7 @@ const createTestLayer = (config: MockConfig) => {
           filtered = filtered.filter(c => c.value === value)
         }
       }
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     if (_class === contact.mixin.Employee) {
       const opts = (options ?? {}) as { limit?: number }
@@ -173,7 +173,7 @@ const createTestLayer = (config: MockConfig) => {
       if (opts.limit !== undefined) {
         filtered = filtered.slice(0, opts.limit)
       }
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     if (_class === contact.class.Organization) {
       const opts = (options ?? {}) as { limit?: number }
@@ -181,19 +181,19 @@ const createTestLayer = (config: MockConfig) => {
       if (opts.limit !== undefined) {
         filtered = filtered.slice(0, opts.limit)
       }
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     if (_class === contact.class.Member) {
-      return Effect.succeed(toFindResult([] as Array<Doc>))
+      return Effect.succeed(toFindResult([]))
     }
-    return Effect.succeed(toFindResult([] as Array<Doc>))
+    return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
 
   const findOneImpl: HulyClientOperations["findOne"] = ((_class: unknown, query: unknown) => {
     if (_class === contact.class.Person) {
       const q = query as Record<string, unknown>
       const found = persons.find(p => p._id === q._id)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]
@@ -633,7 +633,7 @@ describe("Contacts Extended Coverage", () => {
           if (_class === contact.class.Person) {
             const q = query as Record<string, unknown>
             const found = [person].find(p => p._id === q._id)
-            return Effect.succeed(found as Doc | undefined)
+            return Effect.succeed(found)
           }
           return Effect.succeed(undefined)
         }) as HulyClientOperations["findOne"]
@@ -651,9 +651,9 @@ describe("Contacts Extended Coverage", () => {
             if (q.provider !== undefined) {
               filtered = filtered.filter(c => c.provider === q.provider)
             }
-            return Effect.succeed(toFindResult(filtered as Array<Doc>))
+            return Effect.succeed(toFindResult(filtered))
           }
-          return Effect.succeed(toFindResult([] as Array<Doc>))
+          return Effect.succeed(toFindResult([]))
         }) as HulyClientOperations["findAll"]
 
         const captureAddCollection: MockConfig["captureAddCollection"] = {}

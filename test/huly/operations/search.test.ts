@@ -138,7 +138,7 @@ describe("fulltextSearch", () => {
       let calledClass: unknown
       const findAllImpl: HulyClientOperations["findAll"] = ((_class: unknown, _query: unknown) => {
         calledClass = _class
-        return Effect.succeed(toFindResult([] as Array<Doc>, 0))
+        return Effect.succeed(toFindResult([], 0))
       }) as HulyClientOperations["findAll"]
 
       const testLayer = HulyClient.testLayer({ findAll: findAllImpl })

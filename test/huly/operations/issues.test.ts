@@ -244,10 +244,10 @@ const createTestLayerWithMocks = (config: MockConfig) => {
           }
         })
       }
-      return Effect.succeed(toFindResult(result as Array<Doc>))
+      return Effect.succeed(toFindResult(result))
     }
     if (_class === tracker.class.IssueStatus) {
-      return Effect.succeed(toFindResult(statuses as Array<Doc>))
+      return Effect.succeed(toFindResult(statuses))
     }
     // Handle core.class.Status queries (used by findProjectWithStatuses)
     if (String(_class) === String(core.class.Status)) {
@@ -255,22 +255,22 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       const inQuery = q._id as { $in?: Array<Ref<Status>> } | undefined
       if (inQuery?.$in) {
         const filtered = statuses.filter(s => inQuery.$in!.includes(s._id))
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
-      return Effect.succeed(toFindResult(statuses as Array<Doc>))
+      return Effect.succeed(toFindResult(statuses))
     }
     if (_class === contact.class.Channel) {
       const value = (query as Record<string, unknown>).value as string
       const filtered = channels.filter(c => c.value === value)
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     if (_class === contact.class.Person) {
       const nameFilter = (query as Record<string, unknown>).name as string | undefined
       if (nameFilter) {
         const filtered = persons.filter(p => p.name === nameFilter)
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
-      return Effect.succeed(toFindResult(persons as Array<Doc>))
+      return Effect.succeed(toFindResult(persons))
     }
     if (_class === tags.class.TagReference) {
       const q = query as Record<string, unknown>
@@ -279,7 +279,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         tr.attachedTo === q.attachedTo
         && tr.attachedToClass === q.attachedToClass
       )
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -304,9 +304,9 @@ const createTestLayerWithMocks = (config: MockConfig) => {
             }
           }
         }
-        return Effect.succeed(projectWithLookup as Doc)
+        return Effect.succeed(projectWithLookup)
       }
-      return Effect.succeed(found as Doc)
+      return Effect.succeed(found)
     }
     if (_class === tracker.class.Issue) {
       const q = query as Record<string, unknown>
@@ -317,7 +317,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
           (q.identifier && i.identifier === q.identifier)
           || (q.number && i.number === q.number)
         )
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       // Space-only query (rank queries) - respect sort option
       if (q.space) {
@@ -325,7 +325,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         if (opts?.sort?.rank !== undefined) {
           matching.sort((a, b) => opts.sort!.rank * (a.rank.localeCompare(b.rank)))
         }
-        return Effect.succeed(matching[0] as Doc | undefined)
+        return Effect.succeed(matching[0])
       }
       return Effect.succeed(undefined)
     }
@@ -334,14 +334,14 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       const value = q.value as string | { $like: string } | undefined
       if (typeof value === "string") {
         const found = channels.find(c => c.value === value && (q.provider === undefined || c.provider === q.provider))
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       if (value && typeof value === "object" && "$like" in value) {
         const pattern = value.$like.replace(/%/g, "")
         const found = channels.find(c =>
           c.value.includes(pattern) && (q.provider === undefined || c.provider === q.provider)
         )
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       return Effect.succeed(undefined)
     }
@@ -349,17 +349,17 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       const q = query as Record<string, unknown>
       if (q._id) {
         const found = persons.find(p => p._id === q._id)
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       if (q.name) {
         if (typeof q.name === "string") {
           const found = persons.find(p => p.name === q.name)
-          return Effect.succeed(found as Doc | undefined)
+          return Effect.succeed(found)
         }
         if (typeof q.name === "object" && "$like" in (q.name as Record<string, unknown>)) {
           const pattern = (q.name as Record<string, string>).$like.replace(/%/g, "")
           const found = persons.find(p => p.name.includes(pattern))
-          return Effect.succeed(found as Doc | undefined)
+          return Effect.succeed(found)
         }
       }
       return Effect.succeed(undefined)
@@ -371,7 +371,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         (q._id && te._id === q._id)
         || (q.title && q.targetClass && te.title === q.title && te.targetClass === q.targetClass)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]

@@ -1,7 +1,7 @@
 import { describe, it } from "@effect/vitest"
 import type { Channel as HulyChannel } from "@hcengineering/chunter"
 import type { Person, SocialIdentity } from "@hcengineering/contact"
-import { type Doc, type PersonId, type Ref, toFindResult } from "@hcengineering/core"
+import { type PersonId, type Ref, toFindResult } from "@hcengineering/core"
 import { Effect } from "effect"
 import { expect } from "vitest"
 import { HulyClient, type HulyClientOperations } from "../../../src/huly/client.js"
@@ -33,25 +33,25 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         const direction = opts.sort.name
         result = result.sort((a, b) => direction * a.name.localeCompare(b.name))
       }
-      return Effect.succeed(toFindResult(result as Array<Doc>))
+      return Effect.succeed(toFindResult(result))
     }
     if (_class === contact.class.SocialIdentity) {
       const q = query as { _id?: { $in?: Array<PersonId> } }
       const ids = q._id?.$in
       if (ids) {
         const filtered = socialIdentities.filter(si => ids.includes(si._id))
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
-      return Effect.succeed(toFindResult(socialIdentities as Array<Doc>))
+      return Effect.succeed(toFindResult(socialIdentities))
     }
     if (_class === contact.class.Person) {
       const q = query as { _id?: { $in?: Array<Ref<Person>> } }
       const personIds = q._id?.$in
       if (personIds) {
         const filtered = persons.filter(p => personIds.includes(p._id))
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
-      return Effect.succeed(toFindResult(persons as Array<Doc>))
+      return Effect.succeed(toFindResult(persons))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -63,7 +63,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         (q.name && c.name === q.name)
         || (q._id && c._id === q._id)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]

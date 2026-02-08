@@ -72,7 +72,7 @@ const markupRefAsDescription = (
   ref: MarkupBlobRef | null
 ): HulyEvent["description"] => ref as HulyEvent["description"]
 
-const emptyEventDescription = "" as HulyEvent["description"]
+const emptyEventDescription: HulyEvent["description"] = ""
 
 // SDK: Data<Event> requires 'user' but server populates from auth context.
 const serverPopulatedUser: HulyEvent["user"] = "" as HulyEvent["user"]

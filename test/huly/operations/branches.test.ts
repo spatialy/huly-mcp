@@ -89,16 +89,16 @@ const createComponentTestLayer = (config: {
     if (_class === tracker.class.Component) {
       const q = query as Record<string, unknown>
       const filtered = components.filter(c => q.space === undefined || c.space === q.space)
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     if (_class === contact.class.Person) {
       const q = query as Record<string, unknown>
       if (q._id && typeof q._id === "object" && "$in" in (q._id as Record<string, unknown>)) {
         const ids = (q._id as Record<string, Array<string>>).$in
         const filtered = persons.filter(p => ids.includes(p._id))
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
-      return Effect.succeed(toFindResult(persons as Array<Doc>))
+      return Effect.succeed(toFindResult(persons))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -107,7 +107,7 @@ const createComponentTestLayer = (config: {
     if (_class === tracker.class.Project) {
       const q = query as Record<string, unknown>
       const found = projects.find(p => p.identifier === q.identifier)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === tracker.class.Component) {
       const q = query as Record<string, unknown>
@@ -115,13 +115,13 @@ const createComponentTestLayer = (config: {
         (q.space !== undefined && q._id !== undefined && c.space === q.space && c._id === q._id)
         || (q.space !== undefined && q.label !== undefined && c.space === q.space && c.label === q.label)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === contact.class.Person) {
       const q = query as Record<string, unknown>
       if (q._id) {
         const found = persons.find(p => p._id === q._id)
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       return Effect.succeed(undefined)
     }
@@ -275,25 +275,25 @@ const createThreadTestLayer = (config: {
         const direction = opts.sort.createdOn
         result = result.sort((a, b) => direction * ((a.createdOn ?? 0) - (b.createdOn ?? 0)))
       }
-      return Effect.succeed(toFindResult(result as Array<Doc>))
+      return Effect.succeed(toFindResult(result))
     }
     if (_class === contact.class.SocialIdentity) {
       const q = query as { _id?: { $in?: Array<PersonId> } }
       const ids = q._id?.$in
       if (ids) {
         const filtered = socialIdentities.filter(si => ids.includes(si._id))
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
-      return Effect.succeed(toFindResult(socialIdentities as Array<Doc>))
+      return Effect.succeed(toFindResult(socialIdentities))
     }
     if (_class === contact.class.Person) {
       const q = query as { _id?: { $in?: Array<Ref<Person>> } }
       const personIds = q._id?.$in
       if (personIds) {
         const filtered = persons.filter(p => personIds.includes(p._id))
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
-      return Effect.succeed(toFindResult(persons as Array<Doc>))
+      return Effect.succeed(toFindResult(persons))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -305,7 +305,7 @@ const createThreadTestLayer = (config: {
         (q.name && c.name === q.name)
         || (q._id && c._id === q._id)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === chunter.class.ChatMessage) {
       const q = query as { _id?: Ref<ChatMessage>; space?: Ref<Space> }
@@ -313,7 +313,7 @@ const createThreadTestLayer = (config: {
         (!q._id || m._id === q._id)
         && (!q.space || m.space === q.space)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]

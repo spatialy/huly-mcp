@@ -233,7 +233,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
     if (_class === tracker.class.Project) {
       const identifier = (query as Record<string, unknown>).identifier as string
       const found = projects.find(p => p.identifier === identifier)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === tracker.class.Issue) {
       const q = query as Record<string, unknown>
@@ -242,12 +242,12 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         || (q.number && i.number === q.number)
         || (q.space && i.space === q.space)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === contact.class.Person) {
       const id = (query as Record<string, unknown>)._id as string
       const found = persons.find(p => p._id === id)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]
@@ -1295,7 +1295,7 @@ describe("listWorkSlots", () => {
       if (_class === contact.class.Person) {
         const id = (query as Record<string, unknown>)._id as string
         const found = persons.find(p => p._id === id)
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       return Effect.succeed(undefined)
     }) as HulyClientOperations["findOne"]

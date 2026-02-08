@@ -116,18 +116,18 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         (!q.attachedTo || m.attachedTo === q.attachedTo)
         && (!q.attachedToClass || m.attachedToClass === q.attachedToClass)
       )
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     if (_class === activity.class.Reaction) {
       const q = query as { attachedTo?: Ref<HulyActivityMessage> }
       const filtered = reactions.filter(r => !q.attachedTo || r.attachedTo === q.attachedTo)
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     if (_class === activity.class.SavedMessage) {
-      return Effect.succeed(toFindResult(savedMessages as Array<Doc>))
+      return Effect.succeed(toFindResult(savedMessages))
     }
     if (_class === activity.class.UserMentionInfo) {
-      return Effect.succeed(toFindResult(mentions as Array<Doc>))
+      return Effect.succeed(toFindResult(mentions))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -136,7 +136,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
     if (_class === activity.class.ActivityMessage) {
       const q = query as { _id?: Ref<HulyActivityMessage> }
       const found = activityMessages.find(m => q._id && m._id === q._id)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === activity.class.Reaction) {
       const q = query as { attachedTo?: Ref<HulyActivityMessage>; emoji?: string }
@@ -144,12 +144,12 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         (!q.attachedTo || r.attachedTo === q.attachedTo)
         && (!q.emoji || r.emoji === q.emoji)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === activity.class.SavedMessage) {
       const q = query as { attachedTo?: Ref<HulyActivityMessage> }
       const found = savedMessages.find(s => !q.attachedTo || s.attachedTo === q.attachedTo)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]

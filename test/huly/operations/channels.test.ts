@@ -207,7 +207,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         const direction = opts.sort.name
         result = result.sort((a, b) => direction * a.name.localeCompare(b.name))
       }
-      return Effect.succeed(toFindResult(result as Array<Doc>))
+      return Effect.succeed(toFindResult(result))
     }
     if (_class === chunter.class.ChatMessage) {
       const q = query as Record<string, unknown>
@@ -218,7 +218,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         const direction = opts.sort.createdOn
         result = result.sort((a, b) => direction * ((a.createdOn ?? 0) - (b.createdOn ?? 0)))
       }
-      return Effect.succeed(toFindResult(result as Array<Doc>))
+      return Effect.succeed(toFindResult(result))
     }
     if (_class === chunter.class.ThreadMessage) {
       const q = query as { attachedTo?: Ref<ActivityMessage>; space?: Ref<Space> }
@@ -232,7 +232,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         const direction = opts.sort.createdOn
         result = result.sort((a, b) => direction * ((a.createdOn ?? 0) - (b.createdOn ?? 0)))
       }
-      return Effect.succeed(toFindResult(result as Array<Doc>))
+      return Effect.succeed(toFindResult(result))
     }
     if (_class === chunter.class.DirectMessage) {
       const opts = options as { sort?: Record<string, number> } | undefined
@@ -241,31 +241,31 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         const direction = opts.sort.modifiedOn
         result = result.sort((a, b) => direction * (a.modifiedOn - b.modifiedOn))
       }
-      return Effect.succeed(toFindResult(result as Array<Doc>))
+      return Effect.succeed(toFindResult(result))
     }
     if (_class === contact.class.Person) {
       const q = query as { _id?: { $in?: Array<Ref<Person>> } }
       if (q._id?.$in) {
         const filtered = persons.filter(p => q._id!.$in!.includes(p._id))
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
-      return Effect.succeed(toFindResult(persons as Array<Doc>))
+      return Effect.succeed(toFindResult(persons))
     }
     if (_class === contact.mixin.Employee) {
       const q = query as { personUuid?: { $in?: Array<AccountUuid> } }
       if (q.personUuid?.$in) {
         const filtered = employees.filter(e => e.personUuid !== undefined && q.personUuid!.$in!.includes(e.personUuid))
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
-      return Effect.succeed(toFindResult(employees as Array<Doc>))
+      return Effect.succeed(toFindResult(employees))
     }
     if (_class === contact.class.SocialIdentity) {
       const q = query as { _id?: { $in?: Array<PersonId> } }
       if (q._id?.$in) {
         const filtered = socialIdentities.filter(si => q._id!.$in!.includes(si._id))
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
-      return Effect.succeed(toFindResult(socialIdentities as Array<Doc>))
+      return Effect.succeed(toFindResult(socialIdentities))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -277,7 +277,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         (q.name && c.name === q.name)
         || (q._id && c._id === q._id)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === chunter.class.ChatMessage) {
       const q = query as { _id?: Ref<ChatMessage>; space?: Ref<Space> }
@@ -285,7 +285,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         (!q._id || m._id === q._id)
         && (!q.space || m.space === q.space)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === chunter.class.ThreadMessage) {
       const q = query as { _id?: Ref<HulyThreadMessage>; attachedTo?: Ref<ActivityMessage>; space?: Ref<Space> }
@@ -294,7 +294,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         && (!q.attachedTo || m.attachedTo === q.attachedTo)
         && (!q.space || m.space === q.space)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]

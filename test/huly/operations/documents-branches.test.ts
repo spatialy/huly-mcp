@@ -1,5 +1,5 @@
 import { describe, it } from "@effect/vitest"
-import { type Doc, type MarkupBlobRef, type PersonId, type Ref, type Space, toFindResult } from "@hcengineering/core"
+import { type MarkupBlobRef, type PersonId, type Ref, type Space, toFindResult } from "@hcengineering/core"
 import type { Document as HulyDocument, Teamspace as HulyTeamspace } from "@hcengineering/document"
 import { Effect } from "effect"
 import { expect } from "vitest"
@@ -69,7 +69,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       if (q.archived !== undefined) {
         filtered = filtered.filter(ts => ts.archived === q.archived)
       }
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     if (_class === documentPlugin.class.Document) {
       if (config.captureDocumentQuery) {
@@ -78,7 +78,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       }
       const q = query as Record<string, unknown>
       const filtered = documents.filter(d => d.space === q.space)
-      return Effect.succeed(toFindResult(filtered as Array<Doc>))
+      return Effect.succeed(toFindResult(filtered))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -90,7 +90,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         (q.name && ts.name === q.name)
         || (q._id && ts._id === q._id)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === documentPlugin.class.Document) {
       const q = query as Record<string, unknown>
@@ -99,7 +99,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         || (q.space && q._id && d.space === q.space && d._id === q._id)
         || (q.space && !q.title && !q._id && d.space === q.space)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]
@@ -145,7 +145,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       config.captureUpdateMarkup.called = true
       config.captureUpdateMarkup.markup = markup as string
     }
-    return Effect.succeed(undefined as void)
+    return Effect.succeed(undefined)
   }) as HulyClientOperations["updateMarkup"]
 
   const removeDocImpl: HulyClientOperations["removeDoc"] = (

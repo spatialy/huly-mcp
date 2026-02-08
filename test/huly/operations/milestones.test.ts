@@ -131,7 +131,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
       if (opts?.limit) {
         result = result.slice(0, opts.limit)
       }
-      return Effect.succeed(toFindResult(result as Array<Doc>))
+      return Effect.succeed(toFindResult(result))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -140,7 +140,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
     if (_class === tracker.class.Project) {
       const identifier = (query as Record<string, unknown>).identifier as string
       const found = projects.find(p => p.identifier === identifier)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === tracker.class.Milestone) {
       const q = query as Record<string, unknown>
@@ -148,7 +148,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         (q._id && m._id === q._id)
         || (q.label && m.label === q.label && m.space === q.space)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === tracker.class.Issue) {
       const q = query as Record<string, unknown>
@@ -156,7 +156,7 @@ const createTestLayerWithMocks = (config: MockConfig) => {
         (q.identifier && i.identifier === q.identifier)
         || (q.number && i.number === q.number)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]

@@ -2,7 +2,6 @@ import { describe, it } from "@effect/vitest"
 import {
   type Attribute,
   type Class as HulyClass,
-  type Doc,
   type PersonId,
   type Ref,
   type Space,
@@ -144,10 +143,10 @@ const createMockHulyClientLayer = (config: {
 
   const findAllImpl: HulyClientOperations["findAll"] = ((_class: unknown) => {
     if (_class === tracker.class.Issue) {
-      return Effect.succeed(toFindResult(issues as Array<Doc>))
+      return Effect.succeed(toFindResult(issues))
     }
     if (_class === tracker.class.IssueStatus) {
-      return Effect.succeed(toFindResult(statuses as Array<Doc>))
+      return Effect.succeed(toFindResult(statuses))
     }
     return Effect.succeed(toFindResult([]))
   }) as HulyClientOperations["findAll"]
@@ -156,7 +155,7 @@ const createMockHulyClientLayer = (config: {
     if (_class === tracker.class.Project) {
       const identifier = (query as Record<string, unknown>).identifier as string
       const found = projects.find(p => p.identifier === identifier)
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     if (_class === tracker.class.Issue) {
       const q = query as Record<string, unknown>
@@ -164,7 +163,7 @@ const createMockHulyClientLayer = (config: {
         (q.identifier && i.identifier === q.identifier)
         || (q.number && i.number === q.number)
       )
-      return Effect.succeed(found as Doc | undefined)
+      return Effect.succeed(found)
     }
     return Effect.succeed(undefined)
   }) as HulyClientOperations["findOne"]

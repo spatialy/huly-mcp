@@ -186,18 +186,18 @@ describe("buildSocialIdToPersonNameMap - person resolved (channels.ts line 159)"
         const ids = q._id?.$in
         if (ids) {
           const filtered = config.socialIdentities.filter(si => ids.includes(si._id))
-          return Effect.succeed(toFindResult(filtered as Array<Doc>))
+          return Effect.succeed(toFindResult(filtered))
         }
-        return Effect.succeed(toFindResult(config.socialIdentities as Array<Doc>))
+        return Effect.succeed(toFindResult(config.socialIdentities))
       }
       if (_class === contact.class.Person) {
         const q = query as { _id?: { $in?: Array<Ref<Person>> } }
         const personIds = q._id?.$in
         if (personIds) {
           const filtered = config.persons.filter(p => personIds.includes(p._id))
-          return Effect.succeed(toFindResult(filtered as Array<Doc>))
+          return Effect.succeed(toFindResult(filtered))
         }
-        return Effect.succeed(toFindResult(config.persons as Array<Doc>))
+        return Effect.succeed(toFindResult(config.persons))
       }
       return Effect.succeed(toFindResult([]))
     }) as HulyClientOperations["findAll"]
@@ -291,10 +291,10 @@ describe("channels - buildAccountUuidToNameMap emp.personUuid truthy (line 187)"
 
       const findAllImpl: HulyClientOperations["findAll"] = ((_class: unknown, _query: unknown) => {
         if (_class === chunter.class.DirectMessage) {
-          return Effect.succeed(toFindResult([dm] as Array<Doc>))
+          return Effect.succeed(toFindResult([dm]))
         }
         if (_class === contact.mixin.Employee) {
-          return Effect.succeed(toFindResult([emp1, emp2] as Array<Doc>))
+          return Effect.succeed(toFindResult([emp1, emp2]))
         }
         return Effect.succeed(toFindResult([]))
       }) as HulyClientOperations["findAll"]
@@ -322,7 +322,7 @@ describe("listTeamspaces - description || undefined branches (documents.ts line 
         if (q.archived !== undefined) {
           filtered = filtered.filter(ts => ts.archived === q.archived)
         }
-        return Effect.succeed(toFindResult(filtered as Array<Doc>))
+        return Effect.succeed(toFindResult(filtered))
       }
       return Effect.succeed(toFindResult([]))
     }) as HulyClientOperations["findAll"]
@@ -424,7 +424,7 @@ describe("getIssueTemplate - assignee/component lookup false branches (issue-tem
       if (_class === tracker.class.Project) {
         const q = query as Record<string, unknown>
         const found = config.projects.find(p => p.identifier === q.identifier)
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       if (_class === tracker.class.IssueTemplate) {
         const q = query as Record<string, unknown>
@@ -432,13 +432,13 @@ describe("getIssueTemplate - assignee/component lookup false branches (issue-tem
           (q._id && t._id === q._id && (!q.space || t.space === q.space))
           || (q.title && t.title === q.title && (!q.space || t.space === q.space))
         )
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       if (_class === contact.class.Person) {
         const q = query as Record<string, unknown>
         if (q._id) {
           const found = (config.persons ?? []).find(p => p._id === q._id)
-          return Effect.succeed(found as Doc | undefined)
+          return Effect.succeed(found)
         }
         return Effect.succeed(undefined)
       }
@@ -446,7 +446,7 @@ describe("getIssueTemplate - assignee/component lookup false branches (issue-tem
         const q = query as Record<string, unknown>
         if (q._id) {
           const found = (config.components ?? []).find(c => c._id === q._id)
-          return Effect.succeed(found as Doc | undefined)
+          return Effect.succeed(found)
         }
         return Effect.succeed(undefined)
       }
@@ -529,7 +529,7 @@ describe("getNotification - notif.data truthy branch (notifications.ts line 207)
       if (_class === notification.class.InboxNotification) {
         const q = query as { _id?: Ref<HulyInboxNotification> }
         const found = notifications.find(n => n._id === q._id)
-        return Effect.succeed(found as Doc | undefined)
+        return Effect.succeed(found)
       }
       return Effect.succeed(undefined)
     }) as HulyClientOperations["findOne"]
@@ -668,7 +668,7 @@ describe("listChannels - includeArchived true (channels.ts line 209 true branch)
           if (q.archived !== undefined) {
             channels = channels.filter(c => c.archived === q.archived)
           }
-          return Effect.succeed(toFindResult(channels as Array<Doc>))
+          return Effect.succeed(toFindResult(channels))
         }
         return Effect.succeed(toFindResult([]))
       }) as HulyClientOperations["findAll"]
