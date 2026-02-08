@@ -405,7 +405,7 @@ describe("Contacts Operations", () => {
       })
     })
 
-    // test-revizorro: suspect | only checks Exit.isFailure, not error type or identifier
+    // test-revizorro: approved
     it("fails with PersonNotFoundError when person doesn't exist", async () => {
       const testLayer = createTestLayer({ persons: [] })
 
@@ -414,6 +414,17 @@ describe("Contacts Operations", () => {
       )
 
       expect(Exit.isFailure(result)).toBe(true)
+      if (Exit.isFailure(result)) {
+        const error = result.cause.pipe(
+          (cause) => {
+            if (cause._tag === "Fail") return cause.error
+            return undefined
+          }
+        )
+        expect(error).toBeDefined()
+        expect((error as { _tag: string })._tag).toBe("PersonNotFoundError")
+        expect((error as { identifier: string }).identifier).toBe("nonexistent")
+      }
     })
 
     // test-revizorro: approved
@@ -467,7 +478,7 @@ describe("Contacts Operations", () => {
       expect(result.lastName).toBe("Doe")
     })
 
-    // test-revizorro: suspect | uses toMatchObject for weak assertion, missing verification of firstName/lastName/channels
+    // test-revizorro: approved
     it("finds person by email", async () => {
       const mockPerson = createMockPerson()
       const mockChannel = createMockChannel({ value: "john@example.com" })
@@ -481,13 +492,16 @@ describe("Contacts Operations", () => {
         getPerson({ email: Email.make("john@example.com") }).pipe(Effect.provide(testLayer))
       )
 
-      expect(result).toMatchObject({
-        id: "person-123",
-        email: "john@example.com"
-      })
+      expect(result.id).toBe("person-123")
+      expect(result.email).toBe("john@example.com")
+      expect(result.firstName).toBe("John")
+      expect(result.lastName).toBe("Doe")
+      expect(result.channels).toBeDefined()
+      expect(result.channels!.length).toBeGreaterThanOrEqual(1)
+      expect(result.channels!.find(c => c.value === "john@example.com")).toBeDefined()
     })
 
-    // test-revizorro: suspect | only checks Exit.isFailure, not error type or identifier — same weakness as line 408
+    // test-revizorro: approved
     it("fails with PersonNotFoundError when email not found", async () => {
       const testLayer = createTestLayer({ persons: [], channels: [] })
 
@@ -496,6 +510,17 @@ describe("Contacts Operations", () => {
       )
 
       expect(Exit.isFailure(result)).toBe(true)
+      if (Exit.isFailure(result)) {
+        const error = result.cause.pipe(
+          (cause) => {
+            if (cause._tag === "Fail") return cause.error
+            return undefined
+          }
+        )
+        expect(error).toBeDefined()
+        expect((error as { _tag: string })._tag).toBe("PersonNotFoundError")
+        expect((error as { identifier: string }).identifier).toBe("nonexistent@example.com")
+      }
     })
   })
 
@@ -622,7 +647,7 @@ describe("Contacts Operations", () => {
       expect(capture.operations?.city).toBe("")
     })
 
-    // test-revizorro: suspect | only checks Exit.isFailure, not error type or identifier
+    // test-revizorro: approved
     it("fails when person not found", async () => {
       const testLayer = createTestLayer({ persons: [] })
 
@@ -631,6 +656,17 @@ describe("Contacts Operations", () => {
       )
 
       expect(Exit.isFailure(result)).toBe(true)
+      if (Exit.isFailure(result)) {
+        const error = result.cause.pipe(
+          (cause) => {
+            if (cause._tag === "Fail") return cause.error
+            return undefined
+          }
+        )
+        expect(error).toBeDefined()
+        expect((error as { _tag: string })._tag).toBe("PersonNotFoundError")
+        expect((error as { identifier: string }).identifier).toBe("nonexistent")
+      }
     })
   })
 

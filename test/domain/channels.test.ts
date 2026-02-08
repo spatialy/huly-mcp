@@ -133,7 +133,7 @@ describe("Channel Domain Schemas", () => {
         expect(result.body).toBe("Hello world")
       }))
 
-    // test-revizorro: suspect | Incomplete assertions: provides 8 fields but only validates 2 (sender, replies). Missing validation of senderId, timestamps, etc.
+    // test-revizorro: approved
     it.effect("parses full message", () =>
       Effect.gen(function*() {
         const result = yield* Schema.decodeUnknown(MessageSummarySchema)({
@@ -146,7 +146,13 @@ describe("Channel Domain Schemas", () => {
           editedOn: 1706510000000,
           replies: 3
         })
+        expect(result.id).toBe("msg-1")
+        expect(result.body).toBe("Hello world")
         expect(result.sender).toBe("John Doe")
+        expect(result.senderId).toBe("person-1")
+        expect(result.createdOn).toBe(1706500000000)
+        expect(result.modifiedOn).toBe(1706500000000)
+        expect(result.editedOn).toBe(1706510000000)
         expect(result.replies).toBe(3)
       }))
   })
@@ -307,7 +313,7 @@ describe("Channel Domain Schemas", () => {
         expect(result).toEqual({ channel: "general" })
       }))
 
-    // test-revizorro: suspect | Missing assertion for 'channel' field; validates 2 of 3 required input fields
+    // test-revizorro: approved
     it.effect("parses with update fields", () =>
       Effect.gen(function*() {
         const result = yield* parseUpdateChannelParams({
@@ -315,6 +321,7 @@ describe("Channel Domain Schemas", () => {
           name: "new-name",
           topic: "Updated topic"
         })
+        expect(result.channel).toBe("general")
         expect(result.name).toBe("new-name")
         expect(result.topic).toBe("Updated topic")
       }))
@@ -494,12 +501,13 @@ describe("Channel Domain Schemas", () => {
         expect(schema.required).toContain("body")
       }))
 
-    // test-revizorro: suspect | Only validates 3 of 5 expected assertions: missing validation that limit is optional and that no required fields exist
+    // test-revizorro: approved
     it.effect("generates JSON Schema for ListDirectMessagesParams", () =>
       Effect.gen(function*() {
         const schema = listDirectMessagesParamsJsonSchema as JsonSchemaObject
         expect(schema.$schema).toBe("http://json-schema.org/draft-07/schema#")
         expect(schema.type).toBe("object")
+        expect(schema.required).toEqual([])
         expect(schema.properties).toHaveProperty("limit")
       }))
   })

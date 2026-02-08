@@ -334,7 +334,7 @@ describe("listComments", () => {
         expect(result).toHaveLength(1)
       }))
 
-    // test-revizorro: suspect | only verifies result length, not that numeric identifier resolved to correct issue
+    // test-revizorro: approved
     it.effect("finds issue by numeric identifier 42", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-test" as Ref<HulyProject>, identifier: "TEST" })
@@ -346,6 +346,7 @@ describe("listComments", () => {
         })
         const messages = [
           makeChatMessage({
+            _id: "msg-42" as Ref<ChatMessage>,
             message: "Found by number",
             attachedTo: "issue-42" as Ref<Doc>
           })
@@ -363,6 +364,8 @@ describe("listComments", () => {
         }).pipe(Effect.provide(testLayer))
 
         expect(result).toHaveLength(1)
+        expect(result[0].id).toBe("msg-42")
+        expect(result[0].body).toBe("Found by number")
       }))
 
     // test-revizorro: approved
@@ -572,15 +575,18 @@ describe("addComment", () => {
         expect(captureAddCollection.attributes?.message).toContain("console.log")
       }))
 
-    // test-revizorro: suspect | Weak assertions: only checks commentId.length > 0 and type, not actual ID value
+    // test-revizorro: approved
     it.effect("returns comment ID and issue identifier", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "HULY" })
         const issue = makeIssue({ identifier: "HULY-42", number: 42 })
 
+        const captureAddCollection: MockConfig["captureAddCollection"] = {}
+
         const testLayer = createTestLayerWithMocks({
           projects: [project],
-          issues: [issue]
+          issues: [issue],
+          captureAddCollection
         })
 
         const result = yield* addComment({
@@ -589,11 +595,10 @@ describe("addComment", () => {
           body: "Comment added"
         }).pipe(Effect.provide(testLayer))
 
-        // commentId is generated using generateId(), so just verify it exists
         expect(result.commentId).toBeDefined()
-        expect(typeof result.commentId).toBe("string")
         expect(result.commentId.length).toBeGreaterThan(0)
         expect(result.issueIdentifier).toBe("HULY-42")
+        expect(captureAddCollection.id).toBe(result.commentId)
       }))
   })
 
@@ -645,7 +650,7 @@ describe("addComment", () => {
 
 describe("updateComment", () => {
   describe("basic functionality", () => {
-    // test-revizorro: suspect | missing assertion: updateComment sets editedOn timestamp but test doesn't verify it
+    // test-revizorro: approved
     it.effect("updates an existing comment", () =>
       Effect.gen(function*() {
         const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "TEST" })
@@ -672,6 +677,8 @@ describe("updateComment", () => {
           captureUpdateDoc
         })
 
+        const before = Date.now()
+
         const result = yield* updateComment({
           project: projectIdentifier("TEST"),
           issueIdentifier: issueIdentifier("TEST-1"),
@@ -679,10 +686,15 @@ describe("updateComment", () => {
           body: "Updated comment body"
         }).pipe(Effect.provide(testLayer))
 
+        const after = Date.now()
+
         expect(result.commentId).toBe("comment-abc")
         expect(result.issueIdentifier).toBe("TEST-1")
         expect(result.updated).toBe(true)
         expect(captureUpdateDoc.operations?.message).toBe("Updated comment body")
+        const editedOn = captureUpdateDoc.operations?.editedOn as number
+        expect(editedOn).toBeGreaterThanOrEqual(before)
+        expect(editedOn).toBeLessThanOrEqual(after)
       }))
 
     // test-revizorro: approved

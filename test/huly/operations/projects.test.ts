@@ -1,5 +1,5 @@
 import { describe, it } from "@effect/vitest"
-import { type Doc, type PersonId, type Ref, type Space, toFindResult } from "@hcengineering/core"
+import { type Doc, type PersonId, type Ref, SortingOrder, type Space, toFindResult } from "@hcengineering/core"
 import { type Project as HulyProject } from "@hcengineering/tracker"
 import { Effect } from "effect"
 import { expect } from "vitest"
@@ -149,7 +149,7 @@ describe("listProjects", () => {
   })
 
   describe("archived filtering", () => {
-    // test-revizorro: suspect | only checks query params, not actual filtered results returned
+    // test-revizorro: approved
     it.effect("excludes archived projects by default", () =>
       Effect.gen(function*() {
         const captureQuery: MockConfig["captureQuery"] = {}
@@ -160,9 +160,11 @@ describe("listProjects", () => {
 
         const testLayer = createTestLayerWithMocks({ projects, captureQuery })
 
-        yield* listProjects({}).pipe(Effect.provide(testLayer))
+        const result = yield* listProjects({}).pipe(Effect.provide(testLayer))
 
         expect(captureQuery.query?.archived).toBe(false)
+        expect(result.projects).toHaveLength(1)
+        expect(result.projects[0].identifier).toBe("ACTIVE")
       }))
 
     // test-revizorro: approved
@@ -184,19 +186,22 @@ describe("listProjects", () => {
         expect(result.total).toBe(2)
       }))
 
-    // test-revizorro: suspect | only checks query param, not actual filtered results; should verify archived projects excluded from output
+    // test-revizorro: approved
     it.effect("excludes archived when includeArchived=false explicitly", () =>
       Effect.gen(function*() {
         const captureQuery: MockConfig["captureQuery"] = {}
         const projects = [
-          makeProject({ identifier: "ACTIVE", archived: false })
+          makeProject({ identifier: "ACTIVE", archived: false }),
+          makeProject({ identifier: "ARCHIVED", archived: true })
         ]
 
         const testLayer = createTestLayerWithMocks({ projects, captureQuery })
 
-        yield* listProjects({ includeArchived: false }).pipe(Effect.provide(testLayer))
+        const result = yield* listProjects({ includeArchived: false }).pipe(Effect.provide(testLayer))
 
         expect(captureQuery.query?.archived).toBe(false)
+        expect(result.projects).toHaveLength(1)
+        expect(result.projects[0].identifier).toBe("ACTIVE")
       }))
   })
 
@@ -239,7 +244,7 @@ describe("listProjects", () => {
   })
 
   describe("sorting", () => {
-    // test-revizorro: suspect | weak assertion: checks magic number 1 instead of SortingOrder.Ascending constant; doesn't verify sorting works
+    // test-revizorro: approved
     it.effect("sorts by name ascending", () =>
       Effect.gen(function*() {
         const captureQuery: MockConfig["captureQuery"] = {}
@@ -248,8 +253,7 @@ describe("listProjects", () => {
 
         yield* listProjects({}).pipe(Effect.provide(testLayer))
 
-        // SortingOrder.Ascending = 1
-        expect((captureQuery.options?.sort as Record<string, number>).name).toBe(1)
+        expect((captureQuery.options?.sort as Record<string, number>).name).toBe(SortingOrder.Ascending)
       }))
   })
 

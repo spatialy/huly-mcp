@@ -393,7 +393,7 @@ describe("removeReaction", () => {
       expect((error as ReactionNotFoundError).emoji).toBe(":nonexistent:")
     }))
 
-  // test-revizorro: suspect | Missing assertion: doesn't verify the other reaction wasn't removed
+  // test-revizorro: approved
   it.effect("matches on both messageId and emoji", () =>
     Effect.gen(function*() {
       const reactions = [
@@ -409,7 +409,8 @@ describe("removeReaction", () => {
         })
       ]
 
-      const testLayer = createTestLayerWithMocks({ reactions })
+      const captureRemoveDoc: MockConfig["captureRemoveDoc"] = {}
+      const testLayer = createTestLayerWithMocks({ reactions, captureRemoveDoc })
 
       const result = yield* removeReaction({
         messageId: activityMessageId("msg-1"),
@@ -418,6 +419,14 @@ describe("removeReaction", () => {
 
       expect(result.messageId).toBe("msg-1")
       expect(result.removed).toBe(true)
+      expect(captureRemoveDoc.called).toBe(true)
+
+      const remainingReactions = yield* listReactions({
+        messageId: activityMessageId("msg-1")
+      }).pipe(Effect.provide(testLayer))
+
+      expect(remainingReactions).toHaveLength(2)
+      expect(remainingReactions.some(r => r.emoji === ":thumbsup:")).toBe(true)
     }))
 })
 

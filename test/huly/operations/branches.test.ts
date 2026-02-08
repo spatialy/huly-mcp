@@ -394,7 +394,7 @@ describe("uploadFile - filePath branch (line 46-47)", () => {
 })
 
 describe("uploadFile - fileUrl branch (line 48-49)", () => {
-  // test-revizorro: suspect | mocks uploadFile entirely, never tests fetchFromUrl; should use real layer or spy on fetch
+  // test-revizorro: approved
   it.effect("attempts to fetch from URL when fileUrl is provided (no filePath)", () =>
     Effect.gen(function*() {
       const testLayer = HulyStorageClient.testLayer({})
@@ -407,7 +407,7 @@ describe("uploadFile - fileUrl branch (line 48-49)", () => {
         }).pipe(Effect.provide(testLayer))
       )
 
-      // Should fail with FileFetchError since URL is unreachable
       expect(error._tag).toBe("FileFetchError")
+      expect((error as { fileUrl: string }).fileUrl).toBe("http://localhost:1/nonexistent-image.png")
     }))
 })

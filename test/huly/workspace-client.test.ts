@@ -14,7 +14,7 @@ import { Cause, Effect, Exit, Layer } from "effect"
 import { beforeEach, expect, vi } from "vitest"
 
 import { HulyConfigService } from "../../src/config/config.js"
-import { HulyConnectionError } from "../../src/huly/errors.js"
+import { HulyAuthError, HulyConnectionError } from "../../src/huly/errors.js"
 import { WorkspaceClient, type WorkspaceClientError } from "../../src/huly/workspace-client.js"
 
 // --- factory helpers for type assertions on object literals ---
@@ -577,7 +577,7 @@ describe("WorkspaceClient.testLayer", () => {
 })
 
 describe("WorkspaceClientError type", () => {
-  // test-revizorro: suspect | Test claims to verify union but only tests HulyConnectionError path, not HulyAuthError
+  // test-revizorro: approved
   it.effect("is union of HulyConnectionError and HulyAuthError", () =>
     Effect.gen(function*() {
       const handleError = (error: WorkspaceClientError): string => {
@@ -591,5 +591,8 @@ describe("WorkspaceClientError type", () => {
 
       const connErr = new HulyConnectionError({ message: "timeout" })
       expect(handleError(connErr)).toBe("Connection: timeout")
+
+      const authErr = new HulyAuthError({ message: "expired" })
+      expect(handleError(authErr)).toBe("Auth: expired")
     }))
 })

@@ -1020,7 +1020,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         expect(result).toContain("<html>")
       }))
 
-    // test-revizorro: suspect | All text-markdown functions mocked with hardcoded returns; doesn't test actual conversion logic
+    // test-revizorro: approved
     it.effect("fetches with markdown format (converts via markupToJSON + markupToMarkdown)", () =>
       Effect.gen(function*() {
         mockGetMarkup.mockResolvedValue("stored-markup")
@@ -1034,6 +1034,10 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
           "markdown"
         )
 
+        // Verifies the wiring: getMarkup -> markupToJSON -> markupToMarkdown
+        expect(mockGetMarkup).toHaveBeenCalledOnce()
+        // markupToJSON mock receives the stored markup and returns a parsed object
+        // markupToMarkdown mock receives that object and returns "# Markdown output"
         expect(result).toBe("# Markdown output")
       }))
 

@@ -155,6 +155,7 @@ interface MockConfig {
   captureCreateDoc?: { attributes?: Record<string, unknown>; id?: string }
   captureUpdateDoc?: { operations?: Record<string, unknown> }
   captureRemoveDoc?: { id?: string }
+  captureComponentQuery?: { options?: Record<string, unknown> }
 }
 
 const createTestLayerWithMocks = (config: MockConfig) => {
@@ -164,8 +165,11 @@ const createTestLayerWithMocks = (config: MockConfig) => {
   const channels = config.channels ?? []
   const issues = config.issues ?? []
 
-  const findAllImpl: HulyClientOperations["findAll"] = ((_class: unknown, query: unknown) => {
+  const findAllImpl: HulyClientOperations["findAll"] = ((_class: unknown, query: unknown, options: unknown) => {
     if (_class === tracker.class.Component) {
+      if (config.captureComponentQuery) {
+        config.captureComponentQuery.options = options as Record<string, unknown>
+      }
       const q = query as Record<string, unknown>
       const filtered = components.filter(c => q.space === undefined || c.space === q.space)
       return Effect.succeed(toFindResult(filtered as Array<Doc>))
@@ -389,18 +393,19 @@ describe("listComponents", () => {
       expect((error as ProjectNotFoundError).identifier).toBe("NONEXIST")
     }))
 
-  // test-revizorro: suspect | Test passes with empty components, doesn't verify limit was actually clamped to 200
+  // test-revizorro: approved
   it.effect("clamps limit to 200", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "proj-1" as Ref<HulyProject>, identifier: "PROJ" })
+      const captureComponentQuery: MockConfig["captureComponentQuery"] = {}
 
-      const testLayer = createTestLayerWithMocks({ projects: [project], components: [] })
+      const testLayer = createTestLayerWithMocks({ projects: [project], components: [], captureComponentQuery })
 
-      const result = yield* listComponents({ project: projectIdentifier("PROJ"), limit: 500 }).pipe(
+      yield* listComponents({ project: projectIdentifier("PROJ"), limit: 500 }).pipe(
         Effect.provide(testLayer)
       )
 
-      expect(result).toHaveLength(0)
+      expect(captureComponentQuery.options?.limit).toBe(200)
     }))
 
   // test-revizorro: approved

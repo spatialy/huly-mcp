@@ -353,7 +353,7 @@ describe("Contacts Extended Coverage", () => {
   })
 
   describe("listPersons with nameSearch", () => {
-    // test-revizorro: suspect | weak assertion: toBeGreaterThanOrEqual(1) doesn't verify filter works, should check exact count and name match
+    // test-revizorro: approved
     it.effect("applies nameSearch filter", () =>
       Effect.gen(function*() {
         const person1 = createMockPerson({
@@ -374,7 +374,9 @@ describe("Contacts Extended Coverage", () => {
           Effect.provide(testLayer)
         )
 
-        expect(result.length).toBeGreaterThanOrEqual(1)
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe("person-1")
+        expect(result[0].name).toBe("Doe,John")
       }))
 
     // test-revizorro: approved

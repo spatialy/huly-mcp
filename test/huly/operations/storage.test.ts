@@ -136,27 +136,6 @@ describe("uploadFile operation", () => {
         expect(capturedBuffer).toBeDefined()
         expect(capturedBuffer).toEqual(binaryData)
       }))
-
-    // test-revizorro: suspect | circular test: asserts mock returns its own mocked URL value instead of testing actual behavior
-    it.effect("returns correct URL format", () =>
-      Effect.gen(function*() {
-        const testLayer = createTestLayerWithMocks({
-          uploadResult: {
-            blobId: "my-blob-id" as Ref<Blob>,
-            contentType: "application/pdf",
-            size: 100,
-            url: "https://app.huly.io/files?workspace=my-ws&file=my-blob-id"
-          }
-        })
-
-        const result = yield* uploadFile({
-          filename: "document.pdf",
-          data: Buffer.from("pdf content").toString("base64"),
-          contentType: mimeType("application/pdf")
-        }).pipe(Effect.provide(testLayer))
-
-        expect(result.url).toBe("https://app.huly.io/files?workspace=my-ws&file=my-blob-id")
-      }))
   })
 
   describe("error handling", () => {
@@ -304,26 +283,21 @@ describe("uploadFile operation", () => {
 })
 
 describe("getFileUrl operation", () => {
-  // test-revizorro: suspect | circular test: asserts mock returns its own interpolated value instead of testing actual behavior
-  it.effect("returns URL for blob ID", () =>
+  // test-revizorro: approved
+  it.effect("delegates to storage client getFileUrl with correct blobId", () =>
     Effect.gen(function*() {
-      const testLayer = createTestLayerWithMocks({})
+      let capturedBlobId: string | undefined
+
+      const testLayer = HulyStorageClient.testLayer({
+        getFileUrl: (blobId) => {
+          capturedBlobId = blobId
+          return `https://test.huly.io/files?workspace=test&file=${blobId}`
+        }
+      })
 
       const url = yield* getFileUrl("blob-abc-123").pipe(Effect.provide(testLayer))
 
+      expect(capturedBlobId).toBe("blob-abc-123")
       expect(url).toContain("blob-abc-123")
-      expect(url).toContain("file=")
-    }))
-
-  // test-revizorro: suspect | circular: mock returns hardcoded value, assertion matches that exact mock value—tests nothing real
-  it.effect("uses storage client getFileUrl", () =>
-    Effect.gen(function*() {
-      const testLayer = HulyStorageClient.testLayer({
-        getFileUrl: (blobId) => `https://custom.cdn/v1/${blobId}`
-      })
-
-      const url = yield* getFileUrl("custom-blob").pipe(Effect.provide(testLayer))
-
-      expect(url).toBe("https://custom.cdn/v1/custom-blob")
     }))
 })

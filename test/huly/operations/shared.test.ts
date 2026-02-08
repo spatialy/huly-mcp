@@ -509,7 +509,7 @@ describe("shared.ts", () => {
   })
 
   describe("findProject", () => {
-    // test-revizorro: suspect | incomplete: only asserts project.identifier, ignores client property in return type
+    // test-revizorro: approved
     it.effect("returns client and project when found", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -518,6 +518,9 @@ describe("shared.ts", () => {
         const result = yield* findProject("TEST").pipe(Effect.provide(testLayer))
 
         expect(result.project.identifier).toBe("TEST")
+        expect(result.client).toBeDefined()
+        expect(result.client.findOne).toBeDefined()
+        expect(result.client.findAll).toBeDefined()
       }))
 
     // test-revizorro: approved
@@ -589,7 +592,7 @@ describe("shared.ts", () => {
         expect(canceled?.isCanceled).toBe(true)
       }))
 
-    // test-revizorro: suspect | weak test: only checks length > 0, doesn't verify extracted names or isDone/isCanceled heuristics
+    // test-revizorro: approved
     it.effect("uses fallback when status query fails", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -607,9 +610,17 @@ describe("shared.ts", () => {
         const result = yield* findProjectWithStatuses("TEST").pipe(Effect.provide(testLayer))
 
         expect(result.project.identifier).toBe("TEST")
-        expect(result.statuses.length).toBeGreaterThan(0)
-        // Fallback uses name extracted from ref ID after last ":"
-        // and heuristics for isDone/isCanceled
+        expect(result.statuses).toHaveLength(2)
+
+        const doneStatus = result.statuses.find(s => s.name === "done-task")
+        expect(doneStatus).toBeDefined()
+        expect(doneStatus!.isDone).toBe(true)
+        expect(doneStatus!.isCanceled).toBe(false)
+
+        const canceledStatus = result.statuses.find(s => s.name === "canceled-item")
+        expect(canceledStatus).toBeDefined()
+        expect(canceledStatus!.isDone).toBe(false)
+        expect(canceledStatus!.isCanceled).toBe(true)
       }))
 
     // test-revizorro: approved
@@ -690,22 +701,48 @@ describe("shared.ts", () => {
         expect(result.issue.identifier).toBe("TEST-1")
       }))
 
-    // test-revizorro: suspect | test name claims fallback but issue exists with full identifier so first lookup succeeds, fallback never executes
+    // test-revizorro: approved
     it.effect("falls back to number-based lookup", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "PROJ" })
-        const issue = makeIssue({ identifier: "PROJ-42", number: 42 })
+        // Issue identifier differs from the full identifier that parseIssueIdentifier would build.
+        // parseIssueIdentifier("42", "PROJ") produces fullIdentifier "PROJ-42",
+        // but the issue's identifier is "PROJ-042". So the first lookup (by identifier) fails,
+        // and the fallback (by number: 42) succeeds.
+        const issue = makeIssue({ identifier: "PROJ-042", number: 42 })
 
-        const testLayer = createTestLayerWithMocks({
-          projects: [project],
-          issues: [issue]
+        const findOneImpl: HulyClientOperations["findOne"] = ((_class: unknown, query: unknown) => {
+          if (_class === tracker.class.Project) {
+            const q = query as Record<string, unknown>
+            if (q.identifier === "PROJ") return Effect.succeed(project as Doc)
+            return Effect.succeed(undefined)
+          }
+          if (_class === tracker.class.Issue) {
+            const q = query as Record<string, unknown>
+            if (q.identifier !== undefined) {
+              const found = [issue].find(i => i.identifier === q.identifier)
+              return Effect.succeed(found as Doc | undefined)
+            }
+            if (q.number !== undefined) {
+              const found = [issue].find(i => i.number === q.number)
+              return Effect.succeed(found as Doc | undefined)
+            }
+            return Effect.succeed(undefined)
+          }
+          return Effect.succeed(undefined)
+        }) as HulyClientOperations["findOne"]
+
+        const testLayer = HulyClient.testLayer({
+          findOne: findOneImpl,
+          findAll: (() => Effect.succeed(toFindResult([]))) as HulyClientOperations["findAll"]
         })
 
         const result = yield* findProjectAndIssue({ project: "PROJ", identifier: "42" }).pipe(
           Effect.provide(testLayer)
         )
 
-        expect(result.issue.identifier).toBe("PROJ-42")
+        expect(result.issue.identifier).toBe("PROJ-042")
+        expect(result.issue.number).toBe(42)
       }))
 
     // test-revizorro: approved
@@ -742,16 +779,39 @@ describe("shared.ts", () => {
         expect(error._tag).toBe("ProjectNotFoundError")
       }))
 
-    // test-revizorro: suspect | test name claims fallback but first lookup (identifier: "TEST-10") succeeds, fallback never executes; weak assertion only checks number
+    // test-revizorro: approved
     it.effect("returns issue found only by number fallback (identifier not matched directly)", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
-        // Issue identifier is TEST-10, but we query with just "10"
-        const issue = makeIssue({ identifier: "TEST-10", number: 10 })
+        // Issue has a different identifier format than what parseIssueIdentifier("10", "TEST") builds ("TEST-10").
+        // The issue's actual identifier is "TEST-010", so the first lookup by identifier fails,
+        // forcing the number-based fallback.
+        const issue = makeIssue({ identifier: "TEST-010", number: 10 })
 
-        const testLayer = createTestLayerWithMocks({
-          projects: [project],
-          issues: [issue]
+        const findOneImpl: HulyClientOperations["findOne"] = ((_class: unknown, query: unknown) => {
+          if (_class === tracker.class.Project) {
+            const q = query as Record<string, unknown>
+            if (q.identifier === "TEST") return Effect.succeed(project as Doc)
+            return Effect.succeed(undefined)
+          }
+          if (_class === tracker.class.Issue) {
+            const q = query as Record<string, unknown>
+            if (q.identifier !== undefined) {
+              const found = [issue].find(i => i.identifier === q.identifier)
+              return Effect.succeed(found as Doc | undefined)
+            }
+            if (q.number !== undefined) {
+              const found = [issue].find(i => i.number === q.number)
+              return Effect.succeed(found as Doc | undefined)
+            }
+            return Effect.succeed(undefined)
+          }
+          return Effect.succeed(undefined)
+        }) as HulyClientOperations["findOne"]
+
+        const testLayer = HulyClient.testLayer({
+          findOne: findOneImpl,
+          findAll: (() => Effect.succeed(toFindResult([]))) as HulyClientOperations["findAll"]
         })
 
         const result = yield* findProjectAndIssue({ project: "TEST", identifier: "10" }).pipe(
@@ -759,6 +819,8 @@ describe("shared.ts", () => {
         )
 
         expect(result.issue.number).toBe(10)
+        expect(result.issue.identifier).toBe("TEST-010")
+        expect(result.project.identifier).toBe("TEST")
       }))
   })
 

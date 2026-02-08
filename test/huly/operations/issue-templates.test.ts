@@ -771,11 +771,12 @@ describe("createIssueFromTemplate", () => {
       })
     }))
 
-  // test-revizorro: suspect | Missing description assertion - only checks title and priority
+  // test-revizorro: approved
   it.effect("overrides template values with provided params", () =>
     Effect.gen(function*() {
       const capture: MockConfig["captureAddCollection"] = {}
-      const testLayer = setupForCreateFromTemplate({ captureAddCollection: capture })
+      const captureUploadMarkup: MockConfig["captureUploadMarkup"] = {}
+      const testLayer = setupForCreateFromTemplate({ captureAddCollection: capture, captureUploadMarkup })
 
       const result = yield* createIssueFromTemplate({
         project: projectIdentifier("TEST"),
@@ -790,6 +791,7 @@ describe("createIssueFromTemplate", () => {
         title: "Custom Title",
         priority: IssuePriority.Low
       })
+      expect(captureUploadMarkup.markup).toBe("Custom description")
     }))
 
   // test-revizorro: approved
@@ -826,7 +828,7 @@ describe("createIssueFromTemplate", () => {
       })
     }))
 
-  // test-revizorro: suspect | Person name is email-formatted to bypass Email.make() constraint; masks real fallback behavior
+  // test-revizorro: approved
   it.effect("falls back to person name as assignee lookup when no email channel", () =>
     Effect.gen(function*() {
       // When template has assignee but person has no email channel,

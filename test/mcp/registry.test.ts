@@ -257,7 +257,7 @@ describe("createNoParamsWorkspaceToolHandler", () => {
       expect(result.content[0].text).toContain("5")
     }))
 
-  // test-revizorro: suspect | missing errorCode assertion for consistency with similar tests at line 218
+  // test-revizorro: approved
   it.effect("returns error when workspace client is undefined", () =>
     Effect.gen(function*() {
       const handler = createNoParamsWorkspaceToolHandler(
@@ -270,10 +270,11 @@ describe("createNoParamsWorkspaceToolHandler", () => {
       const result = yield* Effect.promise(() => handler({}, noopHulyClient, noopStorageClient, undefined))
 
       expect(result.isError).toBe(true)
+      expect(result._meta?.errorCode).toBe(McpErrorCode.InternalError)
       expect(result.content[0].text).toContain("WorkspaceClient not available")
     }))
 
-  // test-revizorro: suspect | missing errorCode assertion that all similar domain error tests include
+  // test-revizorro: approved
   it.effect("returns domain error on operation failure", () =>
     Effect.gen(function*() {
       const handler = createNoParamsWorkspaceToolHandler(
@@ -288,6 +289,7 @@ describe("createNoParamsWorkspaceToolHandler", () => {
       const result = yield* Effect.promise(() => handler({}, noopHulyClient, noopStorageClient, noopWorkspaceClient))
 
       expect(result.isError).toBe(true)
+      expect(result._meta?.errorCode).toBe(McpErrorCode.InternalError)
       expect(result.content[0].text).toContain("ws broke")
     }))
 })

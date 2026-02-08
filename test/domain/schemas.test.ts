@@ -161,7 +161,7 @@ describe("Domain Schemas", () => {
   })
 
   describe("ProjectSchema", () => {
-    // test-revizorro: suspect | Only checks 2 of 6 fields; claims "full" but misses name, description, archived, defaultStatus
+    // test-revizorro: approved
     it.effect("parses full project", () =>
       Effect.gen(function*() {
         const result = yield* parseProject({
@@ -173,6 +173,10 @@ describe("Domain Schemas", () => {
           statuses: ["Open", "In Progress", "Done"]
         })
         expect(result.identifier).toBe("HULY")
+        expect(result.name).toBe("Huly Project")
+        expect(result.description).toBe("Main project")
+        expect(result.archived).toBe(false)
+        expect(result.defaultStatus).toBe("Open")
         expect(result.statuses).toEqual(["Open", "In Progress", "Done"])
       }))
   })
@@ -211,7 +215,7 @@ describe("Domain Schemas", () => {
   })
 
   describe("IssueSchema", () => {
-    // test-revizorro: suspect | Only asserts 2 of 4 required fields (identifier, title, status, project); missing title and status checks
+    // test-revizorro: approved
     it.effect("parses minimal issue", () =>
       Effect.gen(function*() {
         const result = yield* parseIssue({
@@ -221,6 +225,8 @@ describe("Domain Schemas", () => {
           project: "HULY"
         })
         expect(result.identifier).toBe("HULY-123")
+        expect(result.title).toBe("Fix bug")
+        expect(result.status).toBe("Open")
         expect(result.project).toBe("HULY")
       }))
 
@@ -564,7 +570,7 @@ describe("Domain Schemas", () => {
         })
       }))
 
-    // test-revizorro: suspect | Only checks 2 of 5 fields; should verify all required fields like ProjectSummarySchema test at line 150
+    // test-revizorro: approved
     it.effect("parses with description", () =>
       Effect.gen(function*() {
         const result = yield* Schema.decodeUnknown(TeamspaceSummarySchema)({
@@ -574,7 +580,10 @@ describe("Domain Schemas", () => {
           archived: false,
           private: true
         })
+        expect(result.id).toBe("ts-1")
+        expect(result.name).toBe("My Docs")
         expect(result.description).toBe("Team documentation")
+        expect(result.archived).toBe(false)
         expect(result.private).toBe(true)
       }))
   })
@@ -805,12 +814,14 @@ describe("Domain Schemas", () => {
         expect(schema.properties).toHaveProperty("limit")
       }))
 
-    // test-revizorro: suspect | Missing schema.$schema check and optional field properties; compare line 825 for consistency pattern
+    // test-revizorro: approved
     it.effect("generates JSON Schema for ListDocumentsParams", () =>
       Effect.gen(function*() {
         const schema = listDocumentsParamsJsonSchema as JsonSchemaObject
+        expect(schema.$schema).toBe("http://json-schema.org/draft-07/schema#")
         expect(schema.type).toBe("object")
         expect(schema.required).toContain("teamspace")
+        expect(schema.properties).toHaveProperty("limit")
       }))
 
     // test-revizorro: approved

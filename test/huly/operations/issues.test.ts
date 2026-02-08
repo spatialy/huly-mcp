@@ -310,13 +310,24 @@ const createTestLayerWithMocks = (config: MockConfig) => {
     }
     if (_class === tracker.class.Issue) {
       const q = query as Record<string, unknown>
-      // Find by identifier, number, or space (for rank queries)
-      const found = issues.find(i =>
-        (q.identifier && i.identifier === q.identifier)
-        || (q.number && i.number === q.number)
-        || (q.space && i.space === q.space)
-      )
-      return Effect.succeed(found as Doc | undefined)
+      const opts = options as { sort?: Record<string, number> } | undefined
+      // Find by identifier or number
+      if (q.identifier || q.number) {
+        const found = issues.find(i =>
+          (q.identifier && i.identifier === q.identifier)
+          || (q.number && i.number === q.number)
+        )
+        return Effect.succeed(found as Doc | undefined)
+      }
+      // Space-only query (rank queries) - respect sort option
+      if (q.space) {
+        const matching = issues.filter(i => i.space === q.space)
+        if (opts?.sort?.rank !== undefined) {
+          matching.sort((a, b) => opts.sort!.rank * (a.rank.localeCompare(b.rank)))
+        }
+        return Effect.succeed(matching[0] as Doc | undefined)
+      }
+      return Effect.succeed(undefined)
     }
     if (_class === contact.class.Channel) {
       const q = query as Record<string, unknown>
@@ -485,16 +496,16 @@ describe("listIssues", () => {
         expect(result[1].identifier).toBe("TEST-2")
       }))
 
-    // test-revizorro: suspect | priority values tested, but order matches sort order by coincidence - masks transformation bugs
+    // test-revizorro: approved
     it.effect("transforms priority correctly", () =>
       Effect.gen(function*() {
         const project = makeProject()
         const issues = [
-          makeIssue({ identifier: "TEST-1", priority: IssuePriority.Urgent, modifiedOn: 5000 }),
-          makeIssue({ identifier: "TEST-2", priority: IssuePriority.High, modifiedOn: 4000 }),
-          makeIssue({ identifier: "TEST-3", priority: IssuePriority.Medium, modifiedOn: 3000 }),
-          makeIssue({ identifier: "TEST-4", priority: IssuePriority.Low, modifiedOn: 2000 }),
-          makeIssue({ identifier: "TEST-5", priority: IssuePriority.NoPriority, modifiedOn: 1000 })
+          makeIssue({ identifier: "TEST-1", priority: IssuePriority.Urgent, modifiedOn: 1000 }),
+          makeIssue({ identifier: "TEST-2", priority: IssuePriority.High, modifiedOn: 5000 }),
+          makeIssue({ identifier: "TEST-3", priority: IssuePriority.Medium, modifiedOn: 2000 }),
+          makeIssue({ identifier: "TEST-4", priority: IssuePriority.Low, modifiedOn: 4000 }),
+          makeIssue({ identifier: "TEST-5", priority: IssuePriority.NoPriority, modifiedOn: 3000 })
         ]
         const statuses = [makeStatus({ _id: "status-open" as Ref<Status>, name: "Open" })]
 
@@ -506,11 +517,12 @@ describe("listIssues", () => {
 
         const result = yield* listIssues({ project: projectIdentifier("TEST") }).pipe(Effect.provide(testLayer))
 
-        expect(result[0].priority).toBe("urgent")
-        expect(result[1].priority).toBe("high")
-        expect(result[2].priority).toBe("medium")
-        expect(result[3].priority).toBe("low")
-        expect(result[4].priority).toBe("no-priority")
+        const byIdentifier = (id: string) => result.find(r => r.identifier === id)
+        expect(byIdentifier("TEST-1")?.priority).toBe("urgent")
+        expect(byIdentifier("TEST-2")?.priority).toBe("high")
+        expect(byIdentifier("TEST-3")?.priority).toBe("medium")
+        expect(byIdentifier("TEST-4")?.priority).toBe("low")
+        expect(byIdentifier("TEST-5")?.priority).toBe("no-priority")
       }))
 
     // test-revizorro: approved
@@ -1227,20 +1239,21 @@ describe("createIssue", () => {
         expect(captureAddCollection.attributes?.status).toBe("status-default")
       }))
 
-    // test-revizorro: suspect | Mock findOne ignores sort option for rank queries - doesn't test actual rank calculation
-    it.effect("calculates rank for new issue", () =>
+    // test-revizorro: approved
+    it.effect("calculates rank for new issue based on highest-ranked existing issue", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST", sequence: 1 })
-        const existingIssue = makeIssue({ rank: "0|hzzzzz:" })
+        const lowRankedIssue = makeIssue({ identifier: "TEST-1", number: 1, rank: "0|aaaaaa:" })
+        const highRankedIssue = makeIssue({ identifier: "TEST-2", number: 2, rank: "0|hzzzzz:" })
 
         const captureAddCollection: MockConfig["captureAddCollection"] = {}
 
         const testLayer = createTestLayerWithMocks({
           projects: [project],
-          issues: [existingIssue],
+          issues: [lowRankedIssue, highRankedIssue],
           statuses: [],
           captureAddCollection,
-          updateDocResult: { object: { sequence: 2 } }
+          updateDocResult: { object: { sequence: 3 } }
         })
 
         yield* createIssue({
@@ -1248,10 +1261,12 @@ describe("createIssue", () => {
           title: "Ranked Issue"
         }).pipe(Effect.provide(testLayer))
 
-        // Should have calculated a rank greater than the existing issue's rank
-        expect(captureAddCollection.attributes?.rank).toBeDefined()
-        expect(typeof captureAddCollection.attributes?.rank).toBe("string")
-        expect((captureAddCollection.attributes?.rank as string) > existingIssue.rank).toBe(true)
+        const newRank = captureAddCollection.attributes?.rank as string
+        expect(newRank).toBeDefined()
+        expect(typeof newRank).toBe("string")
+        // Rank must be greater than the highest existing rank (not the lowest)
+        expect(newRank > highRankedIssue.rank).toBe(true)
+        expect(newRank > lowRankedIssue.rank).toBe(true)
       }))
 
     // test-revizorro: approved
@@ -1739,7 +1754,7 @@ describe("updateIssue", () => {
   })
 
   describe("identifier parsing", () => {
-    // test-revizorro: suspect | Only checks identifier, doesn't verify update occurred or title changed
+    // test-revizorro: approved
     it.effect("finds issue by full identifier", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "HULY" })
@@ -1762,6 +1777,8 @@ describe("updateIssue", () => {
         }).pipe(Effect.provide(testLayer))
 
         expect(result.identifier).toBe("HULY-42")
+        expect(result.updated).toBe(true)
+        expect(captureUpdateDoc.operations).toEqual({ title: "Updated" })
       }))
 
     // test-revizorro: approved

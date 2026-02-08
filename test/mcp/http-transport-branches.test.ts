@@ -95,7 +95,7 @@ describe("HTTP Transport - Branch Coverage", () => {
   })
 
   describe("closeHttpServer - error path (lines 181-188)", () => {
-    // test-revizorro: suspect | Only checks closeFn called, doesn't verify error was caught/handled; should assert stderr written and program didn't fail
+    // test-revizorro: approved
     it("should handle server close error gracefully", async () => {
       const { app } = createMockExpressApp()
       const closeFn = vi.fn((cb?: (err?: Error) => void) => {
@@ -112,6 +112,8 @@ describe("HTTP Transport - Branch Coverage", () => {
 
       const mockMcpServer = createMockMcpServer()
 
+      const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
+
       const program = startHttpTransport(
         { port: 3000, host: "127.0.0.1" },
         () => mockMcpServer
@@ -127,8 +129,14 @@ describe("HTTP Transport - Branch Coverage", () => {
         )
       )
 
-      // Verify close was called even though it errored
       expect(closeFn).toHaveBeenCalled()
+      // Verify the error was caught and logged to stderr rather than crashing
+      const closeErrorCall = stderrSpy.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("Server close error")
+      )
+      expect(closeErrorCall).toBeDefined()
+
+      stderrSpy.mockRestore()
     })
   })
 

@@ -191,7 +191,7 @@ describe("HulyClient.testLayer with custom operations", () => {
       expect(results).toHaveLength(2)
     }))
 
-  // test-revizorro: suspect | Weak assertion: only checks toBeDefined(), doesn't validate returned doc matches mock
+  // test-revizorro: approved
   it.effect("custom findOne returns provided value", () =>
     Effect.gen(function*() {
       const doc = { _id: "d1", title: "Found" }
@@ -205,6 +205,8 @@ describe("HulyClient.testLayer with custom operations", () => {
         {} as DocumentQuery<TestDoc>
       )
       expect(result).toBeDefined()
+      expect(result!._id).toBe("d1")
+      expect((result as TestDoc).title).toBe("Found")
     }))
 
   // test-revizorro: approved
@@ -379,7 +381,7 @@ describe("WorkspaceClient.testLayer defaults", () => {
 })
 
 describe("WorkspaceClient.testLayer with custom operations", () => {
-  // test-revizorro: suspect | Only checks length, not actual data; should verify members[0].person === "p1"
+  // test-revizorro: approved
   it.effect("custom getWorkspaceMembers returns provided data", () =>
     Effect.gen(function*() {
       const mockMembers = [{ person: "p1" }]
@@ -392,6 +394,7 @@ describe("WorkspaceClient.testLayer with custom operations", () => {
       const client = yield* WorkspaceClient.pipe(Effect.provide(layer))
       const members = yield* client.getWorkspaceMembers()
       expect(members).toHaveLength(1)
+      expect(members[0].person).toBe("p1")
     }))
 
   // test-revizorro: approved

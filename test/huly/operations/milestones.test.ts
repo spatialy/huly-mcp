@@ -387,13 +387,14 @@ describe("getMilestone", () => {
         expect(result.project).toBe("TEST")
       }))
 
-    // test-revizorro: suspect | only asserts id field; should verify label/project like preceding test to ensure correct milestone lookup
+    // test-revizorro: approved
     it.effect("returns milestone by ID", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
         const milestone = makeMilestone({
           _id: "milestone-abc" as Ref<HulyMilestone>,
-          label: "Sprint 1"
+          label: "Sprint 1",
+          status: MilestoneStatus.InProgress
         })
 
         const testLayer = createTestLayerWithMocks({
@@ -409,6 +410,9 @@ describe("getMilestone", () => {
         )
 
         expect(result.id).toBe("milestone-abc")
+        expect(result.label).toBe("Sprint 1")
+        expect(result.project).toBe("TEST")
+        expect(result.status).toBe("in-progress")
       }))
 
     // test-revizorro: approved
@@ -584,14 +588,16 @@ describe("createMilestone", () => {
         expect(captureCreateDoc.attributes?.comments).toBe(0)
       }))
 
-    // test-revizorro: suspect | trivial assertions (toBeDefined, typeof checks) don't verify actual result structure or label
-    it.effect("returns created milestone ID", () =>
+    // test-revizorro: approved
+    it.effect("returns created milestone with id and label", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
+        const captureCreateDoc: MockConfig["captureCreateDoc"] = {}
 
         const testLayer = createTestLayerWithMocks({
           projects: [project],
-          milestones: []
+          milestones: [],
+          captureCreateDoc
         })
 
         const result = yield* createMilestone({
@@ -600,8 +606,8 @@ describe("createMilestone", () => {
           targetDate: 1706500000000
         }).pipe(Effect.provide(testLayer))
 
-        expect(result.id).toBeDefined()
-        expect(typeof result.id).toBe("string")
+        expect(result.id).toBe(captureCreateDoc.id)
+        expect(result.label).toBe("Sprint 1")
       }))
   })
 
@@ -653,7 +659,7 @@ describe("updateMilestone", () => {
         expect(captureUpdateDoc.operations?.label).toBe("Sprint 1 - Updated")
       }))
 
-    // test-revizorro: suspect | Missing result.updated assertion - test only validates mock, not actual return behavior
+    // test-revizorro: approved
     it.effect("updates milestone description", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -666,12 +672,13 @@ describe("updateMilestone", () => {
           captureUpdateDoc
         })
 
-        yield* updateMilestone({
+        const result = yield* updateMilestone({
           project: projectIdentifier("TEST"),
           milestone: milestoneIdentifier("Sprint 1"),
           description: "Updated description"
         }).pipe(Effect.provide(testLayer))
 
+        expect(result.updated).toBe(true)
         expect(captureUpdateDoc.operations?.description).toBe("Updated description")
       }))
 
@@ -921,7 +928,7 @@ describe("setIssueMilestone", () => {
         expect(captureUpdateDoc.operations?.milestone).toBeNull()
       }))
 
-    // test-revizorro: suspect | Incomplete assertions: only checks identifier, not milestoneSet or updateDoc operations like adjacent tests
+    // test-revizorro: approved
     it.effect("finds issue by number", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -943,6 +950,8 @@ describe("setIssueMilestone", () => {
         }).pipe(Effect.provide(testLayer))
 
         expect(result.identifier).toBe("TEST-42")
+        expect(result.milestoneSet).toBe(true)
+        expect(captureUpdateDoc.operations?.milestone).toBe("m-1")
       }))
   })
 
@@ -1043,7 +1052,7 @@ describe("deleteMilestone", () => {
         expect(captureRemoveDoc.called).toBe(true)
       }))
 
-    // test-revizorro: suspect | missing assertion - doesn't verify captureRemoveDoc.called like the label deletion test does
+    // test-revizorro: approved
     it.effect("deletes milestone by ID", () =>
       Effect.gen(function*() {
         const project = makeProject({ identifier: "TEST" })
@@ -1063,6 +1072,7 @@ describe("deleteMilestone", () => {
 
         expect(result.id).toBe("milestone-abc")
         expect(result.deleted).toBe(true)
+        expect(captureRemoveDoc.called).toBe(true)
       }))
   })
 

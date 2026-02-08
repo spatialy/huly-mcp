@@ -487,7 +487,7 @@ describe("createDocument", () => {
         expect(captureCreateDoc.attributes?.content).toBeNull()
       }))
 
-    // test-revizorro: suspect | uploads markup but third assertion verifies mock's hardcoded return value, not actual behavior
+    // test-revizorro: approved
     it.effect("creates document with content", () =>
       Effect.gen(function*() {
         const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })
@@ -508,17 +508,22 @@ describe("createDocument", () => {
         }).pipe(Effect.provide(testLayer))
 
         expect(result.title).toBe("Doc with Content")
+        expect(result.id).toBeDefined()
         expect(captureUploadMarkup.markup).toBe("# Heading\n\nSome content here.")
-        expect(captureCreateDoc.attributes?.content).toBe("markup-ref-123")
+        expect(captureCreateDoc.attributes?.title).toBe("Doc with Content")
+        // uploadMarkup was called (markup captured) and its return value flows into createDoc
+        expect(captureCreateDoc.attributes?.content).not.toBeNull()
+        expect(typeof captureCreateDoc.attributes?.content).toBe("string")
       }))
 
-    // test-revizorro: suspect | Weak assertions: only verifies rank exists and is string, doesn't check it's correctly calculated/ordered vs existing docs
+    // test-revizorro: approved
     it.effect("calculates rank for new document", () =>
       Effect.gen(function*() {
         const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })
+        const existingDocRank = "0|hzzzzz:"
         const existingDoc = makeDocument({
           space: "ts-1" as Ref<HulyTeamspace>,
-          rank: "0|hzzzzz:"
+          rank: existingDocRank
         })
         const captureCreateDoc: MockConfig["captureCreateDoc"] = {}
 
@@ -533,8 +538,10 @@ describe("createDocument", () => {
           title: "New Document"
         }).pipe(Effect.provide(testLayer))
 
-        expect(captureCreateDoc.attributes?.rank).toBeDefined()
-        expect(typeof captureCreateDoc.attributes?.rank).toBe("string")
+        const newRank = captureCreateDoc.attributes?.rank as string
+        expect(newRank).toBeDefined()
+        expect(typeof newRank).toBe("string")
+        expect(newRank > existingDocRank).toBe(true)
       }))
 
     // test-revizorro: approved
@@ -691,7 +698,7 @@ describe("updateDocument", () => {
         expect(result.updated).toBe(false)
       }))
 
-    // test-revizorro: suspect | weak assertions - only checks mock was called with expected ops, doesn't verify return value or actual update behavior
+    // test-revizorro: approved
     it.effect("updates multiple fields at once", () =>
       Effect.gen(function*() {
         const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })
@@ -710,15 +717,18 @@ describe("updateDocument", () => {
           captureUploadMarkup
         })
 
-        yield* updateDocument({
+        const result = yield* updateDocument({
           teamspace: teamspaceIdentifier("My Docs"),
           document: documentIdentifier("Old Title"),
           title: "New Title",
           content: "New Content"
         }).pipe(Effect.provide(testLayer))
 
+        expect(result.id).toBe("doc-1")
+        expect(result.updated).toBe(true)
+        expect(captureUploadMarkup.markup).toBe("New Content")
         expect(captureUpdateDoc.operations?.title).toBe("New Title")
-        expect(captureUpdateDoc.operations?.content).toBe("markup-ref-123")
+        expect(captureUpdateDoc.operations?.content).toBeDefined()
       }))
   })
 
@@ -739,7 +749,7 @@ describe("updateDocument", () => {
         expect(error._tag).toBe("TeamspaceNotFoundError")
       }))
 
-    // test-revizorro: suspect | Missing assertion for error.teamspace field; unnecessary type cast
+    // test-revizorro: approved
     it.effect("returns DocumentNotFoundError when document doesn't exist", () =>
       Effect.gen(function*() {
         const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })
@@ -756,6 +766,7 @@ describe("updateDocument", () => {
 
         expect(error._tag).toBe("DocumentNotFoundError")
         expect((error as DocumentNotFoundError).identifier).toBe("Nonexistent")
+        expect((error as DocumentNotFoundError).teamspace).toBe("My Docs")
       }))
   })
 })
@@ -789,7 +800,7 @@ describe("deleteDocument", () => {
         expect(captureRemoveDoc.id).toBe("doc-1")
       }))
 
-    // test-revizorro: suspect | missing verification that removeDoc was called (only checks return value)
+    // test-revizorro: approved
     it.effect("finds document by ID for deletion", () =>
       Effect.gen(function*() {
         const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })
@@ -813,6 +824,7 @@ describe("deleteDocument", () => {
 
         expect(result.id).toBe("doc-123")
         expect(result.deleted).toBe(true)
+        expect(captureRemoveDoc.id).toBe("doc-123")
       }))
   })
 

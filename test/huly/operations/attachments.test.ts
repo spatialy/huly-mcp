@@ -376,7 +376,7 @@ describe("getAttachment", () => {
 })
 
 describe("addAttachment", () => {
-  // test-revizorro: suspect | weak assertions (toBeDefined only), missing return value validation
+  // test-revizorro: approved
   it.effect("uploads and attaches file via base64 data", () =>
     Effect.gen(function*() {
       const captureAddCollection: MockConfig["captureAddCollection"] = {}
@@ -391,9 +391,12 @@ describe("addAttachment", () => {
         data: Buffer.from("hello world").toString("base64")
       }).pipe(Effect.provide(testLayer))
 
-      expect(result.attachmentId).toBeDefined()
-      expect(result.blobId).toBeDefined()
-      expect(result.url).toBeDefined()
+      expect(typeof result.attachmentId).toBe("string")
+      expect(result.attachmentId.length).toBeGreaterThan(0)
+      expect(typeof result.blobId).toBe("string")
+      expect(result.blobId.length).toBeGreaterThan(0)
+      expect(typeof result.url).toBe("string")
+      expect(result.url.length).toBeGreaterThan(0)
       expect(captureAddCollection.attributes?.name).toBe("test.txt")
       expect(captureAddCollection.attributes?.type).toBe("text/plain")
     }))
@@ -507,7 +510,7 @@ describe("updateAttachment", () => {
       expect(result.updated).toBe(false)
     }))
 
-  // test-revizorro: suspect | checks only error tag, missing attachmentId assertion like similar tests
+  // test-revizorro: approved
   it.effect("fails with AttachmentNotFoundError when not found", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayer({})
@@ -519,6 +522,7 @@ describe("updateAttachment", () => {
       )
 
       expect(error._tag).toBe("AttachmentNotFoundError")
+      expect((error as AttachmentNotFoundError).attachmentId).toBe("nonexistent")
     }))
 })
 
@@ -638,7 +642,7 @@ describe("downloadAttachment", () => {
 })
 
 describe("addIssueAttachment", () => {
-  // test-revizorro: suspect | weak assertions (toBeDefined only), doesn't validate issue lookup or object refs
+  // test-revizorro: approved
   it.effect("uploads and attaches file to issue", () =>
     Effect.gen(function*() {
       const project = makeProject({ _id: "project-1" as Ref<HulyProject>, identifier: "TEST" })
@@ -663,14 +667,19 @@ describe("addIssueAttachment", () => {
         data: Buffer.from("fake-png-data").toString("base64")
       }).pipe(Effect.provide(testLayer))
 
-      expect(result.attachmentId).toBeDefined()
-      expect(result.url).toBeDefined()
+      expect(typeof result.attachmentId).toBe("string")
+      expect(result.attachmentId.length).toBeGreaterThan(0)
+      expect(typeof result.url).toBe("string")
+      expect(result.url.length).toBeGreaterThan(0)
+      expect(typeof result.blobId).toBe("string")
+      expect(result.blobId.length).toBeGreaterThan(0)
       expect(captureAddCollection.attributes?.name).toBe("screenshot.png")
+      expect(captureAddCollection.attributes?.type).toBe("image/png")
     }))
 })
 
 describe("addDocumentAttachment", () => {
-  // test-revizorro: suspect | weak assertions (toBeDefined), no verification of actual attachment creation or returned values
+  // test-revizorro: approved
   it.effect("uploads and attaches file to document", () =>
     Effect.gen(function*() {
       const teamspace = makeTeamspace({ _id: "ts-1" as Ref<HulyTeamspace>, name: "My Docs" })
@@ -694,8 +703,13 @@ describe("addDocumentAttachment", () => {
         data: Buffer.from("col1,col2\n1,2").toString("base64")
       }).pipe(Effect.provide(testLayer))
 
-      expect(result.attachmentId).toBeDefined()
-      expect(result.url).toBeDefined()
+      expect(typeof result.attachmentId).toBe("string")
+      expect(result.attachmentId.length).toBeGreaterThan(0)
+      expect(typeof result.url).toBe("string")
+      expect(result.url.length).toBeGreaterThan(0)
+      expect(typeof result.blobId).toBe("string")
+      expect(result.blobId.length).toBeGreaterThan(0)
       expect(captureAddCollection.attributes?.name).toBe("data.csv")
+      expect(captureAddCollection.attributes?.type).toBe("text/csv")
     }))
 })

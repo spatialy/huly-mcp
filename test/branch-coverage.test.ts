@@ -321,13 +321,15 @@ describe("createIssueFromTemplate - person not found for template assignee (issu
     ...overrides
   })
 
-  // test-revizorro: suspect | only checks issueId exists, doesn't verify assignee field
+  // test-revizorro: approved
   it.effect("uses no assignee when template.assignee person is not found in DB", () =>
     Effect.gen(function*() {
       const project = makeProject()
       const template = makeTemplate({
         assignee: "nonexistent-person" as Ref<Person>
       })
+
+      let capturedAttributes: Record<string, unknown> | undefined
 
       const findOneImpl: HulyClientOperations["findOne"] = ((_class: unknown, query: unknown) => {
         if (_class === tracker.class.Project) {
@@ -368,9 +370,10 @@ describe("createIssueFromTemplate - person not found for template assignee (issu
         _attachedTo: unknown,
         _attachedToClass: unknown,
         _collection: unknown,
-        _attributes: unknown,
+        attributes: unknown,
         id?: unknown
       ) => {
+        capturedAttributes = attributes as Record<string, unknown>
         return Effect.succeed((id ?? "new-issue-id") as Ref<Doc>)
       }) as HulyClientOperations["addCollection"]
 
@@ -392,6 +395,7 @@ describe("createIssueFromTemplate - person not found for template assignee (issu
       }).pipe(Effect.provide(testLayer))
 
       expect(result.issueId).toBeDefined()
+      expect(capturedAttributes?.assignee).toBeNull()
     }))
 })
 
@@ -439,7 +443,7 @@ describe("hasFileSource - || short-circuit branches (attachments.ts lines 144-14
       expect(result.fileUrl).toBeUndefined()
     }))
 
-  // test-revizorro: suspect | missing assertions for filePath/data undefined, incomplete validation of "ONLY fileUrl" requirement
+  // test-revizorro: approved
   it.effect("accepts AddIssueAttachmentParams with ONLY fileUrl", () =>
     Effect.gen(function*() {
       const result = yield* parseAddIssueAttachmentParams({
@@ -451,6 +455,8 @@ describe("hasFileSource - || short-circuit branches (attachments.ts lines 144-14
       })
 
       expect(result.fileUrl).toBe("https://example.com/doc.pdf")
+      expect(result.filePath).toBeUndefined()
+      expect(result.data).toBeUndefined()
     }))
 
   // test-revizorro: approved

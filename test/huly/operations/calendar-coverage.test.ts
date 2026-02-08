@@ -106,6 +106,7 @@ interface MockConfig {
   captureAddCollection?: { attributes?: Record<string, unknown> }
   captureUpdateMarkup?: { called?: boolean }
   captureUploadMarkup?: { called?: boolean }
+  captureEventQuery?: { query?: Record<string, unknown> }
 }
 
 const createTestLayer = (config: MockConfig) => {
@@ -118,6 +119,9 @@ const createTestLayer = (config: MockConfig) => {
 
   const findAllImpl: HulyClientOperations["findAll"] = ((_class: unknown, query: unknown, _options: unknown) => {
     if (_class === calendar.class.Event) {
+      if (config.captureEventQuery) {
+        config.captureEventQuery.query = query as Record<string, unknown>
+      }
       return Effect.succeed(toFindResult(events as Array<Doc>))
     }
     if (_class === calendar.class.ReccuringInstance) {
@@ -352,7 +356,7 @@ describe("createEvent - description and participants", () => {
       expect(participants[0]).toBe("person-1")
     }))
 
-  // test-revizorro: suspect | weak assertion: toBeUndefined() doesn't verify uploadMarkup wasn't called, only that property wasn't set; should check called=false or verify no markup ref in attributes
+  // test-revizorro: approved
   it.effect("creates event with empty description (whitespace only) - no upload", () =>
     Effect.gen(function*() {
       const captureAddCollection: MockConfig["captureAddCollection"] = {}
@@ -365,7 +369,8 @@ describe("createEvent - description and participants", () => {
         description: "   "
       }).pipe(Effect.provide(testLayer))
 
-      expect(captureUploadMarkup.called).toBeUndefined()
+      expect(captureUploadMarkup.called).not.toBe(true)
+      expect(captureAddCollection.attributes?.description).not.toBe("markup-ref-123")
     }))
 })
 
@@ -538,26 +543,32 @@ describe("updateEvent - description in-place only path (line 423, 427)", () => {
 // --- listEvents from/to filter branches (lines 222, 226) ---
 
 describe("listEvents - from/to date filters", () => {
-  // test-revizorro: suspect | Mock ignores query parameter entirely; doesn't actually test filtering logic
+  // test-revizorro: approved
   it.effect("applies from filter when provided", () =>
     Effect.gen(function*() {
       const events = [makeEvent({ eventId: "evt-1", date: 1700100000000 })]
-      const testLayer = createTestLayer({ events })
+      const captureEventQuery: MockConfig["captureEventQuery"] = {}
+      const testLayer = createTestLayer({ events, captureEventQuery })
 
       const result = yield* listEvents({ from: 1700000000000 }).pipe(Effect.provide(testLayer))
 
       expect(result).toHaveLength(1)
+      expect(captureEventQuery.query?.date).toEqual({ $gte: 1700000000000 })
+      expect(captureEventQuery.query?.dueDate).toBeUndefined()
     }))
 
-  // test-revizorro: suspect | Single event always matches; test doesn't verify filter excludes out-of-range events
+  // test-revizorro: approved
   it.effect("applies to filter when provided", () =>
     Effect.gen(function*() {
       const events = [makeEvent({ eventId: "evt-1", dueDate: 1700200000000 })]
-      const testLayer = createTestLayer({ events })
+      const captureEventQuery: MockConfig["captureEventQuery"] = {}
+      const testLayer = createTestLayer({ events, captureEventQuery })
 
       const result = yield* listEvents({ to: 1700300000000 }).pipe(Effect.provide(testLayer))
 
       expect(result).toHaveLength(1)
+      expect(captureEventQuery.query?.dueDate).toEqual({ $lte: 1700300000000 })
+      expect(captureEventQuery.query?.date).toBeUndefined()
     }))
 
   // test-revizorro: approved
@@ -655,14 +666,10 @@ describe("createEvent - findPersonsByEmails edge cases", () => {
 // --- listEventInstances: participantMap.get fallback (line 622) ---
 
 describe("listEventInstances - participantMap fallback", () => {
-  // test-revizorro: suspect | Only checks toBeDefined() - doesn't verify actual empty array value from fallback
+  // test-revizorro: approved
   it.effect("falls back to empty array when participantMap has no entry for instance eventId", () =>
     Effect.gen(function*() {
       const recurringEvent = makeRecurringEvent({ eventId: "recur-1" })
-      // Instance has a participant ref, but the person lookup returns a person
-      // whose id doesn't match the instance's participant ref.
-      // This causes the participantMap to have entries only for matched participants,
-      // and if none match for an instance, the `?? []` fallback triggers.
       const person = makePerson({ _id: "person-99" as Ref<Person>, name: "Unknown" })
       const instances = [
         makeRecurringInstance({
@@ -683,8 +690,6 @@ describe("listEventInstances - participantMap fallback", () => {
       }).pipe(Effect.provide(testLayer))
 
       expect(result).toHaveLength(1)
-      // The participant ref "person-1" doesn't match person "person-99",
-      // so it gets filtered out, but the participantMap entry should still exist (empty array)
-      expect(result[0].participants).toBeDefined()
+      expect(result[0].participants).toEqual([])
     }))
 })

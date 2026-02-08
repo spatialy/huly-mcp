@@ -393,7 +393,7 @@ describe("markNotificationRead", () => {
       expect(captureUpdateDoc.operations).toBeUndefined()
     }))
 
-  // test-revizorro: suspect | Missing notificationId assertion on error, unlike similar test at line 337
+  // test-revizorro: approved
   it.effect("returns NotificationNotFoundError when not found", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ notifications: [] })
@@ -403,6 +403,7 @@ describe("markNotificationRead", () => {
       )
 
       expect(error._tag).toBe("NotificationNotFoundError")
+      expect((error as NotificationNotFoundError).notificationId).toBe("nonexistent")
     }))
 })
 
@@ -492,7 +493,7 @@ describe("archiveNotification", () => {
       expect(captureUpdateDoc.operations).toBeUndefined()
     }))
 
-  // test-revizorro: suspect | Missing notificationId assertion on error; should assert like getNotification test at line 337
+  // test-revizorro: approved
   it.effect("returns NotificationNotFoundError when not found", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ notifications: [] })
@@ -502,6 +503,7 @@ describe("archiveNotification", () => {
       )
 
       expect(error._tag).toBe("NotificationNotFoundError")
+      expect((error as NotificationNotFoundError).notificationId).toBe("nonexistent")
     }))
 })
 

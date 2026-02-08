@@ -34,15 +34,22 @@ vi.mock("@hcengineering/api-client", () => ({
 
 describe("HulyStorageClient Service", () => {
   describe("testLayer", () => {
-    // test-revizorro: suspect | No Real Testing: only checks toBeDefined(), no behavioral assertions
-    it.effect("provides default noop operations", () =>
+    // test-revizorro: approved
+    it.effect("provides default noop operations that return valid results", () =>
       Effect.gen(function*() {
         const testLayer = HulyStorageClient.testLayer({})
 
         const client = yield* HulyStorageClient.pipe(Effect.provide(testLayer))
 
-        expect(client.uploadFile).toBeDefined()
-        expect(client.getFileUrl).toBeDefined()
+        const uploadResult = yield* client.uploadFile("test.txt", Buffer.from("data"), "text/plain")
+        expect(uploadResult.blobId).toBe("test-blob-id")
+        expect(uploadResult.contentType).toBe("application/octet-stream")
+        expect(uploadResult.size).toBe(0)
+        expect(uploadResult.url).toContain("test-blob-id")
+
+        const url = client.getFileUrl("some-blob")
+        expect(url).toContain("some-blob")
+        expect(url).toContain("workspace=test")
       }))
 
     // test-revizorro: approved
@@ -260,16 +267,14 @@ describe("decodeBase64", () => {
       expect(buffer).toEqual(binaryData)
     }))
 
-  // test-revizorro: suspect | Test trims whitespace itself before calling decodeBase64, so it duplicates "decodes valid base64 string" rather than testing whitespace handling
+  // test-revizorro: approved
   it.effect("handles base64 with whitespace", () =>
     Effect.gen(function*() {
       const original = "test data"
       const base64 = Buffer.from(original).toString("base64")
       const withWhitespace = `  ${base64}  `
 
-      // Note: Buffer.from handles some whitespace, but the validation may fail
-      // depending on how strict we want to be
-      const buffer = yield* decodeBase64(withWhitespace.trim())
+      const buffer = yield* decodeBase64(withWhitespace)
 
       expect(buffer.toString()).toBe(original)
     }))
@@ -405,17 +410,6 @@ describe("fetchFromUrl", () => {
 
       expect(error._tag).toBe("FileFetchError")
       expect(error.fileUrl).toBe("https://nonexistent.invalid.domain.test/file.png")
-    }))
-
-  // test-revizorro: suspect | Near-duplicate of "returns FileFetchError for invalid URL"; only adds toBeDefined() check on reason which is a weak assertion
-  it.effect("includes URL in FileFetchError", () =>
-    Effect.gen(function*() {
-      const testUrl = "https://example.invalid.test/file.png"
-      const error = yield* Effect.flip(fetchFromUrl(testUrl))
-
-      expect(error._tag).toBe("FileFetchError")
-      expect(error.fileUrl).toBe(testUrl)
-      expect(error.reason).toBeDefined()
     }))
 
   // test-revizorro: approved

@@ -466,7 +466,7 @@ describe("listChannels", () => {
 })
 
 describe("getChannel", () => {
-  // test-revizorro: suspect | Incomplete assertions: only checks 4 fields (id, name, topic, description) out of 8+ Channel fields; missing members, private, archived, messages, timestamps
+  // test-revizorro: approved
   it.effect("returns channel by name", () =>
     Effect.gen(function*() {
       const channel = makeChannel({
@@ -475,7 +475,11 @@ describe("getChannel", () => {
         topic: "Dev talk",
         description: "Development channel",
         private: false,
-        archived: false
+        archived: false,
+        members: [],
+        messages: 10,
+        modifiedOn: 1706500000000,
+        createdOn: 1706400000000
       })
 
       const testLayer = createTestLayerWithMocks({ channels: [channel] })
@@ -486,6 +490,11 @@ describe("getChannel", () => {
       expect(result.name).toBe("development")
       expect(result.topic).toBe("Dev talk")
       expect(result.description).toBe("Development channel")
+      expect(result.private).toBe(false)
+      expect(result.archived).toBe(false)
+      expect(result.messages).toBe(10)
+      expect(result.modifiedOn).toBe(1706500000000)
+      expect(result.createdOn).toBe(1706400000000)
     }))
 
   // test-revizorro: approved
@@ -593,7 +602,7 @@ describe("updateChannel", () => {
       expect(captureUpdateDoc.operations?.name).toBe("new-name")
     }))
 
-  // test-revizorro: suspect | Only verifies updateDoc call, not return value (missing id and updated assertions like line 569)
+  // test-revizorro: approved
   it.effect("updates channel topic", () =>
     Effect.gen(function*() {
       const channel = makeChannel({ _id: "ch-1" as Ref<HulyChannel>, name: "general" })
@@ -601,11 +610,13 @@ describe("updateChannel", () => {
 
       const testLayer = createTestLayerWithMocks({ channels: [channel], captureUpdateDoc })
 
-      yield* updateChannel({
+      const result = yield* updateChannel({
         channel: channelIdentifier("general"),
         topic: "New topic"
       }).pipe(Effect.provide(testLayer))
 
+      expect(result.id).toBe("ch-1")
+      expect(result.updated).toBe(true)
       expect(captureUpdateDoc.operations?.topic).toBe("New topic")
     }))
 
@@ -621,7 +632,7 @@ describe("updateChannel", () => {
       expect(result.updated).toBe(false)
     }))
 
-  // test-revizorro: suspect | Only checks _tag, missing identifier verification like getChannel error tests do
+  // test-revizorro: approved
   it.effect("returns ChannelNotFoundError when channel doesn't exist", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayerWithMocks({ channels: [] })
@@ -631,6 +642,7 @@ describe("updateChannel", () => {
       )
 
       expect(error._tag).toBe("ChannelNotFoundError")
+      expect((error as ChannelNotFoundError).identifier).toBe("nonexistent")
     }))
 })
 
@@ -842,7 +854,7 @@ describe("listDirectMessages", () => {
 })
 
 describe("listThreadReplies", () => {
-  // test-revizorro: suspect | Only verifies id field, missing assertions for body, sender, timestamps - incomplete response validation
+  // test-revizorro: approved
   it.effect("returns thread replies sorted by creation date ascending", () =>
     Effect.gen(function*() {
       const channel = makeChannel({ _id: "ch-1" as Ref<HulyChannel>, name: "general" })
@@ -855,13 +867,19 @@ describe("listThreadReplies", () => {
           _id: "reply-2" as Ref<HulyThreadMessage>,
           space: "ch-1" as Ref<Space>,
           attachedTo: "msg-1" as Ref<ActivityMessage>,
-          createdOn: 2000
+          message: "<p>Second reply</p>",
+          modifiedBy: "user-2" as PersonId,
+          createdOn: 2000,
+          modifiedOn: 2500
         }),
         makeThreadMessage({
           _id: "reply-1" as Ref<HulyThreadMessage>,
           space: "ch-1" as Ref<Space>,
           attachedTo: "msg-1" as Ref<ActivityMessage>,
-          createdOn: 1000
+          message: "<p>First reply</p>",
+          modifiedBy: "user-1" as PersonId,
+          createdOn: 1000,
+          modifiedOn: 1500
         })
       ]
 
@@ -878,7 +896,16 @@ describe("listThreadReplies", () => {
 
       expect(result.replies).toHaveLength(2)
       expect(result.replies[0].id).toBe("reply-1")
+      expect(result.replies[0].body).toContain("First reply")
+      expect(result.replies[0].senderId).toBe("user-1")
+      expect(result.replies[0].sender).toBeUndefined()
+      expect(result.replies[0].createdOn).toBe(1000)
+      expect(result.replies[0].modifiedOn).toBe(1500)
       expect(result.replies[1].id).toBe("reply-2")
+      expect(result.replies[1].body).toContain("Second reply")
+      expect(result.replies[1].senderId).toBe("user-2")
+      expect(result.replies[1].createdOn).toBe(2000)
+      expect(result.replies[1].modifiedOn).toBe(2500)
     }))
 
   // test-revizorro: approved

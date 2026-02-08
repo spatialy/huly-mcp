@@ -673,7 +673,7 @@ describe("getTimeReport", () => {
   })
 
   describe("error handling", () => {
-    // test-revizorro: suspect | missing identifier assertion in error; logTime test checks both _tag and identifier
+    // test-revizorro: approved
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -689,6 +689,7 @@ describe("getTimeReport", () => {
         )
 
         expect(error._tag).toBe("ProjectNotFoundError")
+        expect((error as ProjectNotFoundError).identifier).toBe("NONEXISTENT")
       }))
 
     // test-revizorro: approved
@@ -1669,7 +1670,7 @@ describe("stopTimer", () => {
   })
 
   describe("error handling", () => {
-    // test-revizorro: suspect | incomplete assertion; should verify error.identifier like logTime test does
+    // test-revizorro: approved
     it.effect("returns ProjectNotFoundError when project doesn't exist", () =>
       Effect.gen(function*() {
         const testLayer = createTestLayerWithMocks({
@@ -1685,6 +1686,7 @@ describe("stopTimer", () => {
         )
 
         expect(error._tag).toBe("ProjectNotFoundError")
+        expect((error as ProjectNotFoundError).identifier).toBe("NONEXISTENT")
       }))
 
     // test-revizorro: approved

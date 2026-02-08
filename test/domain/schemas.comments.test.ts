@@ -133,13 +133,14 @@ describe("Comment Schemas", () => {
         expect(result.limit).toBe(25)
       }))
 
-    // test-revizorro: suspect | Only checks issueIdentifier, doesn't verify project or limit - incomplete validation
+    // test-revizorro: approved
     it.effect("parses with numeric issue identifier", () =>
       Effect.gen(function*() {
         const result = yield* parseListCommentsParams({
           project: "PROJ",
           issueIdentifier: "456"
         })
+        expect(result.project).toBe("PROJ")
         expect(result.issueIdentifier).toBe("456")
       }))
 
@@ -244,7 +245,7 @@ describe("Comment Schemas", () => {
         expect(result.body).toBe("This is a new comment")
       }))
 
-    // test-revizorro: suspect | Only validates body substring, missing project/issueIdentifier assertions - incomplete test
+    // test-revizorro: approved
     it.effect("parses with markdown body", () =>
       Effect.gen(function*() {
         const result = yield* parseAddCommentParams({
@@ -252,8 +253,9 @@ describe("Comment Schemas", () => {
           issueIdentifier: "TEST-1",
           body: "# Heading\n\n- Item 1\n- Item 2\n\n```js\nconsole.log('hello');\n```"
         })
-        expect(result.body).toContain("# Heading")
-        expect(result.body).toContain("console.log")
+        expect(result.project).toBe("TEST")
+        expect(result.issueIdentifier).toBe("TEST-1")
+        expect(result.body).toBe("# Heading\n\n- Item 1\n- Item 2\n\n```js\nconsole.log('hello');\n```")
       }))
 
     // test-revizorro: approved

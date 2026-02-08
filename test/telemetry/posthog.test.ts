@@ -41,7 +41,7 @@ describe("createPostHogTelemetry", () => {
       expect(call.properties.version).toBeTypeOf("string")
     })
 
-    // test-revizorro: suspect | missing assertion for tool_count property; testInput sets toolCount: 0 but never verified in expects
+    // test-revizorro: approved
     it("maps http transport correctly", () => {
       const telemetry = createPostHogTelemetry(false)
       telemetry.sessionStart({
@@ -54,6 +54,7 @@ describe("createPostHogTelemetry", () => {
       const call = mockCapture.mock.calls[0][0]
       expect(call.properties.transport).toBe("http")
       expect(call.properties.auth_method).toBe("password")
+      expect(call.properties.tool_count).toBe(0)
       expect(call.properties.toolsets).toBeNull()
     })
   })
@@ -148,11 +149,18 @@ describe("createPostHogTelemetry", () => {
       expect(mockShutdown).toHaveBeenCalledWith(2000)
     })
 
-    // test-revizorro: suspect | incomplete verification: doesn't check mockShutdown called or session_end captured before rejection
+    // test-revizorro: approved
     it("does not throw when client.shutdown rejects", async () => {
       mockShutdown.mockRejectedValueOnce(new Error("flush timeout"))
       const telemetry = createPostHogTelemetry(false)
       await expect(telemetry.shutdown()).resolves.toBeUndefined()
+
+      // session_end should still have been captured before the rejection
+      const endCalls = mockCapture.mock.calls.filter(
+        (c) => c[0].event === "session_end"
+      )
+      expect(endCalls).toHaveLength(1)
+      expect(mockShutdown).toHaveBeenCalledOnce()
     })
 
     // test-revizorro: approved

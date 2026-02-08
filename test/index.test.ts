@@ -44,13 +44,14 @@ describe("Main Entry Point", () => {
   })
 
   describe("main program", () => {
-    // test-revizorro: suspect | trivial assertion `toBeDefined()` passes with any error; test doesn't verify ConfigValidationError or missing field
-    it.effect("fails on missing config", () =>
+    // test-revizorro: approved
+    it.effect("fails on missing config with ConfigValidationError", () =>
       Effect.gen(function*() {
         // Don't set any env vars - config should fail
         const error = yield* Effect.flip(main)
 
-        expect(error).toBeDefined()
+        expect(error._tag).toBe("ConfigValidationError")
+        expect(error.message).toContain("Configuration error")
       }))
   })
 
@@ -75,7 +76,7 @@ describe("Main Entry Point", () => {
   })
 
   describe("error handling", () => {
-    // test-revizorro: suspect | only checks error exists, not error type/message - should verify ConfigValidationError with URL validation details
+    // test-revizorro: approved
     it.effect("reports config validation errors clearly", () =>
       Effect.gen(function*() {
         // Invalid URL
@@ -86,7 +87,8 @@ describe("Main Entry Point", () => {
 
         const error = yield* Effect.flip(main)
 
-        expect(error).toBeDefined()
+        expect(error._tag).toBe("ConfigValidationError")
+        expect(error.message).toContain("Configuration error")
       }))
 
     // test-revizorro: approved

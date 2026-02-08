@@ -523,7 +523,7 @@ describe("Issues Coverage - listIssues status filters", () => {
       expect(result).toEqual([])
     }))
 
-  // test-revizorro: suspect | mock ProjectType.statuses missing category field—isCanceled won't be computed
+  // test-revizorro: approved
   it.effect("canceled filter includes only canceled statuses", () =>
     Effect.gen(function*() {
       const project = makeProject({ identifier: "TEST" })

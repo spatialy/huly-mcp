@@ -286,7 +286,7 @@ describe("getUserProfile", () => {
       expect(result).toBeNull()
     }))
 
-  // test-revizorro: suspect | Missing assertion for personUuid field transformation, doesn't verify UUID passed to mock
+  // test-revizorro: approved
   it.effect("returns mapped profile when found", () =>
     Effect.gen(function*() {
       const profile: PersonWithProfile = {
@@ -301,13 +301,19 @@ describe("getUserProfile", () => {
         isPublic: true
       }
 
+      let capturedUuid: string | undefined
       const testLayer = WorkspaceClient.testLayer({
-        getUserProfile: () => Effect.succeed(profile)
+        getUserProfile: (uuid) => {
+          capturedUuid = uuid as string | undefined
+          return Effect.succeed(profile)
+        }
       })
 
       const result = yield* getUserProfile("11111111-2222-3333-4444-555555555555").pipe(Effect.provide(testLayer))
 
+      expect(capturedUuid).toBe("11111111-2222-3333-4444-555555555555")
       expect(result).not.toBeNull()
+      expect(result!.personUuid).toBe("user-uuid-1234-5678-9abc-def012345678")
       expect(result!.firstName).toBe("John")
       expect(result!.lastName).toBe("Doe")
       expect(result!.bio).toBe("Developer")
@@ -399,7 +405,7 @@ describe("updateUserProfile", () => {
       expect(capturedProfile?.socialLinks).toEqual({})
     }))
 
-  // test-revizorro: suspect | missing assertion for result.updated === true, inconsistent with similar test
+  // test-revizorro: approved
   it.effect("updates socialLinks", () =>
     Effect.gen(function*() {
       let capturedProfile: Record<string, unknown> | undefined
@@ -411,10 +417,11 @@ describe("updateUserProfile", () => {
         }
       })
 
-      yield* updateUserProfile({
+      const result = yield* updateUserProfile({
         socialLinks: { github: "user", twitter: "user" }
       }).pipe(Effect.provide(testLayer))
 
+      expect(result.updated).toBe(true)
       expect(capturedProfile?.socialLinks).toEqual({ github: "user", twitter: "user" })
     }))
 })

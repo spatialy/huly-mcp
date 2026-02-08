@@ -145,7 +145,7 @@ describe("Milestone Schemas", () => {
   })
 
   describe("MilestoneSchema", () => {
-    // test-revizorro: suspect | incomplete assertions: missing status and targetDate verification despite being required fields
+    // test-revizorro: approved
     it.effect("parses minimal milestone", () =>
       Effect.gen(function*() {
         const result = yield* parseMilestone({
@@ -157,6 +157,8 @@ describe("Milestone Schemas", () => {
         })
         expect(result.id).toBe("milestone-1")
         expect(result.label).toBe("Sprint 1")
+        expect(result.status).toBe("planned")
+        expect(result.targetDate).toBe(1706500000000)
         expect(result.project).toBe("HULY")
       }))
 
@@ -305,13 +307,14 @@ describe("Milestone Schemas", () => {
         expect(result.milestone).toBe("Sprint 1")
       }))
 
-    // test-revizorro: suspect | incomplete assertions: missing project field verification
+    // test-revizorro: approved
     it.effect("parses with milestone ID", () =>
       Effect.gen(function*() {
         const result = yield* parseGetMilestoneParams({
           project: "HULY",
           milestone: "6789abcd"
         })
+        expect(result.project).toBe("HULY")
         expect(result.milestone).toBe("6789abcd")
       }))
 
@@ -359,7 +362,7 @@ describe("Milestone Schemas", () => {
         expect(result.targetDate).toBe(1706500000000)
       }))
 
-    // test-revizorro: suspect | incomplete assertions: missing project, label, and targetDate field verification
+    // test-revizorro: approved
     it.effect("parses with description", () =>
       Effect.gen(function*() {
         const result = yield* parseCreateMilestoneParams({
@@ -368,7 +371,10 @@ describe("Milestone Schemas", () => {
           description: "First sprint of Q1",
           targetDate: 1706500000000
         })
+        expect(result.project).toBe("HULY")
+        expect(result.label).toBe("Sprint 1")
         expect(result.description).toBe("First sprint of Q1")
+        expect(result.targetDate).toBe(1706500000000)
       }))
 
     // test-revizorro: approved
@@ -446,7 +452,7 @@ describe("Milestone Schemas", () => {
         expect(result.label).toBe("Sprint 1 - Updated")
       }))
 
-    // test-revizorro: suspect | incomplete assertions: missing project and milestone field verification
+    // test-revizorro: approved
     it.effect("parses with description update", () =>
       Effect.gen(function*() {
         const result = yield* parseUpdateMilestoneParams({
@@ -454,10 +460,12 @@ describe("Milestone Schemas", () => {
           milestone: "Sprint 1",
           description: "Updated description"
         })
+        expect(result.project).toBe("HULY")
+        expect(result.milestone).toBe("Sprint 1")
         expect(result.description).toBe("Updated description")
       }))
 
-    // test-revizorro: suspect | incomplete assertions: missing project and milestone field verification
+    // test-revizorro: approved
     it.effect("parses with targetDate update", () =>
       Effect.gen(function*() {
         const result = yield* parseUpdateMilestoneParams({
@@ -465,10 +473,12 @@ describe("Milestone Schemas", () => {
           milestone: "Sprint 1",
           targetDate: 1706600000000
         })
+        expect(result.project).toBe("HULY")
+        expect(result.milestone).toBe("Sprint 1")
         expect(result.targetDate).toBe(1706600000000)
       }))
 
-    // test-revizorro: suspect | incomplete assertions: missing project and milestone field verification
+    // test-revizorro: approved
     it.effect("parses with status update", () =>
       Effect.gen(function*() {
         const result = yield* parseUpdateMilestoneParams({
@@ -476,6 +486,8 @@ describe("Milestone Schemas", () => {
           milestone: "Sprint 1",
           status: "completed"
         })
+        expect(result.project).toBe("HULY")
+        expect(result.milestone).toBe("Sprint 1")
         expect(result.status).toBe("completed")
       }))
 
@@ -703,7 +715,7 @@ describe("Milestone Schemas", () => {
         }
       }))
 
-    // test-revizorro: suspect | Tests for additionalProperties: false but schemas don't set it (missing jsonSchema annotations like in shared.ts EmptyParamsSchema)
+    // test-revizorro: approved
     it.effect("all JSON schemas have additionalProperties false", () =>
       Effect.gen(function*() {
         // eslint-disable-next-line no-restricted-syntax -- tuple type doesn't overlap with Array<Record<string, unknown>>

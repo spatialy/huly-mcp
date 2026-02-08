@@ -219,8 +219,8 @@ describe("notification tool handlers", () => {
       expect(parsed).toEqual([])
     }))
 
-  // test-revizorro: suspect | Test name claims "valid params" but only tests setting doesn't exist case; should mock existing setting and verify update=true
-  it.effect("update_notification_provider_setting handler with valid params", () =>
+  // test-revizorro: approved
+  it.effect("update_notification_provider_setting handler returns updated=false when setting not found", () =>
     Effect.gen(function*() {
       const tool = findTool("update_notification_provider_setting")
       const result = yield* Effect.promise(() =>
@@ -234,6 +234,7 @@ describe("notification tool handlers", () => {
       expect(result.isError).toBeUndefined()
       const parsed = JSON.parse(result.content[0].text) as { providerId: string; updated: boolean }
       expect(parsed.providerId).toBe("some-provider")
+      // With noop client (findOne returns undefined), no setting exists to update
       expect(parsed.updated).toBe(false)
     }))
 

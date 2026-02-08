@@ -285,14 +285,14 @@ describe("Calendar Schemas", () => {
       expect(Either.isRight(result)).toBe(true)
     })
 
-    // test-revizorro: suspect | empty rules array makes no semantic sense for recurring event
-    it("accepts empty rules array", () => {
+    // test-revizorro: approved
+    it("rejects empty rules array", () => {
       const result = Schema.decodeUnknownEither(CreateRecurringEventParamsSchema)({
         title: "Meeting",
         startDate: 1704067200000,
         rules: []
       })
-      expect(Either.isRight(result)).toBe(true)
+      expect(Either.isLeft(result)).toBe(true)
     })
 
     // test-revizorro: approved

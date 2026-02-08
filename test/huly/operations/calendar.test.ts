@@ -106,6 +106,8 @@ interface MockConfig {
   captureUpdateDoc?: { operations?: Record<string, unknown> }
   captureRemoveDoc?: { id?: string }
   captureAddCollection?: { attributes?: Record<string, unknown> }
+  captureUpdateMarkup?: { called?: boolean }
+  captureUploadMarkup?: { called?: boolean }
 }
 
 const createTestLayer = (config: MockConfig) => {
@@ -198,11 +200,19 @@ const createTestLayer = (config: MockConfig) => {
     return Effect.succeed("new-id" as Ref<Doc>)
   }) as HulyClientOperations["addCollection"]
 
-  const uploadMarkupImpl: HulyClientOperations["uploadMarkup"] =
-    (() => Effect.succeed("markup-ref-123" as MarkupBlobRef)) as HulyClientOperations["uploadMarkup"]
+  const uploadMarkupImpl: HulyClientOperations["uploadMarkup"] = (() => {
+    if (config.captureUploadMarkup) {
+      config.captureUploadMarkup.called = true
+    }
+    return Effect.succeed("markup-ref-123" as MarkupBlobRef)
+  }) as HulyClientOperations["uploadMarkup"]
 
-  const updateMarkupImpl: HulyClientOperations["updateMarkup"] =
-    (() => Effect.succeed(undefined as void)) as HulyClientOperations["updateMarkup"]
+  const updateMarkupImpl: HulyClientOperations["updateMarkup"] = (() => {
+    if (config.captureUpdateMarkup) {
+      config.captureUpdateMarkup.called = true
+    }
+    return Effect.succeed(undefined as void)
+  }) as HulyClientOperations["updateMarkup"]
 
   return HulyClient.testLayer({
     findAll: findAllImpl,
@@ -298,20 +308,23 @@ describe("getEvent", () => {
 })
 
 describe("createEvent", () => {
-  // test-revizorro: suspect | Missing dueDate assertion - should verify default calculation (date + 1 hour)
+  // test-revizorro: approved
   it.effect("creates event with minimal params", () =>
     Effect.gen(function*() {
       const captureAddCollection: MockConfig["captureAddCollection"] = {}
       const testLayer = createTestLayer({ captureAddCollection })
+      const startDate = 1700000000000
+      const ONE_HOUR_MS = 3600000
 
       const result = yield* createEvent({
         title: "New Event",
-        date: 1700000000000
+        date: startDate
       }).pipe(Effect.provide(testLayer))
 
       expect(result.eventId).toBeDefined()
       expect(captureAddCollection.attributes?.title).toBe("New Event")
       expect(captureAddCollection.attributes?.allDay).toBe(false)
+      expect(captureAddCollection.attributes?.dueDate).toBe(startDate + ONE_HOUR_MS)
     }))
 
   // test-revizorro: approved
@@ -394,11 +407,13 @@ describe("updateEvent", () => {
       expect(captureUpdateDoc.operations?.description).toBe("")
     }))
 
-  // test-revizorro: suspect | doesn't verify updateMarkup was called; only checks updated=true which would pass for wrong code paths
+  // test-revizorro: approved
   it.effect("updates description in place when event already has one", () =>
     Effect.gen(function*() {
       const event = makeEvent({ eventId: "evt-1", description: "existing-markup-ref" as HulyEvent["description"] })
-      const testLayer = createTestLayer({ events: [event] })
+      const captureUpdateMarkup: MockConfig["captureUpdateMarkup"] = {}
+      const captureUploadMarkup: MockConfig["captureUploadMarkup"] = {}
+      const testLayer = createTestLayer({ events: [event], captureUpdateMarkup, captureUploadMarkup })
 
       const result = yield* updateEvent({
         eventId: eventBrandId("evt-1"),
@@ -406,14 +421,18 @@ describe("updateEvent", () => {
       }).pipe(Effect.provide(testLayer))
 
       expect(result.updated).toBe(true)
+      expect(captureUpdateMarkup.called).toBe(true)
+      expect(captureUploadMarkup.called).toBeUndefined()
     }))
 
-  // test-revizorro: suspect | Mock uploadMarkup hardcoded; doesn't verify uploadMarkup vs updateMarkup path taken
+  // test-revizorro: approved
   it.effect("uploads new description when event has none", () =>
     Effect.gen(function*() {
       const event = makeEvent({ eventId: "evt-1", description: "" as HulyEvent["description"] })
       const captureUpdateDoc: MockConfig["captureUpdateDoc"] = {}
-      const testLayer = createTestLayer({ events: [event], captureUpdateDoc })
+      const captureUploadMarkup: MockConfig["captureUploadMarkup"] = {}
+      const captureUpdateMarkup: MockConfig["captureUpdateMarkup"] = {}
+      const testLayer = createTestLayer({ events: [event], captureUpdateDoc, captureUploadMarkup, captureUpdateMarkup })
 
       const result = yield* updateEvent({
         eventId: eventBrandId("evt-1"),
@@ -421,10 +440,12 @@ describe("updateEvent", () => {
       }).pipe(Effect.provide(testLayer))
 
       expect(result.updated).toBe(true)
+      expect(captureUploadMarkup.called).toBe(true)
+      expect(captureUpdateMarkup.called).toBeUndefined()
       expect(captureUpdateDoc.operations?.description).toBe("markup-ref-123")
     }))
 
-  // test-revizorro: suspect | Only verifies error type, not error content (eventId missing from assertion)
+  // test-revizorro: approved
   it.effect("fails with EventNotFoundError when event does not exist", () =>
     Effect.gen(function*() {
       const testLayer = createTestLayer({})
@@ -434,6 +455,7 @@ describe("updateEvent", () => {
       )
 
       expect(error._tag).toBe("EventNotFoundError")
+      expect((error as EventNotFoundError).eventId).toBe("nonexistent")
     }))
 })
 

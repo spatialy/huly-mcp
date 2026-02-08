@@ -298,7 +298,7 @@ describe("Error Mapping to MCP", () => {
     })
 
     describe("Parallel cause", () => {
-      // test-revizorro: suspect | missing errorCode assertion - should verify InvalidParams code
+      // test-revizorro: approved
       it.effect("extracts first meaningful error from parallel cause", () =>
         Effect.gen(function*() {
           const error1 = new InvalidStatusError({ status: "bad", project: "P" })
@@ -307,6 +307,7 @@ describe("Error Mapping to MCP", () => {
           const response = mapDomainCauseToMcp(cause)
 
           expect(response.isError).toBe(true)
+          expect(response._meta.errorCode).toBe(McpErrorCode.InvalidParams)
           expect(response.content[0].text).toBe(
             "Invalid status 'bad' for project 'P'"
           )

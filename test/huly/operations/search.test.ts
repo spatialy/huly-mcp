@@ -1,5 +1,5 @@
 import { describe, it } from "@effect/vitest"
-import { type Doc, type PersonId, type Ref, type Space, toFindResult } from "@hcengineering/core"
+import { type Doc, type PersonId, type Ref, SortingOrder, type Space, toFindResult } from "@hcengineering/core"
 import { Effect } from "effect"
 import { expect } from "vitest"
 import { HulyClient, type HulyClientOperations } from "../../../src/huly/client.js"
@@ -94,7 +94,7 @@ describe("fulltextSearch", () => {
       expect(opts.limit).toBe(200)
     }))
 
-  // test-revizorro: suspect | assertion only checks existence (toBeDefined), not actual sort order value
+  // test-revizorro: approved
   it.effect("sorts by modifiedOn descending", () =>
     Effect.gen(function*() {
       const captured: { query?: unknown; options?: unknown } = {}
@@ -103,7 +103,7 @@ describe("fulltextSearch", () => {
       yield* fulltextSearch({ query: "test" }).pipe(Effect.provide(testLayer))
 
       const opts = captured.options as { sort?: Record<string, number> }
-      expect(opts.sort?.modifiedOn).toBeDefined()
+      expect(opts.sort?.modifiedOn).toBe(SortingOrder.Descending)
     }))
 
   // test-revizorro: approved

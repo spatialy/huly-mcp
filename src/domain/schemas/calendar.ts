@@ -329,7 +329,7 @@ export const CreateRecurringEventParamsSchema = Schema.Struct({
   dueDate: Schema.optional(Timestamp.annotations({
     description: "First occurrence end date/time (timestamp). If not provided, defaults to startDate + 1 hour"
   })),
-  rules: Schema.Array(RecurringRuleSchema).annotations({
+  rules: Schema.NonEmptyArray(RecurringRuleSchema).annotations({
     description: "Recurring rules (RFC5545 RRULE format)"
   }),
   allDay: Schema.optional(Schema.Boolean.annotations({
