@@ -49,7 +49,8 @@ type ListSavedMessagesError = HulyClientError
 
 type ListMentionsError = HulyClientError
 
-// SDK: Data<Reaction> requires createBy but server populates from auth context.
+// SDK: Data<Reaction> requires createBy (PersonId, branded string) but server populates from auth context.
+// PersonId = string & { __personId: true }; no SDK factory exists. Empty string is overwritten server-side.
 const serverPopulatedCreateBy: HulyReaction["createBy"] = "" as HulyReaction["createBy"]
 
 /**

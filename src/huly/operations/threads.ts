@@ -90,6 +90,32 @@ const findMessage = (
     return { client, channel, message }
   })
 
+const findReply = (
+  client: HulyClient["Type"],
+  channel: HulyChannel,
+  message: ChatMessage,
+  replyId: string
+): Effect.Effect<HulyThreadMessage, ThreadReplyNotFoundError | HulyClientError> =>
+  Effect.gen(function*() {
+    const reply = yield* client.findOne<HulyThreadMessage>(
+      chunter.class.ThreadMessage,
+      {
+        _id: toRef<HulyThreadMessage>(replyId),
+        attachedTo: toRef<ActivityMessage>(message._id),
+        space: channel._id
+      }
+    )
+
+    if (reply === undefined) {
+      return yield* new ThreadReplyNotFoundError({
+        replyId,
+        messageId: message._id
+      })
+    }
+
+    return reply
+  })
+
 // --- Operations ---
 
 export const listThreadReplies = (
@@ -179,22 +205,7 @@ export const updateThreadReply = (
 ): Effect.Effect<UpdateThreadReplyResult, UpdateThreadReplyError, HulyClient> =>
   Effect.gen(function*() {
     const { channel, client, message } = yield* findMessage(params.channel, params.messageId)
-
-    const reply = yield* client.findOne<HulyThreadMessage>(
-      chunter.class.ThreadMessage,
-      {
-        _id: toRef<HulyThreadMessage>(params.replyId),
-        attachedTo: toRef<ActivityMessage>(message._id),
-        space: channel._id
-      }
-    )
-
-    if (reply === undefined) {
-      return yield* new ThreadReplyNotFoundError({
-        replyId: params.replyId,
-        messageId: params.messageId
-      })
-    }
+    const reply = yield* findReply(client, channel, message, params.replyId)
 
     const markup = markdownToMarkupString(params.body)
 
@@ -218,22 +229,7 @@ export const deleteThreadReply = (
 ): Effect.Effect<DeleteThreadReplyResult, DeleteThreadReplyError, HulyClient> =>
   Effect.gen(function*() {
     const { channel, client, message } = yield* findMessage(params.channel, params.messageId)
-
-    const reply = yield* client.findOne<HulyThreadMessage>(
-      chunter.class.ThreadMessage,
-      {
-        _id: toRef<HulyThreadMessage>(params.replyId),
-        attachedTo: toRef<ActivityMessage>(message._id),
-        space: channel._id
-      }
-    )
-
-    if (reply === undefined) {
-      return yield* new ThreadReplyNotFoundError({
-        replyId: params.replyId,
-        messageId: params.messageId
-      })
-    }
+    const reply = yield* findReply(client, channel, message, params.replyId)
 
     yield* client.removeDoc(
       chunter.class.ThreadMessage,

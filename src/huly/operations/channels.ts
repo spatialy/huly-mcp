@@ -77,7 +77,8 @@ type ListDirectMessagesError = HulyClientError
 
 // --- SDK Type Bridges ---
 
-// SDK: PersonId and SocialIdentityRef are the same underlying string but typed differently.
+// SDK: SocialIdentityRef = Ref<SocialIdentity> & PersonId. PersonId lacks the Ref<> phantom brand (__ref).
+// Both are branded strings over the same runtime value; cast is safe but no single-step path exists.
 const personIdsAsSocialIdentityRefs = (
   ids: Array<PersonId>
 ): Array<SocialIdentityRef> => ids as Array<SocialIdentityRef>

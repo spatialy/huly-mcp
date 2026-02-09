@@ -22,6 +22,15 @@ import { createUnknownToolError, McpErrorCode, toMcpResponse } from "./error-map
 import type { ToolRegistry } from "./tools/index.js"
 import { CATEGORY_NAMES, createFilteredRegistry, toolRegistry } from "./tools/index.js"
 
+interface McpInputSchema {
+  readonly type: "object"
+  readonly properties?: Record<string, unknown>
+  readonly required?: Array<string>
+  readonly [key: string]: unknown
+}
+
+const isObjectSchema = (schema: object): schema is McpInputSchema => "type" in schema && schema.type === "object"
+
 export type McpTransportType = "stdio" | "http"
 
 interface McpServerConfig {
@@ -87,17 +96,14 @@ const createMcpServer = (
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     telemetry.firstListTools()
     return {
-      tools: registry.definitions.map((tool) => ({
-        name: tool.name,
-        description: tool.description,
-        // MCP SDK expects a narrower type than JSONSchema7; our inputSchema
-        // is always { type: "object", ... } so the cast is structurally safe.
-        inputSchema: tool.inputSchema as {
-          type: "object"
-          properties?: Record<string, unknown>
-          required?: Array<string>
-        }
-      }))
+      tools: registry.definitions.flatMap((tool) => {
+        if (!isObjectSchema(tool.inputSchema)) return []
+        return [{
+          name: tool.name,
+          description: tool.description,
+          inputSchema: tool.inputSchema
+        }]
+      })
     }
   })
 

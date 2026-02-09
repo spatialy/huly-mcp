@@ -69,10 +69,10 @@ export const assertNonEmpty = <T>(
   arr: ReadonlyArray<T>,
   message?: string
 ): readonly [T, ...Array<T>] => {
-  if (arr.length === 0) {
-    throw new AssertionError(message ?? "Expected non-empty array")
+  if (isNonEmpty(arr)) {
+    return arr
   }
-  return arr as readonly [T, ...Array<T>]
+  throw new AssertionError(message ?? "Expected non-empty array")
 }
 
 /**

@@ -31,6 +31,7 @@ import {
   InvalidContentTypeError,
   InvalidFileDataError
 } from "./errors.js"
+import { toRef } from "./operations/shared.js"
 
 const MAX_FILE_SIZE_MB = 100
 const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * BYTES_PER_MB
@@ -218,7 +219,7 @@ export class HulyStorageClient extends Context.Tag("@hulymcp/HulyStorageClient")
       StorageClientError
     > =>
       Effect.succeed({
-        blobId: "test-blob-id" as Ref<Blob>,
+        blobId: toRef<Blob>("test-blob-id"),
         contentType: "application/octet-stream",
         size: 0,
         url: "https://test.huly.io/files?workspace=test&file=test-blob-id"

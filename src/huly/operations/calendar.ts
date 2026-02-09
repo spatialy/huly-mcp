@@ -64,17 +64,19 @@ type ListEventInstancesError = HulyClientError | RecurringEventNotFoundError
 
 // --- SDK Type Bridges ---
 
-// SDK: HulyEvent["description"] is a complex union; fetchMarkup expects MarkupBlobRef.
+// SDK: HulyEvent["description"] is Markup | MarkupBlobRef | null; fetchMarkup expects MarkupBlobRef.
+// At runtime the value is always a MarkupBlobRef when non-empty; Markup (plain string) lacks the Ref<Blob> brand.
 const descriptionAsMarkupRef = (desc: HulyEvent["description"]): MarkupBlobRef => desc as MarkupBlobRef
 
-// SDK: uploadMarkup returns MarkupBlobRef but Event.description expects a different union.
+// SDK: MarkupBlobRef (Ref<Blob>) is assignable to Markup (string); null maps to empty string.
 const markupRefAsDescription = (
   ref: MarkupBlobRef | null
-): HulyEvent["description"] => ref as HulyEvent["description"]
+): HulyEvent["description"] => ref ?? ""
 
 const emptyEventDescription: HulyEvent["description"] = ""
 
-// SDK: Data<Event> requires 'user' but server populates from auth context.
+// SDK: Data<Event> requires 'user' (PersonId, branded string) but server populates from auth context.
+// PersonId = string & { __personId: true }; no SDK factory exists. Empty string is overwritten server-side.
 const serverPopulatedUser: HulyEvent["user"] = "" as HulyEvent["user"]
 
 // SDK: Visibility and HulyVisibility are identical string literal unions.

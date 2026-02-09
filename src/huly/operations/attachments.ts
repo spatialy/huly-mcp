@@ -122,7 +122,7 @@ type AddDocumentAttachmentError =
 // SDK: DocumentUpdate<Attachment> doesn't allow clearing optional fields with empty string.
 // Huly API requires empty string to clear description (not undefined/null).
 const clearAttachmentDescription = (ops: DocumentUpdate<HulyAttachment>): void => {
-  ;(ops as Record<string, unknown>).description = ""
+  Object.assign(ops, { description: "" })
 }
 
 const toAttachmentSummary = (att: HulyAttachment): AttachmentSummary => ({
@@ -283,9 +283,8 @@ const toFileSourceParams = (params: {
 }): FileSourceParams => {
   if (params.filePath !== undefined) return { _tag: "filePath", filePath: params.filePath }
   if (params.fileUrl !== undefined) return { _tag: "fileUrl", fileUrl: params.fileUrl }
-  // Schema validation guarantees at least one source is present.
-  // Cast is safe: data is the only remaining option after filePath/fileUrl checks.
-  return { _tag: "base64", data: params.data as string }
+  if (params.data !== undefined) return { _tag: "base64", data: params.data }
+  throw new Error("Schema validation should guarantee at least one file source (filePath, fileUrl, or data)")
 }
 
 export const addAttachment = (

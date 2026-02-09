@@ -2,7 +2,7 @@
  * Workspace management operations using account-client.
  * @module
  */
-import type { AccountRole as HulyAccountRole, WorkspaceInfoWithStatus } from "@hcengineering/core"
+import { AccountRole as HulyAccountRole, type WorkspaceInfoWithStatus } from "@hcengineering/core"
 import { Effect, Option } from "effect"
 
 import { AccountId, PersonUuid, RegionId, WorkspaceUuid } from "../../domain/schemas/shared.js"
@@ -29,16 +29,19 @@ import type { InvalidPersonUuidError } from "../errors.js"
 import { WorkspaceClient, type WorkspaceClientError } from "../workspace-client.js"
 import { clampLimit, validatePersonUuid } from "./shared.js"
 
-// Compile-time assertion: AccountRole string literals must match HulyAccountRole enum values
-// If AccountRole has values not in HulyAccountRole, this line will fail to compile
-type _AssertAccountRoleCompatible = AccountRole extends `${HulyAccountRole}` ? true : never
-void (true as _AssertAccountRoleCompatible)
-
-const toHulyAccountRole = (role: AccountRole): HulyAccountRole => {
-  // AccountRole validated by AccountRoleSchema at API boundary.
-  // Values match HulyAccountRole enum. Cast safe after schema validation.
-  return role as HulyAccountRole
+// Exhaustive map guarantees compile-time alignment between AccountRole literals and HulyAccountRole enum.
+// If either side adds a value, TS will error here.
+const accountRoleMap: Record<AccountRole, HulyAccountRole> = {
+  READONLYGUEST: HulyAccountRole.ReadOnlyGuest,
+  DocGuest: HulyAccountRole.DocGuest,
+  GUEST: HulyAccountRole.Guest,
+  USER: HulyAccountRole.User,
+  MAINTAINER: HulyAccountRole.Maintainer,
+  OWNER: HulyAccountRole.Owner,
+  ADMIN: HulyAccountRole.Admin
 }
+
+const toHulyAccountRole = (role: AccountRole): HulyAccountRole => accountRoleMap[role]
 
 type ListWorkspaceMembersError = WorkspaceClientError
 type UpdateMemberRoleError = WorkspaceClientError
