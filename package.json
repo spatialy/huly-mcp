@@ -46,6 +46,7 @@
     "claude",
     "llm"
   ],
+  "packageManager": "pnpm@10.29.3",
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -78,6 +79,15 @@
   },
   "lint-staged": {
     "*.ts": "eslint --fix"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "core-js",
+      "esbuild",
+      "@parcel/watcher",
+      "msgpackr-extract",
+      "unrs-resolver"
+    ]
   },
   "devDependencies": {
     "@effect/eslint-plugin": "^0.3.2",
