@@ -1,6 +1,8 @@
 import type { ParseResult } from "effect"
 import { Effect, Either, Exit } from "effect"
 
+import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js"
+
 import { HulyClient } from "../../huly/client.js"
 import { type HulyDomainError, HulyError } from "../../huly/errors.js"
 import { HulyStorageClient } from "../../huly/storage.js"
@@ -18,7 +20,54 @@ export interface ToolDefinition {
   readonly description: string
   readonly inputSchema: object
   readonly category: string
+  readonly annotations?: ToolAnnotations
 }
+
+const deriveTitle = (name: string): string =>
+  name.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+
+const READ_PREFIXES = ["list_", "get_", "search_", "fulltext_", "download_"]
+const CREATE_PREFIXES = ["create_", "add_", "upload_", "send_", "log_"]
+const UPDATE_PREFIXES = [
+  "update_",
+  "set_",
+  "pin_",
+  "unpin_",
+  "mark_",
+  "archive_",
+  "start_",
+  "stop_",
+  "save_",
+  "unsave_",
+  "remove_"
+]
+const DELETE_PREFIXES = ["delete_"]
+
+const matchesPrefix = (name: string, prefixes: ReadonlyArray<string>): boolean =>
+  prefixes.some((p) => name.startsWith(p))
+
+const deriveAnnotations = (name: string): ToolAnnotations => {
+  const title = deriveTitle(name)
+
+  if (matchesPrefix(name, READ_PREFIXES)) {
+    return { title, readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false }
+  }
+  if (matchesPrefix(name, CREATE_PREFIXES)) {
+    return { title, readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false }
+  }
+  if (matchesPrefix(name, UPDATE_PREFIXES)) {
+    return { title, readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false }
+  }
+  if (matchesPrefix(name, DELETE_PREFIXES)) {
+    return { title, readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false }
+  }
+  return { title, readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false }
+}
+
+export const resolveAnnotations = (tool: ToolDefinition): ToolAnnotations => ({
+  ...deriveAnnotations(tool.name),
+  ...tool.annotations
+})
 
 export interface RegisteredTool extends ToolDefinition {
   readonly handler: (

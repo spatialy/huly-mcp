@@ -19,7 +19,7 @@ import { TelemetryService } from "../telemetry/telemetry.js"
 import { VERSION } from "../version.js"
 import { createUnknownToolError, McpErrorCode, toMcpResponse } from "./error-mapping.js"
 import type { ToolRegistry } from "./tools/index.js"
-import { CATEGORY_NAMES, createFilteredRegistry, toolRegistry } from "./tools/index.js"
+import { CATEGORY_NAMES, createFilteredRegistry, resolveAnnotations, toolRegistry } from "./tools/index.js"
 
 interface McpInputSchema {
   readonly type: "object"
@@ -100,7 +100,8 @@ const createMcpServer = (
         return [{
           name: tool.name,
           description: tool.description,
-          inputSchema: tool.inputSchema
+          inputSchema: tool.inputSchema,
+          annotations: resolveAnnotations(tool)
         }]
       })
     }

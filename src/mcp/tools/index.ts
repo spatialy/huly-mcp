@@ -14,6 +14,7 @@ import { milestoneTools } from "./milestones.js"
 import { notificationTools } from "./notifications.js"
 import { projectTools } from "./projects.js"
 import type { RegisteredTool, ToolDefinition } from "./registry.js"
+import { resolveAnnotations } from "./registry.js"
 import { searchTools } from "./search.js"
 import { storageTools } from "./storage.js"
 import { timeTools } from "./time.js"
@@ -77,5 +78,7 @@ export const createFilteredRegistry = (categories: ReadonlySet<string>): ToolReg
   buildRegistry(allTools.filter((t) => categories.has(t.category)))
 
 export const toolRegistry: ToolRegistry = buildRegistry(allTools)
+
+export { resolveAnnotations }
 
 export const TOOL_DEFINITIONS = Object.fromEntries(toolRegistry.tools)
