@@ -1280,7 +1280,7 @@ describe("McpServerService.layer operations", () => {
       })
     })
 
-    it.scoped("http transport does not create stdio server (server is null)", () =>
+    it.scoped("http transport stop is no-op when not running", () =>
       Effect.gen(function*() {
         const layers = Layer.mergeAll(
           HulyClient.testLayer({}),
@@ -1302,6 +1302,38 @@ describe("McpServerService.layer operations", () => {
   })
 
   describe("createMcpServer request handlers", () => {
+    const buildAndRun = (
+      layers: Layer.Layer<HulyClient | HulyStorageClient | WorkspaceClient | TelemetryService>
+    ) =>
+      Effect.gen(function*() {
+        const serverLayer = McpServerService.layer({
+          transport: "stdio",
+          autoExit: true
+        }).pipe(Layer.provide(layers))
+        const ctx = yield* Layer.build(serverLayer)
+        const ops = yield* McpServerService.pipe(
+          Effect.provide(Layer.succeedContext(ctx))
+        )
+        const fiber = yield* Effect.fork(
+          ops.run().pipe(
+            Effect.provideService(
+              HttpServerFactoryService,
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- mock stub
+              { createApp: () => ({}) as never, listen: () => Effect.void as never }
+            )
+          )
+        )
+        yield* Effect.promise(() => new Promise((r) => setTimeout(r, 50)))
+        return fiber
+      })
+
+    const cleanup = (fiber: Fiber.RuntimeFiber<void, McpServerError>) =>
+      Effect.gen(function*() {
+        process.stdin.emit("end")
+        yield* Effect.promise(() => new Promise((r) => setTimeout(r, 50)))
+        yield* Fiber.interrupt(fiber)
+      })
+
     it.scoped("ListTools handler returns tool definitions", () =>
       Effect.gen(function*() {
         capturedHandlers.clear()
@@ -1320,10 +1352,7 @@ describe("McpServerService.layer operations", () => {
           WorkspaceClient.testLayer({}),
           TelemetryService.testLayer(telemetryOps)
         )
-        const serverLayer = McpServerService.layer({
-          transport: "stdio"
-        }).pipe(Layer.provide(layers))
-        yield* Layer.build(serverLayer)
+        const fiber = yield* buildAndRun(layers)
 
         const listToolsHandler = capturedHandlers.get(ListToolsRequestSchema) as
           | (() => Promise<{ tools: Array<{ name: string }> }>)
@@ -1336,7 +1365,9 @@ describe("McpServerService.layer operations", () => {
         expect(result.tools[0]).toHaveProperty("description")
         expect(result.tools[0]).toHaveProperty("inputSchema")
         expect(firstListToolsCalled).toBe(true)
-      }))
+
+        yield* cleanup(fiber)
+      }), { timeout: 5000 })
 
     it.scoped("CallTool handler returns null for unknown tool", () =>
       Effect.gen(function*() {
@@ -1356,10 +1387,7 @@ describe("McpServerService.layer operations", () => {
           WorkspaceClient.testLayer({}),
           TelemetryService.testLayer(telemetryOps)
         )
-        const serverLayer = McpServerService.layer({
-          transport: "stdio"
-        }).pipe(Layer.provide(layers))
-        yield* Layer.build(serverLayer)
+        const fiber = yield* buildAndRun(layers)
 
         const callToolHandler = capturedHandlers.get(CallToolRequestSchema) as
           | ((req: { params: { name: string; arguments?: Record<string, unknown> } }) => Promise<unknown>)
@@ -1377,7 +1405,9 @@ describe("McpServerService.layer operations", () => {
         expect(toolCalledProps).not.toBeNull()
         expect(toolCalledProps!.toolName).toBe("nonexistent_tool")
         expect(toolCalledProps!.status).toBe("error")
-      }))
+
+        yield* cleanup(fiber)
+      }), { timeout: 5000 })
 
     it.scoped("CallTool handler handles known tool", () =>
       Effect.gen(function*() {
@@ -1397,10 +1427,7 @@ describe("McpServerService.layer operations", () => {
           WorkspaceClient.testLayer({}),
           TelemetryService.testLayer(telemetryOps)
         )
-        const serverLayer = McpServerService.layer({
-          transport: "stdio"
-        }).pipe(Layer.provide(layers))
-        yield* Layer.build(serverLayer)
+        const fiber = yield* buildAndRun(layers)
 
         const callToolHandler = capturedHandlers.get(CallToolRequestSchema) as
           | ((req: { params: { name: string; arguments?: Record<string, unknown> } }) => Promise<unknown>)
@@ -1420,7 +1447,9 @@ describe("McpServerService.layer operations", () => {
         expect(toolCalledProps).not.toBeNull()
         expect(toolCalledProps!.toolName).toBe("list_projects")
         expect(toolCalledProps!.status).toBe("success")
-      }))
+
+        yield* cleanup(fiber)
+      }), { timeout: 5000 })
 
     it.scoped("CallTool handler handles tool with no arguments", () =>
       Effect.gen(function*() {
@@ -1431,10 +1460,7 @@ describe("McpServerService.layer operations", () => {
           WorkspaceClient.testLayer({}),
           TelemetryService.testLayer()
         )
-        const serverLayer = McpServerService.layer({
-          transport: "stdio"
-        }).pipe(Layer.provide(layers))
-        yield* Layer.build(serverLayer)
+        const fiber = yield* buildAndRun(layers)
 
         const callToolHandler = capturedHandlers.get(CallToolRequestSchema) as
           | ((req: { params: { name: string; arguments?: Record<string, unknown> } }) => Promise<unknown>)
@@ -1449,7 +1475,9 @@ describe("McpServerService.layer operations", () => {
         )) as { content: Array<{ text: string }> }
 
         expect(result.content).toBeDefined()
-      }))
+
+        yield* cleanup(fiber)
+      }), { timeout: 5000 })
 
     it.scoped("CallTool records error telemetry for parse errors", () =>
       Effect.gen(function*() {
@@ -1469,10 +1497,7 @@ describe("McpServerService.layer operations", () => {
           WorkspaceClient.testLayer({}),
           TelemetryService.testLayer(telemetryOps)
         )
-        const serverLayer = McpServerService.layer({
-          transport: "stdio"
-        }).pipe(Layer.provide(layers))
-        yield* Layer.build(serverLayer)
+        const fiber = yield* buildAndRun(layers)
 
         const callToolHandler = capturedHandlers.get(CallToolRequestSchema) as
           | ((req: { params: { name: string; arguments?: Record<string, unknown> } }) => Promise<unknown>)
@@ -1488,7 +1513,9 @@ describe("McpServerService.layer operations", () => {
         expect(result.content).toBeDefined()
         expect(toolCalledProps).not.toBeNull()
         expect(toolCalledProps!.toolName).toBe("get_issue")
-      }))
+
+        yield* cleanup(fiber)
+      }), { timeout: 5000 })
 
     it.scoped("CallTool records internal error telemetry for connection errors", () =>
       Effect.gen(function*() {
@@ -1514,10 +1541,7 @@ describe("McpServerService.layer operations", () => {
           WorkspaceClient.testLayer({}),
           TelemetryService.testLayer(telemetryOps)
         )
-        const serverLayer = McpServerService.layer({
-          transport: "stdio"
-        }).pipe(Layer.provide(layers))
-        yield* Layer.build(serverLayer)
+        const fiber = yield* buildAndRun(layers)
 
         const callToolHandler = capturedHandlers.get(CallToolRequestSchema) as
           | ((req: { params: { name: string; arguments?: Record<string, unknown> } }) => Promise<unknown>)
@@ -1533,6 +1557,8 @@ describe("McpServerService.layer operations", () => {
         expect(toolCalledProps).not.toBeNull()
         expect(toolCalledProps!.status).toBe("error")
         expect(toolCalledProps!.toolName).toBe("list_projects")
-      }))
+
+        yield* cleanup(fiber)
+      }), { timeout: 5000 })
   })
 })

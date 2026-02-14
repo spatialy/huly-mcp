@@ -16,7 +16,6 @@ import { HulyStorageClient } from "../huly/storage.js"
 import { WorkspaceClient, type WorkspaceClientOperations } from "../huly/workspace-client.js"
 import type { TelemetryOperations } from "../telemetry/telemetry.js"
 import { TelemetryService } from "../telemetry/telemetry.js"
-import { assertExists } from "../utils/assertions.js"
 import { VERSION } from "../version.js"
 import { createUnknownToolError, McpErrorCode, toMcpResponse } from "./error-mapping.js"
 import type { ToolRegistry } from "./tools/index.js"
@@ -175,15 +174,11 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
           toolsets
         })
 
-        // TODO better harmony with config.transport
-        const server = config.transport === "stdio"
-          ? createMcpServer(hulyClient, storageClient, telemetry, registry, workspaceClient)
-          : null
-
         const flushTelemetry = Effect.ignore(
           Effect.tryPromise(() => telemetry.shutdown())
         )
 
+        const serverRef = yield* Ref.make<Server | null>(null)
         const isRunning = yield* Ref.make(false)
 
         const operations: McpServerOperations = {
@@ -198,8 +193,9 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
               yield* Ref.set(isRunning, true)
 
               if (config.transport === "stdio") {
+                const stdioServer = createMcpServer(hulyClient, storageClient, telemetry, registry, workspaceClient)
+                yield* Ref.set(serverRef, stdioServer)
                 const transport = new StdioServerTransport()
-                const stdioServer = assertExists(server, "server must exist for stdio transport")
 
                 yield* Effect.tryPromise({
                   try: () => stdioServer.connect(transport),
@@ -277,15 +273,17 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
 
               yield* flushTelemetry
 
-              if (server) {
+              const runningServer = yield* Ref.get(serverRef)
+              if (runningServer !== null) {
                 yield* Effect.tryPromise({
-                  try: () => server.close(),
+                  try: () => runningServer.close(),
                   catch: (e) =>
                     new McpServerError({
                       message: `Failed to stop server: ${String(e)}`,
                       cause: e
                     })
                 })
+                yield* Ref.set(serverRef, null)
               }
             })
         }
