@@ -149,7 +149,7 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @firfi/huly-m
 |------|-------------|
 | `list_issues` | Query Huly issues with optional filters. Returns issues sorted by modification date (newest first). Supports filtering by project, status, assignee, and milestone. Supports searching by title substring (titleSearch) and description content (descriptionSearch). |
 | `get_issue` | Retrieve full details for a Huly issue including markdown description. Use this to view issue content, comments, or full metadata. |
-| `create_issue` | Create a new issue in a Huly project. Description supports markdown formatting. Returns the created issue identifier. |
+| `create_issue` | Create a new issue in a Huly project. Optionally create as a sub-issue by specifying parentIssue. Description supports markdown formatting. Returns the created issue identifier. |
 | `update_issue` | Update fields on an existing Huly issue. Only provided fields are modified. Description updates support markdown. |
 | `add_issue_label` | Add a tag/label to a Huly issue. Creates the tag if it doesn't exist in the project. |
 | `delete_issue` | Permanently delete a Huly issue. This action cannot be undone. |
