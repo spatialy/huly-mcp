@@ -8,6 +8,7 @@ import { calendarTools } from "./calendar.js"
 import { channelTools } from "./channels.js"
 import { commentTools } from "./comments.js"
 import { contactTools } from "./contacts.js"
+import { deletionTools } from "./deletion.js"
 import { documentTools } from "./documents.js"
 import { issueTools } from "./issues.js"
 import { milestoneTools } from "./milestones.js"
@@ -24,6 +25,7 @@ const allTools: ReadonlyArray<RegisteredTool> = [
   ...projectTools,
   ...issueTools,
   ...commentTools,
+  ...deletionTools,
   ...milestoneTools,
   ...documentTools,
   ...storageTools,

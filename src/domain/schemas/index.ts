@@ -118,6 +118,18 @@ export {
 } from "./components.js"
 
 export {
+  type DeletionImpact,
+  DeletionImpactSchema,
+  type EntityType,
+  EntityTypeSchema,
+  EntityTypeValues,
+  parsePreviewDeletionParams,
+  type PreviewDeletionParams,
+  previewDeletionParamsJsonSchema,
+  PreviewDeletionParamsSchema
+} from "./deletion.js"
+
+export {
   type CreateIssueFromTemplateParams,
   createIssueFromTemplateParamsJsonSchema,
   CreateIssueFromTemplateParamsSchema,

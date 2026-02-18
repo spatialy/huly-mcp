@@ -9,3 +9,5 @@ COMPARISON.md
 .env.production
 CLAUDE.local.md
 .worktrees/
+.huly-local/
+.env.local
