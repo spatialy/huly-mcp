@@ -101,24 +101,21 @@ export const parseAddCommentParams = Schema.decodeUnknown(AddCommentParamsSchema
 export const parseUpdateCommentParams = Schema.decodeUnknown(UpdateCommentParamsSchema)
 export const parseDeleteCommentParams = Schema.decodeUnknown(DeleteCommentParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
 
-export const AddCommentResultSchema = Schema.Struct({
-  commentId: CommentId,
-  issueIdentifier: IssueIdentifier
-}).annotations({ title: "AddCommentResult", description: "Result of add comment operation" })
-export type AddCommentResult = Schema.Schema.Type<typeof AddCommentResultSchema>
+export interface AddCommentResult {
+  readonly commentId: CommentId
+  readonly issueIdentifier: IssueIdentifier
+}
 
-export const UpdateCommentResultSchema = Schema.Struct({
-  commentId: CommentId,
-  issueIdentifier: IssueIdentifier,
-  updated: Schema.Boolean
-}).annotations({ title: "UpdateCommentResult", description: "Result of update comment operation" })
-export type UpdateCommentResult = Schema.Schema.Type<typeof UpdateCommentResultSchema>
+export interface UpdateCommentResult {
+  readonly commentId: CommentId
+  readonly issueIdentifier: IssueIdentifier
+  readonly updated: boolean
+}
 
-export const DeleteCommentResultSchema = Schema.Struct({
-  commentId: CommentId,
-  issueIdentifier: IssueIdentifier,
-  deleted: Schema.Boolean
-}).annotations({ title: "DeleteCommentResult", description: "Result of delete comment operation" })
-export type DeleteCommentResult = Schema.Schema.Type<typeof DeleteCommentResultSchema>
+export interface DeleteCommentResult {
+  readonly commentId: CommentId
+  readonly issueIdentifier: IssueIdentifier
+  readonly deleted: boolean
+}

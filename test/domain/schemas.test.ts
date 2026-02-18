@@ -6,8 +6,6 @@ import {
   createDocumentParamsJsonSchema,
   createIssueParamsJsonSchema,
   deleteDocumentParamsJsonSchema,
-  DocumentSchema,
-  DocumentSummarySchema,
   getDocumentParamsJsonSchema,
   getIssueParamsJsonSchema,
   getTimeReportParamsJsonSchema,
@@ -39,12 +37,8 @@ import {
   parseStopTimerParams,
   parseUpdateDocumentParams,
   parseUpdateIssueParams,
-  ProjectSummarySchema,
   startTimerParamsJsonSchema,
   stopTimerParamsJsonSchema,
-  TeamspaceSummarySchema,
-  TimeReportSummarySchema,
-  TimeSpendReportSchema,
   updateDocumentParamsJsonSchema,
   updateIssueParamsJsonSchema
 } from "../../src/domain/schemas.js"
@@ -171,38 +165,6 @@ describe("Domain Schemas", () => {
           name: "John Doe",
           email: "john@example.com"
         })
-      }))
-  })
-
-  describe("ProjectSummarySchema", () => {
-    // test-revizorro: approved
-    it.effect("parses minimal project", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(ProjectSummarySchema)({
-          identifier: "HULY",
-          name: "Huly Project",
-          archived: false
-        })
-        expect(result).toEqual({
-          identifier: "HULY",
-          name: "Huly Project",
-          archived: false
-        })
-      }))
-
-    // test-revizorro: approved
-    it.effect("parses with description", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(ProjectSummarySchema)({
-          identifier: "HULY",
-          name: "Huly Project",
-          description: "Main project",
-          archived: false
-        })
-        expect(result.identifier).toBe("HULY")
-        expect(result.name).toBe("Huly Project")
-        expect(result.description).toBe("Main project")
-        expect(result.archived).toBe(false)
       }))
   })
 
@@ -599,102 +561,6 @@ describe("Domain Schemas", () => {
 
   // --- Document Schema Tests ---
 
-  describe("TeamspaceSummarySchema", () => {
-    // test-revizorro: approved
-    it.effect("parses minimal teamspace", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(TeamspaceSummarySchema)({
-          id: "ts-1",
-          name: "My Docs",
-          archived: false,
-          private: false
-        })
-        expect(result).toEqual({
-          id: "ts-1",
-          name: "My Docs",
-          archived: false,
-          private: false
-        })
-      }))
-
-    // test-revizorro: approved
-    it.effect("parses with description", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(TeamspaceSummarySchema)({
-          id: "ts-1",
-          name: "My Docs",
-          description: "Team documentation",
-          archived: false,
-          private: true
-        })
-        expect(result.id).toBe("ts-1")
-        expect(result.name).toBe("My Docs")
-        expect(result.description).toBe("Team documentation")
-        expect(result.archived).toBe(false)
-        expect(result.private).toBe(true)
-      }))
-  })
-
-  describe("DocumentSummarySchema", () => {
-    // test-revizorro: approved
-    it.effect("parses minimal document summary", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(DocumentSummarySchema)({
-          id: "doc-1",
-          title: "Getting Started",
-          teamspace: "My Docs"
-        })
-        expect(result).toEqual({
-          id: "doc-1",
-          title: "Getting Started",
-          teamspace: "My Docs"
-        })
-      }))
-
-    // test-revizorro: approved
-    it.effect("parses with modifiedOn", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(DocumentSummarySchema)({
-          id: "doc-1",
-          title: "Getting Started",
-          teamspace: "My Docs",
-          modifiedOn: 1706500000000
-        })
-        expect(result.modifiedOn).toBe(1706500000000)
-      }))
-  })
-
-  describe("DocumentSchema", () => {
-    // test-revizorro: approved
-    it.effect("parses minimal document", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(DocumentSchema)({
-          id: "doc-1",
-          title: "Getting Started",
-          teamspace: "My Docs"
-        })
-        expect(result.id).toBe("doc-1")
-        expect(result.title).toBe("Getting Started")
-        expect(result.content).toBeUndefined()
-      }))
-
-    // test-revizorro: approved
-    it.effect("parses full document", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(DocumentSchema)({
-          id: "doc-1",
-          title: "Getting Started",
-          content: "# Welcome\n\nThis is the content.",
-          teamspace: "My Docs",
-          modifiedOn: 1706500000000,
-          createdOn: 1706400000000
-        })
-        expect(result.content).toBe("# Welcome\n\nThis is the content.")
-        expect(result.modifiedOn).toBe(1706500000000)
-        expect(result.createdOn).toBe(1706400000000)
-      }))
-  })
-
   describe("ListTeamspacesParamsSchema", () => {
     // test-revizorro: approved
     it.effect("parses empty params", () =>
@@ -910,78 +776,6 @@ describe("Domain Schemas", () => {
   })
 
   // --- Time Schema Tests ---
-
-  describe("TimeSpendReportSchema", () => {
-    // test-revizorro: approved
-    it.effect("parses valid time report", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(TimeSpendReportSchema)({
-          id: "report-1",
-          identifier: "TEST-1",
-          value: 30,
-          description: "Worked on feature"
-        })
-        expect(result.id).toBe("report-1")
-        expect(result.identifier).toBe("TEST-1")
-        expect(result.value).toBe(30)
-        expect(result.description).toBe("Worked on feature")
-      }))
-
-    // test-revizorro: approved
-    it.effect("parses with optional employee", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(TimeSpendReportSchema)({
-          id: "report-1",
-          identifier: "TEST-1",
-          employee: "John Doe",
-          value: 60,
-          description: "Bug fix"
-        })
-        expect(result.employee).toBe("John Doe")
-      }))
-
-    // test-revizorro: approved
-    it.effect("parses with optional date", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(TimeSpendReportSchema)({
-          id: "report-1",
-          identifier: "TEST-1",
-          date: 1706500000000,
-          value: 45,
-          description: "Review"
-        })
-        expect(result.date).toBe(1706500000000)
-      }))
-  })
-
-  describe("TimeReportSummarySchema", () => {
-    // test-revizorro: approved
-    it.effect("parses valid summary", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(TimeReportSummarySchema)({
-          identifier: "TEST-1",
-          totalTime: 120,
-          reports: []
-        })
-        expect(result.identifier).toBe("TEST-1")
-        expect(result.totalTime).toBe(120)
-        expect(result.reports).toHaveLength(0)
-      }))
-
-    // test-revizorro: approved
-    it.effect("parses with estimation and remainingTime", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(TimeReportSummarySchema)({
-          identifier: "TEST-1",
-          totalTime: 60,
-          estimation: 120,
-          remainingTime: 60,
-          reports: []
-        })
-        expect(result.estimation).toBe(120)
-        expect(result.remainingTime).toBe(60)
-      }))
-  })
 
   describe("LogTimeParamsSchema", () => {
     // test-revizorro: approved

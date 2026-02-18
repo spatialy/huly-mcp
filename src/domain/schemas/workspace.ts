@@ -1,15 +1,7 @@
 import { JSONSchema, Schema } from "effect"
 
-import {
-  AccountId,
-  EmptyParamsSchema,
-  LimitParam,
-  NonEmptyString,
-  PersonUuid,
-  RegionId,
-  Timestamp,
-  WorkspaceUuid
-} from "./shared.js"
+import type { PersonUuid, WorkspaceUuid } from "./shared.js"
+import { AccountId, EmptyParamsSchema, LimitParam, NonEmptyString, RegionId } from "./shared.js"
 
 export const AccountRoleSchema = Schema.Literal(
   "READONLYGUEST",
@@ -36,75 +28,51 @@ export const AccountRoleValues = [
   "ADMIN"
 ] as const
 
-export const WorkspaceMemberSchema = Schema.Struct({
-  personId: PersonUuid,
-  role: AccountRoleSchema,
-  name: Schema.optional(Schema.String),
-  email: Schema.optional(Schema.String)
-}).annotations({
-  title: "WorkspaceMember",
-  description: "Workspace member with role information"
-})
+// No codec needed — internal type, not used for runtime validation
+export interface WorkspaceMember {
+  readonly personId: PersonUuid
+  readonly role: AccountRole
+  readonly name?: string | undefined
+  readonly email?: string | undefined
+}
 
-export type WorkspaceMember = Schema.Schema.Type<typeof WorkspaceMemberSchema>
+export interface WorkspaceInfo {
+  readonly uuid: WorkspaceUuid
+  readonly name: string
+  readonly url: string
+  readonly region?: RegionId | undefined
+  readonly createdOn: number
+  readonly allowReadOnlyGuest?: boolean | undefined
+  readonly allowGuestSignUp?: boolean | undefined
+  readonly version?: string | undefined
+  readonly mode?: string | undefined
+}
 
-export const WorkspaceInfoSchema = Schema.Struct({
-  uuid: WorkspaceUuid,
-  name: Schema.String,
-  url: Schema.String,
-  region: Schema.optional(RegionId),
-  createdOn: Timestamp,
-  allowReadOnlyGuest: Schema.optional(Schema.Boolean),
-  allowGuestSignUp: Schema.optional(Schema.Boolean),
-  version: Schema.optional(Schema.String),
-  mode: Schema.optional(Schema.String)
-}).annotations({
-  title: "WorkspaceInfo",
-  description: "Workspace information"
-})
+export interface WorkspaceSummary {
+  readonly uuid: WorkspaceUuid
+  readonly name: string
+  readonly url: string
+  readonly region?: RegionId | undefined
+  readonly createdOn: number
+  readonly lastVisit?: number | undefined
+}
 
-export type WorkspaceInfo = Schema.Schema.Type<typeof WorkspaceInfoSchema>
+export interface RegionInfo {
+  readonly region: RegionId
+  readonly name: string
+}
 
-export const WorkspaceSummarySchema = Schema.Struct({
-  uuid: WorkspaceUuid,
-  name: Schema.String,
-  url: Schema.String,
-  region: Schema.optional(RegionId),
-  createdOn: Timestamp,
-  lastVisit: Schema.optional(Timestamp)
-}).annotations({
-  title: "WorkspaceSummary",
-  description: "Workspace summary for list operations"
-})
-
-export type WorkspaceSummary = Schema.Schema.Type<typeof WorkspaceSummarySchema>
-
-export const RegionInfoSchema = Schema.Struct({
-  region: RegionId,
-  name: Schema.String
-}).annotations({
-  title: "RegionInfo",
-  description: "Available region information"
-})
-
-export type RegionInfo = Schema.Schema.Type<typeof RegionInfoSchema>
-
-export const UserProfileSchema = Schema.Struct({
-  personUuid: PersonUuid,
-  firstName: Schema.String,
-  lastName: Schema.String,
-  bio: Schema.optional(Schema.String),
-  city: Schema.optional(Schema.String),
-  country: Schema.optional(Schema.String),
-  website: Schema.optional(Schema.String),
-  socialLinks: Schema.optional(Schema.Record({ key: Schema.String, value: Schema.String })),
-  isPublic: Schema.Boolean
-}).annotations({
-  title: "UserProfile",
-  description: "User profile information"
-})
-
-export type UserProfile = Schema.Schema.Type<typeof UserProfileSchema>
+export interface UserProfile {
+  readonly personUuid: PersonUuid
+  readonly firstName: string
+  readonly lastName: string
+  readonly bio?: string | undefined
+  readonly city?: string | undefined
+  readonly country?: string | undefined
+  readonly website?: string | undefined
+  readonly socialLinks?: { readonly [x: string]: string } | undefined
+  readonly isPublic: boolean
+}
 
 export const ListWorkspaceMembersParamsSchema = Schema.Struct({
   limit: Schema.optional(
@@ -238,35 +206,29 @@ export const parseUpdateUserProfileParams = Schema.decodeUnknown(UpdateUserProfi
 export const parseUpdateGuestSettingsParams = Schema.decodeUnknown(UpdateGuestSettingsParamsSchema)
 export const parseGetRegionsParams = Schema.decodeUnknown(GetRegionsParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
+export interface UpdateMemberRoleResult {
+  readonly accountId: AccountId
+  readonly role: AccountRole
+  readonly updated: boolean
+}
 
-export const UpdateMemberRoleResultSchema = Schema.Struct({
-  accountId: AccountId,
-  role: AccountRoleSchema,
-  updated: Schema.Boolean
-}).annotations({ title: "UpdateMemberRoleResult", description: "Result of update member role operation" })
-export type UpdateMemberRoleResult = Schema.Schema.Type<typeof UpdateMemberRoleResultSchema>
+export interface CreateWorkspaceResult {
+  readonly uuid: WorkspaceUuid
+  readonly url: string
+  readonly name: string
+}
 
-export const CreateWorkspaceResultSchema = Schema.Struct({
-  uuid: WorkspaceUuid,
-  url: Schema.String,
-  name: Schema.String
-}).annotations({ title: "CreateWorkspaceResult", description: "Result of create workspace operation" })
-export type CreateWorkspaceResult = Schema.Schema.Type<typeof CreateWorkspaceResultSchema>
+export interface DeleteWorkspaceResult {
+  readonly deleted: boolean
+}
 
-export const DeleteWorkspaceResultSchema = Schema.Struct({
-  deleted: Schema.Boolean
-}).annotations({ title: "DeleteWorkspaceResult", description: "Result of delete workspace operation" })
-export type DeleteWorkspaceResult = Schema.Schema.Type<typeof DeleteWorkspaceResultSchema>
+export interface UpdateUserProfileResult {
+  readonly updated: boolean
+}
 
-export const UpdateUserProfileResultSchema = Schema.Struct({
-  updated: Schema.Boolean
-}).annotations({ title: "UpdateUserProfileResult", description: "Result of update user profile operation" })
-export type UpdateUserProfileResult = Schema.Schema.Type<typeof UpdateUserProfileResultSchema>
-
-export const UpdateGuestSettingsResultSchema = Schema.Struct({
-  updated: Schema.Boolean,
-  allowReadOnly: Schema.optional(Schema.Boolean),
-  allowSignUp: Schema.optional(Schema.Boolean)
-}).annotations({ title: "UpdateGuestSettingsResult", description: "Result of update guest settings operation" })
-export type UpdateGuestSettingsResult = Schema.Schema.Type<typeof UpdateGuestSettingsResultSchema>
+export interface UpdateGuestSettingsResult {
+  readonly updated: boolean
+  readonly allowReadOnly?: boolean | undefined
+  readonly allowSignUp?: boolean | undefined
+}

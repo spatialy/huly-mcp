@@ -1,99 +1,64 @@
 import { JSONSchema, Schema } from "effect"
 
+import type { NotificationTypeId } from "./shared.js"
 import {
   LimitParam,
   NonEmptyString,
   NotificationContextId,
   NotificationId,
   NotificationProviderId,
-  NotificationTypeId,
-  ObjectClassName,
-  Timestamp
+  ObjectClassName
 } from "./shared.js"
 
-// --- Notification Summary (for list operations) ---
+// No codec needed — internal type, not used for runtime validation
+export interface NotificationSummary {
+  readonly id: NotificationId
+  readonly isViewed: boolean
+  readonly archived: boolean
+  readonly objectId?: string | undefined
+  readonly objectClass?: ObjectClassName | undefined
+  readonly title?: string | undefined
+  readonly body?: string | undefined
+  readonly createdOn?: number | undefined
+  readonly modifiedOn?: number | undefined
+}
 
-export const NotificationSummarySchema = Schema.Struct({
-  id: NotificationId,
-  isViewed: Schema.Boolean,
-  archived: Schema.Boolean,
-  objectId: Schema.optional(NonEmptyString),
-  objectClass: Schema.optional(ObjectClassName),
-  title: Schema.optional(Schema.String),
-  body: Schema.optional(Schema.String),
-  createdOn: Schema.optional(Timestamp),
-  modifiedOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "NotificationSummary",
-  description: "Notification summary for list operations"
-})
+export interface Notification {
+  readonly id: NotificationId
+  readonly isViewed: boolean
+  readonly archived: boolean
+  readonly objectId?: string | undefined
+  readonly objectClass?: ObjectClassName | undefined
+  readonly docNotifyContextId?: NotificationContextId | undefined
+  readonly title?: string | undefined
+  readonly body?: string | undefined
+  readonly data?: string | undefined
+  readonly createdOn?: number | undefined
+  readonly modifiedOn?: number | undefined
+}
 
-export type NotificationSummary = Schema.Schema.Type<typeof NotificationSummarySchema>
+export interface DocNotifyContextSummary {
+  readonly id: NotificationContextId
+  readonly objectId: string
+  readonly objectClass: ObjectClassName
+  readonly isPinned: boolean
+  readonly hidden: boolean
+  readonly lastViewedTimestamp?: number | undefined
+  readonly lastUpdateTimestamp?: number | undefined
+}
 
-// --- Full Notification ---
+export interface NotificationProviderSetting {
+  readonly id: string
+  readonly providerId: NotificationProviderId
+  readonly enabled: boolean
+}
 
-export const NotificationSchema = Schema.Struct({
-  id: NotificationId,
-  isViewed: Schema.Boolean,
-  archived: Schema.Boolean,
-  objectId: Schema.optional(NonEmptyString),
-  objectClass: Schema.optional(ObjectClassName),
-  docNotifyContextId: Schema.optional(NotificationContextId),
-  title: Schema.optional(Schema.String),
-  body: Schema.optional(Schema.String),
-  data: Schema.optional(Schema.String),
-  createdOn: Schema.optional(Timestamp),
-  modifiedOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "Notification",
-  description: "Full notification with all fields"
-})
-
-export type Notification = Schema.Schema.Type<typeof NotificationSchema>
-
-// --- Doc Notify Context Summary ---
-
-export const DocNotifyContextSummarySchema = Schema.Struct({
-  id: NotificationContextId,
-  objectId: NonEmptyString,
-  objectClass: ObjectClassName,
-  isPinned: Schema.Boolean,
-  hidden: Schema.Boolean,
-  lastViewedTimestamp: Schema.optional(Timestamp),
-  lastUpdateTimestamp: Schema.optional(Timestamp)
-}).annotations({
-  title: "DocNotifyContextSummary",
-  description: "Document notification context summary"
-})
-
-export type DocNotifyContextSummary = Schema.Schema.Type<typeof DocNotifyContextSummarySchema>
-
-// --- Notification Provider Setting ---
-
-export const NotificationProviderSettingSchema = Schema.Struct({
-  id: NonEmptyString,
-  providerId: NotificationProviderId,
-  enabled: Schema.Boolean
-}).annotations({
-  title: "NotificationProviderSetting",
-  description: "Notification provider setting"
-})
-
-export type NotificationProviderSetting = Schema.Schema.Type<typeof NotificationProviderSettingSchema>
-
-// --- Notification Type Setting ---
-
-export const NotificationTypeSettingSchema = Schema.Struct({
-  id: NonEmptyString,
-  providerId: NotificationProviderId,
-  typeId: NotificationTypeId,
-  enabled: Schema.Boolean
-}).annotations({
-  title: "NotificationTypeSetting",
-  description: "Notification type setting"
-})
-
-export type NotificationTypeSetting = Schema.Schema.Type<typeof NotificationTypeSettingSchema>
+export interface NotificationTypeSetting {
+  readonly id: string
+  readonly providerId: NotificationProviderId
+  readonly typeId: NotificationTypeId
+  readonly enabled: boolean
+}
 
 // --- List Notifications Params ---
 
@@ -287,58 +252,41 @@ export const parseUpdateNotificationProviderSettingParams = Schema.decodeUnknown
   UpdateNotificationProviderSettingParamsSchema
 )
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
+export interface MarkNotificationReadResult {
+  readonly id: NotificationId
+  readonly marked: boolean
+}
 
-export const MarkNotificationReadResultSchema = Schema.Struct({
-  id: NotificationId,
-  marked: Schema.Boolean
-}).annotations({ title: "MarkNotificationReadResult", description: "Result of mark notification read operation" })
-export type MarkNotificationReadResult = Schema.Schema.Type<typeof MarkNotificationReadResultSchema>
+export interface MarkAllNotificationsReadResult {
+  readonly count: number
+}
 
-export const MarkAllNotificationsReadResultSchema = Schema.Struct({
-  count: Schema.Number
-}).annotations({
-  title: "MarkAllNotificationsReadResult",
-  description: "Result of mark all notifications read operation"
-})
-export type MarkAllNotificationsReadResult = Schema.Schema.Type<typeof MarkAllNotificationsReadResultSchema>
+export interface ArchiveNotificationResult {
+  readonly id: NotificationId
+  readonly archived: boolean
+}
 
-export const ArchiveNotificationResultSchema = Schema.Struct({
-  id: NotificationId,
-  archived: Schema.Boolean
-}).annotations({ title: "ArchiveNotificationResult", description: "Result of archive notification operation" })
-export type ArchiveNotificationResult = Schema.Schema.Type<typeof ArchiveNotificationResultSchema>
+export interface ArchiveAllNotificationsResult {
+  readonly count: number
+}
 
-export const ArchiveAllNotificationsResultSchema = Schema.Struct({
-  count: Schema.Number
-}).annotations({ title: "ArchiveAllNotificationsResult", description: "Result of archive all notifications operation" })
-export type ArchiveAllNotificationsResult = Schema.Schema.Type<typeof ArchiveAllNotificationsResultSchema>
+export interface DeleteNotificationResult {
+  readonly id: NotificationId
+  readonly deleted: boolean
+}
 
-export const DeleteNotificationResultSchema = Schema.Struct({
-  id: NotificationId,
-  deleted: Schema.Boolean
-}).annotations({ title: "DeleteNotificationResult", description: "Result of delete notification operation" })
-export type DeleteNotificationResult = Schema.Schema.Type<typeof DeleteNotificationResultSchema>
+export interface PinNotificationContextResult {
+  readonly id: NotificationContextId
+  readonly isPinned: boolean
+}
 
-export const PinNotificationContextResultSchema = Schema.Struct({
-  id: NotificationContextId,
-  isPinned: Schema.Boolean
-}).annotations({ title: "PinNotificationContextResult", description: "Result of pin notification context operation" })
-export type PinNotificationContextResult = Schema.Schema.Type<typeof PinNotificationContextResultSchema>
+export interface UpdateNotificationProviderSettingResult {
+  readonly providerId: NotificationProviderId
+  readonly enabled: boolean
+  readonly updated: boolean
+}
 
-export const UpdateNotificationProviderSettingResultSchema = Schema.Struct({
-  providerId: NotificationProviderId,
-  enabled: Schema.Boolean,
-  updated: Schema.Boolean
-}).annotations({
-  title: "UpdateNotificationProviderSettingResult",
-  description: "Result of update notification provider setting operation"
-})
-export type UpdateNotificationProviderSettingResult = Schema.Schema.Type<
-  typeof UpdateNotificationProviderSettingResultSchema
->
-
-export const UnreadCountResultSchema = Schema.Struct({
-  count: Schema.Number
-}).annotations({ title: "UnreadCountResult", description: "Result of unread notification count operation" })
-export type UnreadCountResult = Schema.Schema.Type<typeof UnreadCountResultSchema>
+export interface UnreadCountResult {
+  readonly count: number
+}

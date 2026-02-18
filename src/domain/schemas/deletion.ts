@@ -2,9 +2,9 @@ import { JSONSchema, Schema } from "effect"
 
 import { ProjectIdentifier } from "./shared.js"
 
-export const EntityTypeValues = ["issue", "project", "component", "milestone"] as const
+const EntityTypeValues = ["issue", "project", "component", "milestone"] as const
 
-export const EntityTypeSchema = Schema.Literal(...EntityTypeValues).annotations({
+const EntityTypeSchema = Schema.Literal(...EntityTypeValues).annotations({
   title: "EntityType",
   description: "Type of entity to preview deletion for"
 })
@@ -39,40 +39,24 @@ export const PreviewDeletionParamsSchema = Schema.Struct({
 
 export type PreviewDeletionParams = Schema.Schema.Type<typeof PreviewDeletionParamsSchema>
 
-export const DeletionImpactSchema = Schema.Struct({
-  entityType: EntityTypeSchema,
-  identifier: Schema.String.annotations({
-    description: "The resolved identifier of the entity"
-  }),
-  impact: Schema.Struct({
-    subIssues: Schema.optional(Schema.Number).annotations({ description: "Number of sub-issues (issue only)" }),
-    comments: Schema.optional(Schema.Number).annotations({ description: "Number of comments (issue only)" }),
-    attachments: Schema.optional(Schema.Number).annotations({ description: "Number of attachments (issue only)" }),
-    blockedBy: Schema.optional(Schema.Number).annotations({
-      description: "Number of blocking relations (issue only)"
-    }),
-    relations: Schema.optional(Schema.Number).annotations({ description: "Number of other relations (issue only)" }),
-    issues: Schema.optional(Schema.Number).annotations({
-      description: "Number of issues (project/component/milestone)"
-    }),
-    components: Schema.optional(Schema.Number).annotations({ description: "Number of components (project only)" }),
-    milestones: Schema.optional(Schema.Number).annotations({ description: "Number of milestones (project only)" }),
-    templates: Schema.optional(Schema.Number).annotations({
-      description: "Number of issue templates (project only)"
-    })
-  }),
-  warnings: Schema.Array(Schema.String).annotations({
-    description: "Human-readable warnings about deletion consequences"
-  }),
-  totalAffected: Schema.Number.annotations({
-    description: "Sum of all impact counts"
-  })
-}).annotations({
-  title: "DeletionImpact",
-  description: "Preview of what would be affected by deleting an entity"
-})
-
-export type DeletionImpact = Schema.Schema.Type<typeof DeletionImpactSchema>
+// No codec needed — internal type, not used for runtime validation
+export interface DeletionImpact {
+  readonly entityType: EntityType
+  readonly identifier: string
+  readonly impact: {
+    readonly subIssues?: number | undefined
+    readonly comments?: number | undefined
+    readonly attachments?: number | undefined
+    readonly blockedBy?: number | undefined
+    readonly relations?: number | undefined
+    readonly issues?: number | undefined
+    readonly components?: number | undefined
+    readonly milestones?: number | undefined
+    readonly templates?: number | undefined
+  }
+  readonly warnings: ReadonlyArray<string>
+  readonly totalAffected: number
+}
 
 export const previewDeletionParamsJsonSchema = JSONSchema.make(PreviewDeletionParamsSchema)
 export const parsePreviewDeletionParams = Schema.decodeUnknown(PreviewDeletionParamsSchema)

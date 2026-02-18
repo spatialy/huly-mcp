@@ -11,8 +11,9 @@ import type {
   Project as HulyProject
 } from "@hcengineering/tracker"
 import { MilestoneStatus, TimeReportDayType } from "@hcengineering/tracker"
-import { Effect } from "effect"
+import { Effect, Exit } from "effect"
 import { expect } from "vitest"
+import { parsePreviewDeletionParams } from "../../../src/domain/schemas/deletion.js"
 import { HulyClient, type HulyClientOperations } from "../../../src/huly/client.js"
 import type {
   ComponentNotFoundError,
@@ -118,8 +119,6 @@ interface MockConfig {
   components?: Array<HulyComponent>
   milestones?: Array<HulyMilestone>
   templates?: Array<HulyIssueTemplate>
-  issuesByComponent?: Map<string, Array<HulyIssue>>
-  issuesByMilestone?: Map<string, Array<HulyIssue>>
 }
 
 const createTestLayerWithMocks = (config: MockConfig) => {
@@ -523,5 +522,40 @@ describe("previewDeletion - milestone", () => {
 
       expect(error._tag).toBe("MilestoneNotFoundError")
       expect((error as MilestoneNotFoundError).identifier).toBe("Ghost")
+    }))
+})
+
+describe("PreviewDeletionParamsSchema validation", () => {
+  it.effect("rejects entityType=issue without identifier", () =>
+    Effect.gen(function*() {
+      const exit = yield* Effect.exit(
+        parsePreviewDeletionParams({ entityType: "issue", project: "PROJ" })
+      )
+      expect(Exit.isFailure(exit)).toBe(true)
+    }))
+
+  it.effect("rejects entityType=component with empty identifier", () =>
+    Effect.gen(function*() {
+      const exit = yield* Effect.exit(
+        parsePreviewDeletionParams({ entityType: "component", project: "PROJ", identifier: "  " })
+      )
+      expect(Exit.isFailure(exit)).toBe(true)
+    }))
+
+  it.effect("accepts entityType=project without identifier", () =>
+    Effect.gen(function*() {
+      const result = yield* parsePreviewDeletionParams({ entityType: "project", project: "PROJ" })
+      expect(result.entityType).toBe("project")
+    }))
+
+  it.effect("accepts entityType=issue with identifier", () =>
+    Effect.gen(function*() {
+      const result = yield* parsePreviewDeletionParams({
+        entityType: "issue",
+        project: "PROJ",
+        identifier: "PROJ-1"
+      })
+      expect(result.entityType).toBe("issue")
+      expect(result.identifier).toBe("PROJ-1")
     }))
 })

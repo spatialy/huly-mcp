@@ -1,8 +1,8 @@
 import { JSONSchema, Schema } from "effect"
 
+import type { BlobId } from "./shared.js"
 import {
   AttachmentId,
-  BlobId,
   DocumentIdentifier,
   IssueIdentifier,
   LimitParam,
@@ -11,76 +11,32 @@ import {
   ObjectClassName,
   ProjectIdentifier,
   SpaceId,
-  TeamspaceIdentifier,
-  Timestamp
+  TeamspaceIdentifier
 } from "./shared.js"
 
-export const AttachmentSummarySchema = Schema.Struct({
-  id: AttachmentId.annotations({
-    description: "Attachment ID"
-  }),
-  name: Schema.String.annotations({
-    description: "File name"
-  }),
-  type: Schema.String.annotations({
-    description: "MIME type"
-  }),
-  size: Schema.Number.pipe(Schema.int(), Schema.nonNegative()).annotations({
-    description: "File size in bytes"
-  }),
-  pinned: Schema.optional(Schema.Boolean).annotations({
-    description: "Whether the attachment is pinned"
-  }),
-  description: Schema.optional(Schema.String).annotations({
-    description: "Attachment description"
-  }),
-  modifiedOn: Schema.optional(Timestamp).annotations({
-    description: "Last modification timestamp"
-  })
-}).annotations({
-  title: "AttachmentSummary",
-  description: "Attachment summary for list operations"
-})
+// No codec needed — internal type, not used for runtime validation
+export interface AttachmentSummary {
+  readonly id: AttachmentId
+  readonly name: string
+  readonly type: string
+  readonly size: number
+  readonly pinned?: boolean | undefined
+  readonly description?: string | undefined
+  readonly modifiedOn?: number | undefined
+}
 
-export type AttachmentSummary = Schema.Schema.Type<typeof AttachmentSummarySchema>
-
-export const AttachmentSchema = Schema.Struct({
-  id: AttachmentId.annotations({
-    description: "Attachment ID"
-  }),
-  name: Schema.String.annotations({
-    description: "File name"
-  }),
-  type: Schema.String.annotations({
-    description: "MIME type"
-  }),
-  size: Schema.Number.pipe(Schema.int(), Schema.nonNegative()).annotations({
-    description: "File size in bytes"
-  }),
-  pinned: Schema.optional(Schema.Boolean).annotations({
-    description: "Whether the attachment is pinned"
-  }),
-  readonly: Schema.optional(Schema.Boolean).annotations({
-    description: "Whether the attachment is readonly"
-  }),
-  description: Schema.optional(Schema.String).annotations({
-    description: "Attachment description"
-  }),
-  url: Schema.optional(Schema.String).annotations({
-    description: "Download URL for the attachment"
-  }),
-  modifiedOn: Schema.optional(Timestamp).annotations({
-    description: "Last modification timestamp"
-  }),
-  createdOn: Schema.optional(Timestamp).annotations({
-    description: "Creation timestamp"
-  })
-}).annotations({
-  title: "Attachment",
-  description: "Full attachment with all fields"
-})
-
-export type Attachment = Schema.Schema.Type<typeof AttachmentSchema>
+export interface Attachment {
+  readonly id: AttachmentId
+  readonly name: string
+  readonly type: string
+  readonly size: number
+  readonly pinned?: boolean | undefined
+  readonly readonly?: boolean | undefined
+  readonly description?: string | undefined
+  readonly url?: string | undefined
+  readonly modifiedOn?: number | undefined
+  readonly createdOn?: number | undefined
+}
 
 export const ListAttachmentsParamsSchema = Schema.Struct({
   objectId: NonEmptyString.annotations({
@@ -280,38 +236,32 @@ export const parseDownloadAttachmentParams = Schema.decodeUnknown(DownloadAttach
 export const parseAddIssueAttachmentParams = Schema.decodeUnknown(AddIssueAttachmentParamsSchema)
 export const parseAddDocumentAttachmentParams = Schema.decodeUnknown(AddDocumentAttachmentParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
+export interface AddAttachmentResult {
+  readonly attachmentId: AttachmentId
+  readonly blobId: BlobId
+  readonly url: string
+}
 
-export const AddAttachmentResultSchema = Schema.Struct({
-  attachmentId: AttachmentId,
-  blobId: BlobId,
-  url: Schema.String
-}).annotations({ title: "AddAttachmentResult", description: "Result of add attachment operation" })
-export type AddAttachmentResult = Schema.Schema.Type<typeof AddAttachmentResultSchema>
+export interface UpdateAttachmentResult {
+  readonly attachmentId: AttachmentId
+  readonly updated: boolean
+}
 
-export const UpdateAttachmentResultSchema = Schema.Struct({
-  attachmentId: AttachmentId,
-  updated: Schema.Boolean
-}).annotations({ title: "UpdateAttachmentResult", description: "Result of update attachment operation" })
-export type UpdateAttachmentResult = Schema.Schema.Type<typeof UpdateAttachmentResultSchema>
+export interface DeleteAttachmentResult {
+  readonly attachmentId: AttachmentId
+  readonly deleted: boolean
+}
 
-export const DeleteAttachmentResultSchema = Schema.Struct({
-  attachmentId: AttachmentId,
-  deleted: Schema.Boolean
-}).annotations({ title: "DeleteAttachmentResult", description: "Result of delete attachment operation" })
-export type DeleteAttachmentResult = Schema.Schema.Type<typeof DeleteAttachmentResultSchema>
+export interface PinAttachmentResult {
+  readonly attachmentId: AttachmentId
+  readonly pinned: boolean
+}
 
-export const PinAttachmentResultSchema = Schema.Struct({
-  attachmentId: AttachmentId,
-  pinned: Schema.Boolean
-}).annotations({ title: "PinAttachmentResult", description: "Result of pin attachment operation" })
-export type PinAttachmentResult = Schema.Schema.Type<typeof PinAttachmentResultSchema>
-
-export const DownloadAttachmentResultSchema = Schema.Struct({
-  attachmentId: AttachmentId,
-  url: Schema.String,
-  name: Schema.String,
-  type: Schema.String,
-  size: Schema.Number
-}).annotations({ title: "DownloadAttachmentResult", description: "Result of download attachment operation" })
-export type DownloadAttachmentResult = Schema.Schema.Type<typeof DownloadAttachmentResultSchema>
+export interface DownloadAttachmentResult {
+  readonly attachmentId: AttachmentId
+  readonly url: string
+  readonly name: string
+  readonly type: string
+  readonly size: number
+}

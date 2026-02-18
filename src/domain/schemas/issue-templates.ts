@@ -200,34 +200,19 @@ export const parseCreateIssueFromTemplateParams = Schema.decodeUnknown(CreateIss
 export const parseUpdateIssueTemplateParams = Schema.decodeUnknown(UpdateIssueTemplateParamsSchema)
 export const parseDeleteIssueTemplateParams = Schema.decodeUnknown(DeleteIssueTemplateParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
 
-export const CreateIssueTemplateResultSchema = Schema.Struct({
-  id: IssueTemplateId,
-  title: Schema.String
-}).annotations({
-  title: "CreateIssueTemplateResult",
-  description: "Result of creating an issue template"
-})
+export interface CreateIssueTemplateResult {
+  readonly id: IssueTemplateId
+  readonly title: string
+}
 
-export type CreateIssueTemplateResult = Schema.Schema.Type<typeof CreateIssueTemplateResultSchema>
+export interface UpdateIssueTemplateResult {
+  readonly id: IssueTemplateId
+  readonly updated: boolean
+}
 
-export const UpdateIssueTemplateResultSchema = Schema.Struct({
-  id: IssueTemplateId,
-  updated: Schema.Boolean
-}).annotations({
-  title: "UpdateIssueTemplateResult",
-  description: "Result of updating an issue template"
-})
-
-export type UpdateIssueTemplateResult = Schema.Schema.Type<typeof UpdateIssueTemplateResultSchema>
-
-export const DeleteIssueTemplateResultSchema = Schema.Struct({
-  id: IssueTemplateId,
-  deleted: Schema.Boolean
-}).annotations({
-  title: "DeleteIssueTemplateResult",
-  description: "Result of deleting an issue template"
-})
-
-export type DeleteIssueTemplateResult = Schema.Schema.Type<typeof DeleteIssueTemplateResultSchema>
+export interface DeleteIssueTemplateResult {
+  readonly id: IssueTemplateId
+  readonly deleted: boolean
+}

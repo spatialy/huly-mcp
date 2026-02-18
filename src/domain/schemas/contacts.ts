@@ -1,76 +1,45 @@
 import { JSONSchema, Schema } from "effect"
 
-import {
-  ContactProvider,
-  Email,
-  LimitParam,
-  MemberReference,
-  NonEmptyString,
-  OrganizationId,
-  PersonId,
-  PersonName,
-  Timestamp
-} from "./shared.js"
+import type { ContactProvider, OrganizationId, PersonName } from "./shared.js"
+import { Email, LimitParam, MemberReference, NonEmptyString, PersonId } from "./shared.js"
 
-export const PersonSummarySchema = Schema.Struct({
-  id: PersonId,
-  name: PersonName,
-  city: Schema.optional(Schema.String),
-  email: Schema.optional(Email),
-  modifiedOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "PersonSummary",
-  description: "Person summary for list operations"
-})
+// No codec needed — internal type, not used for runtime validation
+export interface PersonSummary {
+  readonly id: PersonId
+  readonly name: PersonName
+  readonly city?: string | undefined
+  readonly email?: Email | undefined
+  readonly modifiedOn?: number | undefined
+}
 
-export type PersonSummary = Schema.Schema.Type<typeof PersonSummarySchema>
+export interface Person {
+  readonly id: PersonId
+  readonly name: PersonName
+  readonly firstName?: string | undefined
+  readonly lastName?: string | undefined
+  readonly city?: string | undefined
+  readonly email?: Email | undefined
+  readonly channels?: ReadonlyArray<{ readonly provider: ContactProvider; readonly value: string }> | undefined
+  readonly modifiedOn?: number | undefined
+  readonly createdOn?: number | undefined
+}
 
-export const PersonSchema = Schema.Struct({
-  id: PersonId,
-  name: PersonName,
-  firstName: Schema.optional(Schema.String),
-  lastName: Schema.optional(Schema.String),
-  city: Schema.optional(Schema.String),
-  email: Schema.optional(Email),
-  channels: Schema.optional(Schema.Array(Schema.Struct({
-    provider: ContactProvider,
-    value: Schema.String
-  }))),
-  modifiedOn: Schema.optional(Timestamp),
-  createdOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "Person",
-  description: "Full person with all fields"
-})
+export interface EmployeeSummary {
+  readonly id: PersonId
+  readonly name: PersonName
+  readonly email?: Email | undefined
+  readonly position?: string | undefined
+  readonly active: boolean
+  readonly modifiedOn?: number | undefined
+}
 
-export type Person = Schema.Schema.Type<typeof PersonSchema>
-
-export const EmployeeSummarySchema = Schema.Struct({
-  id: PersonId,
-  name: PersonName,
-  email: Schema.optional(Email),
-  position: Schema.optional(Schema.String),
-  active: Schema.Boolean,
-  modifiedOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "EmployeeSummary",
-  description: "Employee summary for list operations"
-})
-
-export type EmployeeSummary = Schema.Schema.Type<typeof EmployeeSummarySchema>
-
-export const OrganizationSummarySchema = Schema.Struct({
-  id: OrganizationId,
-  name: Schema.String,
-  city: Schema.optional(Schema.String),
-  members: Schema.Number,
-  modifiedOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "OrganizationSummary",
-  description: "Organization summary for list operations"
-})
-
-export type OrganizationSummary = Schema.Schema.Type<typeof OrganizationSummarySchema>
+export interface OrganizationSummary {
+  readonly id: OrganizationId
+  readonly name: string
+  readonly city?: string | undefined
+  readonly members: number
+  readonly modifiedOn?: number | undefined
+}
 
 export const ListPersonsParamsSchema = Schema.Struct({
   nameSearch: Schema.optional(Schema.String.annotations({
@@ -232,26 +201,21 @@ export const parseListEmployeesParams = Schema.decodeUnknown(ListEmployeesParams
 export const parseListOrganizationsParams = Schema.decodeUnknown(ListOrganizationsParamsSchema)
 export const parseCreateOrganizationParams = Schema.decodeUnknown(CreateOrganizationParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
+export interface CreatePersonResult {
+  readonly id: PersonId
+}
 
-export const CreatePersonResultSchema = Schema.Struct({
-  id: PersonId
-}).annotations({ title: "CreatePersonResult", description: "Result of create person operation" })
-export type CreatePersonResult = Schema.Schema.Type<typeof CreatePersonResultSchema>
+export interface UpdatePersonResult {
+  readonly id: PersonId
+  readonly updated: boolean
+}
 
-export const UpdatePersonResultSchema = Schema.Struct({
-  id: PersonId,
-  updated: Schema.Boolean
-}).annotations({ title: "UpdatePersonResult", description: "Result of update person operation" })
-export type UpdatePersonResult = Schema.Schema.Type<typeof UpdatePersonResultSchema>
+export interface DeletePersonResult {
+  readonly id: PersonId
+  readonly deleted: boolean
+}
 
-export const DeletePersonResultSchema = Schema.Struct({
-  id: PersonId,
-  deleted: Schema.Boolean
-}).annotations({ title: "DeletePersonResult", description: "Result of delete person operation" })
-export type DeletePersonResult = Schema.Schema.Type<typeof DeletePersonResultSchema>
-
-export const CreateOrganizationResultSchema = Schema.Struct({
-  id: OrganizationId
-}).annotations({ title: "CreateOrganizationResult", description: "Result of create organization operation" })
-export type CreateOrganizationResult = Schema.Schema.Type<typeof CreateOrganizationResultSchema>
+export interface CreateOrganizationResult {
+  readonly id: OrganizationId
+}

@@ -4,8 +4,6 @@ import { describe, expect, it } from "vitest"
 import {
   CreateEventParamsSchema,
   CreateRecurringEventParamsSchema,
-  EventSchema,
-  EventSummarySchema,
   GetEventParamsSchema,
   ListEventInstancesParamsSchema,
   ListEventsParamsSchema,
@@ -352,69 +350,6 @@ describe("Calendar Schemas", () => {
     it("rejects empty recurringEventId", () => {
       const result = Schema.decodeUnknownEither(ListEventInstancesParamsSchema)({
         recurringEventId: ""
-      })
-      expect(Either.isLeft(result)).toBe(true)
-    })
-  })
-
-  describe("EventSummarySchema", () => {
-    // test-revizorro: approved
-    it("accepts valid summary", () => {
-      const result = Schema.decodeUnknownEither(EventSummarySchema)({
-        eventId: "evt-123",
-        title: "Meeting",
-        date: 1704067200000,
-        dueDate: 1704070800000,
-        allDay: false
-      })
-      expect(Either.isRight(result)).toBe(true)
-    })
-
-    // test-revizorro: approved
-    it("accepts with optional fields", () => {
-      const result = Schema.decodeUnknownEither(EventSummarySchema)({
-        eventId: "evt-123",
-        title: "Meeting",
-        date: 1704067200000,
-        dueDate: 1704070800000,
-        allDay: false,
-        location: "Room 101",
-        modifiedOn: 1704000000000
-      })
-      expect(Either.isRight(result)).toBe(true)
-    })
-  })
-
-  describe("EventSchema", () => {
-    // test-revizorro: approved
-    it("accepts full event", () => {
-      const result = Schema.decodeUnknownEither(EventSchema)({
-        eventId: "evt-123",
-        title: "Team Meeting",
-        description: "Quarterly review",
-        date: 1704067200000,
-        dueDate: 1704074400000,
-        allDay: false,
-        location: "Main Conference Room",
-        visibility: "public",
-        participants: [{ id: "person-1", name: "Alice" }],
-        externalParticipants: ["external@example.com"],
-        calendarId: "cal-1",
-        modifiedOn: 1704000000000,
-        createdOn: 1703900000000
-      })
-      expect(Either.isRight(result)).toBe(true)
-    })
-
-    // test-revizorro: approved
-    it("rejects invalid participant structure", () => {
-      const result = Schema.decodeUnknownEither(EventSchema)({
-        eventId: "evt-123",
-        title: "Meeting",
-        date: 1704067200000,
-        dueDate: 1704070800000,
-        allDay: false,
-        participants: [{ name: "Alice" }]
       })
       expect(Either.isLeft(result)).toBe(true)
     })

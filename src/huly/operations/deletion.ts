@@ -42,7 +42,11 @@ const previewIssueDeletion = (
 
     const warnings: Array<string> = []
     if (subIssues > 0) warnings.push(`Has ${subIssues} sub-issue${subIssues > 1 ? "s" : ""} that will be orphaned`)
-    if (blockedBy > 0) warnings.push(`Blocks ${blockedBy} other issue${blockedBy > 1 ? "s" : ""}`)
+    if (blockedBy > 0) {
+      warnings.push(
+        `Blocked by ${blockedBy} other issue${blockedBy > 1 ? "s" : ""} — blocking relations will be removed`
+      )
+    }
     if (relations > 0) warnings.push(`Has ${relations} relation${relations > 1 ? "s" : ""} to other issues`)
     if (comments > 0) warnings.push(`Has ${comments} comment${comments > 1 ? "s" : ""} that will be deleted`)
     if (attachments > 0) {

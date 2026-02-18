@@ -162,44 +162,24 @@ export const parseUpdateComponentParams = Schema.decodeUnknown(UpdateComponentPa
 export const parseSetIssueComponentParams = Schema.decodeUnknown(SetIssueComponentParamsSchema)
 export const parseDeleteComponentParams = Schema.decodeUnknown(DeleteComponentParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
 
-export const CreateComponentResultSchema = Schema.Struct({
-  id: ComponentId,
-  label: ComponentLabel
-}).annotations({
-  title: "CreateComponentResult",
-  description: "Result of creating a component"
-})
+export interface CreateComponentResult {
+  readonly id: ComponentId
+  readonly label: ComponentLabel
+}
 
-export type CreateComponentResult = Schema.Schema.Type<typeof CreateComponentResultSchema>
+export interface UpdateComponentResult {
+  readonly id: ComponentId
+  readonly updated: boolean
+}
 
-export const UpdateComponentResultSchema = Schema.Struct({
-  id: ComponentId,
-  updated: Schema.Boolean
-}).annotations({
-  title: "UpdateComponentResult",
-  description: "Result of updating a component"
-})
+export interface SetIssueComponentResult {
+  readonly identifier: IssueIdentifier
+  readonly componentSet: boolean
+}
 
-export type UpdateComponentResult = Schema.Schema.Type<typeof UpdateComponentResultSchema>
-
-export const SetIssueComponentResultSchema = Schema.Struct({
-  identifier: IssueIdentifier,
-  componentSet: Schema.Boolean
-}).annotations({
-  title: "SetIssueComponentResult",
-  description: "Result of setting a component on an issue"
-})
-
-export type SetIssueComponentResult = Schema.Schema.Type<typeof SetIssueComponentResultSchema>
-
-export const DeleteComponentResultSchema = Schema.Struct({
-  id: ComponentId,
-  deleted: Schema.Boolean
-}).annotations({
-  title: "DeleteComponentResult",
-  description: "Result of deleting a component"
-})
-
-export type DeleteComponentResult = Schema.Schema.Type<typeof DeleteComponentResultSchema>
+export interface DeleteComponentResult {
+  readonly id: ComponentId
+  readonly deleted: boolean
+}

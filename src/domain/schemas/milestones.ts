@@ -172,28 +172,23 @@ export const parseUpdateMilestoneParams = Schema.decodeUnknown(UpdateMilestonePa
 export const parseSetIssueMilestoneParams = Schema.decodeUnknown(SetIssueMilestoneParamsSchema)
 export const parseDeleteMilestoneParams = Schema.decodeUnknown(DeleteMilestoneParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
+export interface CreateMilestoneResult {
+  readonly id: MilestoneId
+  readonly label: MilestoneLabel
+}
 
-export const CreateMilestoneResultSchema = Schema.Struct({
-  id: MilestoneId,
-  label: MilestoneLabel
-}).annotations({ title: "CreateMilestoneResult", description: "Result of create milestone operation" })
-export type CreateMilestoneResult = Schema.Schema.Type<typeof CreateMilestoneResultSchema>
+export interface UpdateMilestoneResult {
+  readonly id: MilestoneId
+  readonly updated: boolean
+}
 
-export const UpdateMilestoneResultSchema = Schema.Struct({
-  id: MilestoneId,
-  updated: Schema.Boolean
-}).annotations({ title: "UpdateMilestoneResult", description: "Result of update milestone operation" })
-export type UpdateMilestoneResult = Schema.Schema.Type<typeof UpdateMilestoneResultSchema>
+export interface SetIssueMilestoneResult {
+  readonly identifier: IssueIdentifier
+  readonly milestoneSet: boolean
+}
 
-export const SetIssueMilestoneResultSchema = Schema.Struct({
-  identifier: IssueIdentifier,
-  milestoneSet: Schema.Boolean
-}).annotations({ title: "SetIssueMilestoneResult", description: "Result of set issue milestone operation" })
-export type SetIssueMilestoneResult = Schema.Schema.Type<typeof SetIssueMilestoneResultSchema>
-
-export const DeleteMilestoneResultSchema = Schema.Struct({
-  id: MilestoneId,
-  deleted: Schema.Boolean
-}).annotations({ title: "DeleteMilestoneResult", description: "Result of delete milestone operation" })
-export type DeleteMilestoneResult = Schema.Schema.Type<typeof DeleteMilestoneResultSchema>
+export interface DeleteMilestoneResult {
+  readonly id: MilestoneId
+  readonly deleted: boolean
+}

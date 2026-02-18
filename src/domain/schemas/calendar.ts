@@ -1,6 +1,7 @@
 import { JSONSchema, Schema } from "effect"
 
-import { Email, EventId, LimitParam, NonEmptyString, PersonId, PersonName, Timestamp } from "./shared.js"
+import { Email, EventId, LimitParam, NonEmptyString, Timestamp } from "./shared.js"
+import type { PersonId, PersonName } from "./shared.js"
 
 export const VisibilityValues = ["public", "freeBusy", "private"] as const
 
@@ -86,113 +87,84 @@ export const RecurringRuleSchema = Schema.Struct({
 
 export type RecurringRule = Schema.Schema.Type<typeof RecurringRuleSchema>
 
-export const ParticipantSchema = Schema.Struct({
-  id: PersonId,
-  name: Schema.optional(PersonName),
-  email: Schema.optional(Email)
-}).annotations({
-  title: "Participant",
-  description: "Event participant"
-})
+// No codec needed — internal type, not used for runtime validation
+export interface Participant {
+  readonly id: PersonId
+  readonly name?: PersonName | undefined
+  readonly email?: Email | undefined
+}
 
-export type Participant = Schema.Schema.Type<typeof ParticipantSchema>
+export interface EventSummary {
+  readonly eventId: EventId
+  readonly title: string
+  readonly date: number
+  readonly dueDate: number
+  readonly allDay: boolean
+  readonly location?: string | undefined
+  readonly modifiedOn?: number | undefined
+}
 
-export const EventSummarySchema = Schema.Struct({
-  eventId: EventId,
-  title: Schema.String,
-  date: Timestamp,
-  dueDate: Timestamp,
-  allDay: Schema.Boolean,
-  location: Schema.optional(Schema.String),
-  modifiedOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "EventSummary",
-  description: "Event summary for list operations"
-})
+export interface Event {
+  readonly eventId: EventId
+  readonly title: string
+  readonly description?: string | undefined
+  readonly date: number
+  readonly dueDate: number
+  readonly allDay: boolean
+  readonly location?: string | undefined
+  readonly visibility?: Visibility | undefined
+  readonly participants?: ReadonlyArray<Participant> | undefined
+  readonly externalParticipants?: ReadonlyArray<Email> | undefined
+  readonly calendarId?: string | undefined
+  readonly modifiedOn?: number | undefined
+  readonly createdOn?: number | undefined
+}
 
-export type EventSummary = Schema.Schema.Type<typeof EventSummarySchema>
+export interface RecurringEventSummary {
+  readonly eventId: EventId
+  readonly title: string
+  readonly originalStartTime: number
+  readonly rules: ReadonlyArray<RecurringRule>
+  readonly timeZone?: string | undefined
+  readonly modifiedOn?: number | undefined
+}
 
-export const EventSchema = Schema.Struct({
-  eventId: EventId,
-  title: Schema.String,
-  description: Schema.optional(Schema.String),
-  date: Timestamp,
-  dueDate: Timestamp,
-  allDay: Schema.Boolean,
-  location: Schema.optional(Schema.String),
-  visibility: Schema.optional(VisibilitySchema),
-  participants: Schema.optional(Schema.Array(ParticipantSchema)),
-  externalParticipants: Schema.optional(Schema.Array(Email)),
-  calendarId: Schema.optional(NonEmptyString),
-  modifiedOn: Schema.optional(Timestamp),
-  createdOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "Event",
-  description: "Full calendar event with all fields"
-})
+export interface RecurringEvent {
+  readonly eventId: EventId
+  readonly title: string
+  readonly description?: string | undefined
+  readonly originalStartTime: number
+  readonly rules: ReadonlyArray<RecurringRule>
+  readonly exdate?: ReadonlyArray<number> | undefined
+  readonly rdate?: ReadonlyArray<number> | undefined
+  readonly timeZone?: string | undefined
+  readonly dueDate: number
+  readonly allDay: boolean
+  readonly location?: string | undefined
+  readonly visibility?: Visibility | undefined
+  readonly participants?: ReadonlyArray<Participant> | undefined
+  readonly externalParticipants?: ReadonlyArray<Email> | undefined
+  readonly calendarId?: string | undefined
+  readonly modifiedOn?: number | undefined
+  readonly createdOn?: number | undefined
+}
 
-export type Event = Schema.Schema.Type<typeof EventSchema>
-
-export const RecurringEventSummarySchema = Schema.Struct({
-  eventId: EventId,
-  title: Schema.String,
-  originalStartTime: Timestamp,
-  rules: Schema.Array(RecurringRuleSchema),
-  timeZone: Schema.optional(Schema.String),
-  modifiedOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "RecurringEventSummary",
-  description: "Recurring event summary for list operations"
-})
-
-export type RecurringEventSummary = Schema.Schema.Type<typeof RecurringEventSummarySchema>
-
-export const RecurringEventSchema = Schema.Struct({
-  eventId: EventId,
-  title: Schema.String,
-  description: Schema.optional(Schema.String),
-  originalStartTime: Timestamp,
-  rules: Schema.Array(RecurringRuleSchema),
-  exdate: Schema.optional(Schema.Array(Timestamp)),
-  rdate: Schema.optional(Schema.Array(Timestamp)),
-  timeZone: Schema.optional(Schema.String),
-  dueDate: Timestamp,
-  allDay: Schema.Boolean,
-  location: Schema.optional(Schema.String),
-  visibility: Schema.optional(VisibilitySchema),
-  participants: Schema.optional(Schema.Array(ParticipantSchema)),
-  externalParticipants: Schema.optional(Schema.Array(Email)),
-  calendarId: Schema.optional(NonEmptyString),
-  modifiedOn: Schema.optional(Timestamp),
-  createdOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "RecurringEvent",
-  description: "Full recurring calendar event with all fields"
-})
-
-export type RecurringEvent = Schema.Schema.Type<typeof RecurringEventSchema>
-
-export const EventInstanceSchema = Schema.Struct({
-  eventId: EventId,
-  recurringEventId: EventId,
-  title: Schema.String,
-  description: Schema.optional(Schema.String),
-  date: Timestamp,
-  dueDate: Timestamp,
-  originalStartTime: Timestamp,
-  allDay: Schema.Boolean,
-  location: Schema.optional(Schema.String),
-  visibility: Schema.optional(VisibilitySchema),
-  isCancelled: Schema.optional(Schema.Boolean),
-  isVirtual: Schema.optional(Schema.Boolean),
-  participants: Schema.optional(Schema.Array(ParticipantSchema)),
-  externalParticipants: Schema.optional(Schema.Array(Email))
-}).annotations({
-  title: "EventInstance",
-  description: "Instance of a recurring event"
-})
-
-export type EventInstance = Schema.Schema.Type<typeof EventInstanceSchema>
+export interface EventInstance {
+  readonly eventId: EventId
+  readonly recurringEventId: EventId
+  readonly title: string
+  readonly description?: string | undefined
+  readonly date: number
+  readonly dueDate: number
+  readonly originalStartTime: number
+  readonly allDay: boolean
+  readonly location?: string | undefined
+  readonly visibility?: Visibility | undefined
+  readonly isCancelled?: boolean | undefined
+  readonly isVirtual?: boolean | undefined
+  readonly participants?: ReadonlyArray<Participant> | undefined
+  readonly externalParticipants?: ReadonlyArray<Email> | undefined
+}
 
 // --- Params schemas ---
 
@@ -403,26 +375,21 @@ export const parseListRecurringEventsParams = Schema.decodeUnknown(ListRecurring
 export const parseCreateRecurringEventParams = Schema.decodeUnknown(CreateRecurringEventParamsSchema)
 export const parseListEventInstancesParams = Schema.decodeUnknown(ListEventInstancesParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
+export interface CreateEventResult {
+  readonly eventId: EventId
+}
 
-export const CreateEventResultSchema = Schema.Struct({
-  eventId: EventId
-}).annotations({ title: "CreateEventResult", description: "Result of create event operation" })
-export type CreateEventResult = Schema.Schema.Type<typeof CreateEventResultSchema>
+export interface UpdateEventResult {
+  readonly eventId: EventId
+  readonly updated: boolean
+}
 
-export const UpdateEventResultSchema = Schema.Struct({
-  eventId: EventId,
-  updated: Schema.Boolean
-}).annotations({ title: "UpdateEventResult", description: "Result of update event operation" })
-export type UpdateEventResult = Schema.Schema.Type<typeof UpdateEventResultSchema>
+export interface DeleteEventResult {
+  readonly eventId: EventId
+  readonly deleted: boolean
+}
 
-export const DeleteEventResultSchema = Schema.Struct({
-  eventId: EventId,
-  deleted: Schema.Boolean
-}).annotations({ title: "DeleteEventResult", description: "Result of delete event operation" })
-export type DeleteEventResult = Schema.Schema.Type<typeof DeleteEventResultSchema>
-
-export const CreateRecurringEventResultSchema = Schema.Struct({
-  eventId: EventId
-}).annotations({ title: "CreateRecurringEventResult", description: "Result of create recurring event operation" })
-export type CreateRecurringEventResult = Schema.Schema.Type<typeof CreateRecurringEventResultSchema>
+export interface CreateRecurringEventResult {
+  readonly eventId: EventId
+}

@@ -1,59 +1,40 @@
 import { JSONSchema, Schema } from "effect"
 
-import { ActivityMessageId, EmojiCode, LimitParam, NonEmptyString, ObjectClassName, Timestamp } from "./shared.js"
+import { ActivityMessageId, EmojiCode, LimitParam, NonEmptyString, ObjectClassName } from "./shared.js"
 
-export const ActivityMessageSchema = Schema.Struct({
-  id: ActivityMessageId,
-  objectId: NonEmptyString.annotations({ description: "ID of the object this message is attached to" }),
-  objectClass: ObjectClassName.annotations({ description: "Class of the object this message is attached to" }),
-  modifiedBy: Schema.optional(NonEmptyString),
-  modifiedOn: Schema.optional(Timestamp),
-  isPinned: Schema.optional(Schema.Boolean),
-  replies: Schema.optional(Schema.Number),
-  reactions: Schema.optional(Schema.Number),
-  editedOn: Schema.optional(Schema.NullOr(Timestamp)),
-  action: Schema.optional(Schema.String.annotations({ description: "Action type: create, update, remove" })),
-  message: Schema.optional(Schema.String.annotations({ description: "Message content if activity reference" }))
-}).annotations({
-  title: "ActivityMessage",
-  description: "Activity feed message"
-})
+// No codec needed — internal type, not used for runtime validation
+export interface ActivityMessage {
+  readonly id: ActivityMessageId
+  readonly objectId: string
+  readonly objectClass: ObjectClassName
+  readonly modifiedBy?: string | undefined
+  readonly modifiedOn?: number | undefined
+  readonly isPinned?: boolean | undefined
+  readonly replies?: number | undefined
+  readonly reactions?: number | undefined
+  readonly editedOn?: number | null | undefined
+  readonly action?: string | undefined
+  readonly message?: string | undefined
+}
 
-export type ActivityMessage = Schema.Schema.Type<typeof ActivityMessageSchema>
+export interface Reaction {
+  readonly id: string
+  readonly messageId: ActivityMessageId
+  readonly emoji: EmojiCode
+  readonly createdBy?: string | undefined
+}
 
-export const ReactionSchema = Schema.Struct({
-  id: NonEmptyString,
-  messageId: ActivityMessageId.annotations({ description: "ID of the message this reaction is on" }),
-  emoji: EmojiCode.annotations({ description: "Emoji code (e.g., ':thumbsup:' or unicode)" }),
-  createdBy: Schema.optional(NonEmptyString)
-}).annotations({
-  title: "Reaction",
-  description: "Reaction on an activity message"
-})
+export interface SavedMessage {
+  readonly id: string
+  readonly messageId: ActivityMessageId
+}
 
-export type Reaction = Schema.Schema.Type<typeof ReactionSchema>
-
-export const SavedMessageSchema = Schema.Struct({
-  id: NonEmptyString,
-  messageId: ActivityMessageId.annotations({ description: "ID of the saved activity message" })
-}).annotations({
-  title: "SavedMessage",
-  description: "Bookmarked activity message"
-})
-
-export type SavedMessage = Schema.Schema.Type<typeof SavedMessageSchema>
-
-export const MentionSchema = Schema.Struct({
-  id: NonEmptyString,
-  messageId: ActivityMessageId.annotations({ description: "ID of the message containing the mention" }),
-  userId: NonEmptyString.annotations({ description: "ID of the mentioned user" }),
-  content: Schema.optional(Schema.String.annotations({ description: "Content snippet with the mention" }))
-}).annotations({
-  title: "Mention",
-  description: "User mention in an activity message"
-})
-
-export type Mention = Schema.Schema.Type<typeof MentionSchema>
+export interface Mention {
+  readonly id: string
+  readonly messageId: ActivityMessageId
+  readonly userId: string
+  readonly content?: string | undefined
+}
 
 export const ListActivityParamsSchema = Schema.Struct({
   objectId: NonEmptyString.annotations({
@@ -184,28 +165,23 @@ export const parseUnsaveMessageParams = Schema.decodeUnknown(UnsaveMessageParams
 export const parseListSavedMessagesParams = Schema.decodeUnknown(ListSavedMessagesParamsSchema)
 export const parseListMentionsParams = Schema.decodeUnknown(ListMentionsParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
+export interface AddReactionResult {
+  readonly reactionId: string
+  readonly messageId: ActivityMessageId
+}
 
-export const AddReactionResultSchema = Schema.Struct({
-  reactionId: NonEmptyString,
-  messageId: ActivityMessageId
-}).annotations({ title: "AddReactionResult", description: "Result of add reaction operation" })
-export type AddReactionResult = Schema.Schema.Type<typeof AddReactionResultSchema>
+export interface RemoveReactionResult {
+  readonly messageId: ActivityMessageId
+  readonly removed: boolean
+}
 
-export const RemoveReactionResultSchema = Schema.Struct({
-  messageId: ActivityMessageId,
-  removed: Schema.Boolean
-}).annotations({ title: "RemoveReactionResult", description: "Result of remove reaction operation" })
-export type RemoveReactionResult = Schema.Schema.Type<typeof RemoveReactionResultSchema>
+export interface SaveMessageResult {
+  readonly savedId: string
+  readonly messageId: ActivityMessageId
+}
 
-export const SaveMessageResultSchema = Schema.Struct({
-  savedId: NonEmptyString,
-  messageId: ActivityMessageId
-}).annotations({ title: "SaveMessageResult", description: "Result of save message operation" })
-export type SaveMessageResult = Schema.Schema.Type<typeof SaveMessageResultSchema>
-
-export const UnsaveMessageResultSchema = Schema.Struct({
-  messageId: ActivityMessageId,
-  removed: Schema.Boolean
-}).annotations({ title: "UnsaveMessageResult", description: "Result of unsave message operation" })
-export type UnsaveMessageResult = Schema.Schema.Type<typeof UnsaveMessageResultSchema>
+export interface UnsaveMessageResult {
+  readonly messageId: ActivityMessageId
+  readonly removed: boolean
+}

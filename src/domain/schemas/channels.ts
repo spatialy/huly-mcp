@@ -1,88 +1,51 @@
 import { JSONSchema, Schema } from "effect"
 
-import {
-  AccountUuid,
-  ChannelId,
-  ChannelIdentifier,
-  ChannelName,
-  LimitParam,
-  MessageId,
-  NonEmptyString,
-  PersonName,
-  ThreadReplyId,
-  Timestamp
-} from "./shared.js"
+import type { AccountUuid, ChannelId, ChannelName, PersonName } from "./shared.js"
+import { ChannelIdentifier, LimitParam, MessageId, NonEmptyString, ThreadReplyId } from "./shared.js"
 
-// --- Channel Summary (for list operations) ---
+// No codec needed — internal type, not used for runtime validation
+export interface ChannelSummary {
+  readonly id: ChannelId
+  readonly name: ChannelName
+  readonly topic?: string | undefined
+  readonly private: boolean
+  readonly archived: boolean
+  readonly members?: number | undefined
+  readonly messages?: number | undefined
+  readonly modifiedOn?: number | undefined
+}
 
-export const ChannelSummarySchema = Schema.Struct({
-  id: ChannelId,
-  name: ChannelName,
-  topic: Schema.optional(Schema.String),
-  private: Schema.Boolean,
-  archived: Schema.Boolean,
-  members: Schema.optional(Schema.NonNegativeInt),
-  messages: Schema.optional(Schema.NonNegativeInt),
-  modifiedOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "ChannelSummary",
-  description: "Channel summary for list operations"
-})
+export interface Channel {
+  readonly id: ChannelId
+  readonly name: ChannelName
+  readonly topic?: string | undefined
+  readonly description?: string | undefined
+  readonly private: boolean
+  readonly archived: boolean
+  readonly members?: ReadonlyArray<PersonName> | undefined
+  readonly messages?: number | undefined
+  readonly modifiedOn?: number | undefined
+  readonly createdOn?: number | undefined
+}
 
-export type ChannelSummary = Schema.Schema.Type<typeof ChannelSummarySchema>
+export interface MessageSummary {
+  readonly id: MessageId
+  readonly body: string
+  readonly sender?: PersonName | undefined
+  readonly senderId?: string | undefined
+  readonly createdOn?: number | undefined
+  readonly modifiedOn?: number | undefined
+  readonly editedOn?: number | undefined
+  readonly replies?: number | undefined
+}
 
-// --- Full Channel ---
-
-export const ChannelSchema = Schema.Struct({
-  id: ChannelId,
-  name: ChannelName,
-  topic: Schema.optional(Schema.String),
-  description: Schema.optional(Schema.String),
-  private: Schema.Boolean,
-  archived: Schema.Boolean,
-  members: Schema.optional(Schema.Array(PersonName)),
-  messages: Schema.optional(Schema.NonNegativeInt),
-  modifiedOn: Schema.optional(Timestamp),
-  createdOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "Channel",
-  description: "Full channel with all fields"
-})
-
-export type Channel = Schema.Schema.Type<typeof ChannelSchema>
-
-// --- Message Summary ---
-
-export const MessageSummarySchema = Schema.Struct({
-  id: MessageId,
-  body: Schema.String,
-  sender: Schema.optional(PersonName),
-  senderId: Schema.optional(Schema.String),
-  createdOn: Schema.optional(Timestamp),
-  modifiedOn: Schema.optional(Timestamp),
-  editedOn: Schema.optional(Timestamp),
-  replies: Schema.optional(Schema.NonNegativeInt)
-}).annotations({
-  title: "MessageSummary",
-  description: "Message summary for list operations"
-})
-
-export type MessageSummary = Schema.Schema.Type<typeof MessageSummarySchema>
-
-// --- Direct Message Conversation Summary ---
-
-export const DirectMessageSummarySchema = Schema.Struct({
-  id: ChannelId,
-  participants: Schema.Array(PersonName),
-  participantIds: Schema.optional(Schema.Array(AccountUuid)),
-  messages: Schema.optional(Schema.NonNegativeInt),
-  modifiedOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "DirectMessageSummary",
-  description: "Direct message conversation summary"
-})
-
-export type DirectMessageSummary = Schema.Schema.Type<typeof DirectMessageSummarySchema>
+export interface DirectMessageSummary {
+  readonly id: ChannelId
+  readonly participants: ReadonlyArray<PersonName>
+  readonly participantIds?: ReadonlyArray<AccountUuid> | undefined
+  readonly messages?: number | undefined
+  readonly modifiedOn?: number | undefined
+}
 
 // --- List Channels Params ---
 
@@ -223,22 +186,16 @@ export const ListDirectMessagesParamsSchema = Schema.Struct({
 
 export type ListDirectMessagesParams = Schema.Schema.Type<typeof ListDirectMessagesParamsSchema>
 
-// --- Thread Message Schema ---
-
-export const ThreadMessageSchema = Schema.Struct({
-  id: ThreadReplyId,
-  body: Schema.String,
-  sender: Schema.optional(PersonName),
-  senderId: Schema.optional(Schema.String),
-  createdOn: Schema.optional(Timestamp),
-  modifiedOn: Schema.optional(Timestamp),
-  editedOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "ThreadMessage",
-  description: "Thread reply message"
-})
-
-export type ThreadMessage = Schema.Schema.Type<typeof ThreadMessageSchema>
+// No codec needed — internal type, not used for runtime validation
+export interface ThreadMessage {
+  readonly id: ThreadReplyId
+  readonly body: string
+  readonly sender?: PersonName | undefined
+  readonly senderId?: string | undefined
+  readonly createdOn?: number | undefined
+  readonly modifiedOn?: number | undefined
+  readonly editedOn?: number | undefined
+}
 
 // --- List Thread Replies Params ---
 
@@ -351,65 +308,54 @@ export const parseAddThreadReplyParams = Schema.decodeUnknown(AddThreadReplyPara
 export const parseUpdateThreadReplyParams = Schema.decodeUnknown(UpdateThreadReplyParamsSchema)
 export const parseDeleteThreadReplyParams = Schema.decodeUnknown(DeleteThreadReplyParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
+export interface CreateChannelResult {
+  readonly id: ChannelId
+  readonly name: ChannelName
+}
 
-export const CreateChannelResultSchema = Schema.Struct({
-  id: ChannelId,
-  name: ChannelName
-}).annotations({ title: "CreateChannelResult", description: "Result of create channel operation" })
-export type CreateChannelResult = Schema.Schema.Type<typeof CreateChannelResultSchema>
+export interface UpdateChannelResult {
+  readonly id: ChannelId
+  readonly updated: boolean
+}
 
-export const UpdateChannelResultSchema = Schema.Struct({
-  id: ChannelId,
-  updated: Schema.Boolean
-}).annotations({ title: "UpdateChannelResult", description: "Result of update channel operation" })
-export type UpdateChannelResult = Schema.Schema.Type<typeof UpdateChannelResultSchema>
+export interface DeleteChannelResult {
+  readonly id: ChannelId
+  readonly deleted: boolean
+}
 
-export const DeleteChannelResultSchema = Schema.Struct({
-  id: ChannelId,
-  deleted: Schema.Boolean
-}).annotations({ title: "DeleteChannelResult", description: "Result of delete channel operation" })
-export type DeleteChannelResult = Schema.Schema.Type<typeof DeleteChannelResultSchema>
+export interface ListChannelMessagesResult {
+  readonly messages: ReadonlyArray<MessageSummary>
+  readonly total: number
+}
 
-export const ListChannelMessagesResultSchema = Schema.Struct({
-  messages: Schema.Array(MessageSummarySchema),
-  total: Schema.Number
-}).annotations({ title: "ListChannelMessagesResult", description: "Result of list channel messages operation" })
-export type ListChannelMessagesResult = Schema.Schema.Type<typeof ListChannelMessagesResultSchema>
+export interface SendChannelMessageResult {
+  readonly id: MessageId
+  readonly channelId: ChannelId
+}
 
-export const SendChannelMessageResultSchema = Schema.Struct({
-  id: MessageId,
-  channelId: ChannelId
-}).annotations({ title: "SendChannelMessageResult", description: "Result of send channel message operation" })
-export type SendChannelMessageResult = Schema.Schema.Type<typeof SendChannelMessageResultSchema>
+export interface ListDirectMessagesResult {
+  readonly conversations: ReadonlyArray<DirectMessageSummary>
+  readonly total: number
+}
 
-export const ListDirectMessagesResultSchema = Schema.Struct({
-  conversations: Schema.Array(DirectMessageSummarySchema),
-  total: Schema.Number
-}).annotations({ title: "ListDirectMessagesResult", description: "Result of list direct messages operation" })
-export type ListDirectMessagesResult = Schema.Schema.Type<typeof ListDirectMessagesResultSchema>
+export interface ListThreadRepliesResult {
+  readonly replies: ReadonlyArray<ThreadMessage>
+  readonly total: number
+}
 
-export const ListThreadRepliesResultSchema = Schema.Struct({
-  replies: Schema.Array(ThreadMessageSchema),
-  total: Schema.Number
-}).annotations({ title: "ListThreadRepliesResult", description: "Result of list thread replies operation" })
-export type ListThreadRepliesResult = Schema.Schema.Type<typeof ListThreadRepliesResultSchema>
+export interface AddThreadReplyResult {
+  readonly id: ThreadReplyId
+  readonly messageId: MessageId
+  readonly channelId: ChannelId
+}
 
-export const AddThreadReplyResultSchema = Schema.Struct({
-  id: ThreadReplyId,
-  messageId: MessageId,
-  channelId: ChannelId
-}).annotations({ title: "AddThreadReplyResult", description: "Result of add thread reply operation" })
-export type AddThreadReplyResult = Schema.Schema.Type<typeof AddThreadReplyResultSchema>
+export interface UpdateThreadReplyResult {
+  readonly id: ThreadReplyId
+  readonly updated: boolean
+}
 
-export const UpdateThreadReplyResultSchema = Schema.Struct({
-  id: ThreadReplyId,
-  updated: Schema.Boolean
-}).annotations({ title: "UpdateThreadReplyResult", description: "Result of update thread reply operation" })
-export type UpdateThreadReplyResult = Schema.Schema.Type<typeof UpdateThreadReplyResultSchema>
-
-export const DeleteThreadReplyResultSchema = Schema.Struct({
-  id: ThreadReplyId,
-  deleted: Schema.Boolean
-}).annotations({ title: "DeleteThreadReplyResult", description: "Result of delete thread reply operation" })
-export type DeleteThreadReplyResult = Schema.Schema.Type<typeof DeleteThreadReplyResultSchema>
+export interface DeleteThreadReplyResult {
+  readonly id: ThreadReplyId
+  readonly deleted: boolean
+}

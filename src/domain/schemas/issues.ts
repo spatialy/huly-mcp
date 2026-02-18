@@ -1,11 +1,11 @@
 import { JSONSchema, ParseResult, Schema } from "effect"
 
 import { normalizeForComparison } from "../../utils/normalize.js"
+import type { IssueId } from "./shared.js"
 import {
   ColorCode,
   ComponentIdentifier,
   Email,
-  IssueId,
   IssueIdentifier,
   LimitParam,
   NonEmptyString,
@@ -259,45 +259,23 @@ export const parseUpdateIssueParams = Schema.decodeUnknown(UpdateIssueParamsSche
 export const parseAddLabelParams = Schema.decodeUnknown(AddLabelParamsSchema)
 export const parseDeleteIssueParams = Schema.decodeUnknown(DeleteIssueParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
+export interface CreateIssueResult {
+  readonly identifier: IssueIdentifier
+  readonly issueId: IssueId
+}
 
-// issueId: internal UUID (Ref<Issue>), identifier: human-readable key (e.g. "HULY-123")
-export const CreateIssueResultSchema = Schema.Struct({
-  identifier: IssueIdentifier,
-  issueId: IssueId
-}).annotations({
-  title: "CreateIssueResult",
-  description: "Result of creating an issue"
-})
+export interface UpdateIssueResult {
+  readonly identifier: IssueIdentifier
+  readonly updated: boolean
+}
 
-export type CreateIssueResult = Schema.Schema.Type<typeof CreateIssueResultSchema>
+export interface AddLabelResult {
+  readonly identifier: IssueIdentifier
+  readonly labelAdded: boolean
+}
 
-export const UpdateIssueResultSchema = Schema.Struct({
-  identifier: IssueIdentifier,
-  updated: Schema.Boolean
-}).annotations({
-  title: "UpdateIssueResult",
-  description: "Result of updating an issue"
-})
-
-export type UpdateIssueResult = Schema.Schema.Type<typeof UpdateIssueResultSchema>
-
-export const AddLabelResultSchema = Schema.Struct({
-  identifier: IssueIdentifier,
-  labelAdded: Schema.Boolean
-}).annotations({
-  title: "AddLabelResult",
-  description: "Result of adding a label to an issue"
-})
-
-export type AddLabelResult = Schema.Schema.Type<typeof AddLabelResultSchema>
-
-export const DeleteIssueResultSchema = Schema.Struct({
-  identifier: IssueIdentifier,
-  deleted: Schema.Boolean
-}).annotations({
-  title: "DeleteIssueResult",
-  description: "Result of deleting an issue"
-})
-
-export type DeleteIssueResult = Schema.Schema.Type<typeof DeleteIssueResultSchema>
+export interface DeleteIssueResult {
+  readonly identifier: IssueIdentifier
+  readonly deleted: boolean
+}

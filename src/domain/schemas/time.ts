@@ -1,60 +1,33 @@
 import { JSONSchema, Schema } from "effect"
 
-import {
-  IssueIdentifier,
-  LimitParam,
-  NonEmptyString,
-  PersonName,
-  PositiveNumber,
-  ProjectIdentifier,
-  TimeSpendReportId,
-  Timestamp,
-  TodoId
-} from "./shared.js"
+import type { PersonName, PositiveNumber, TimeSpendReportId } from "./shared.js"
+import { IssueIdentifier, LimitParam, NonEmptyString, ProjectIdentifier, Timestamp, TodoId } from "./shared.js"
 
-export const TimeSpendReportSchema = Schema.Struct({
-  id: TimeSpendReportId,
-  identifier: Schema.optional(IssueIdentifier.annotations({
-    description: "Issue identifier (e.g., 'HULY-123'). Absent if the issue was deleted."
-  })),
-  employee: Schema.optional(PersonName),
-  date: Schema.optional(Schema.NullOr(Timestamp)),
-  value: Schema.Number.annotations({ description: "Time spent in minutes" }),
-  description: Schema.String
-}).annotations({
-  title: "TimeSpendReport",
-  description: "Time tracking entry for an issue"
-})
+// No codec needed — internal type, not used for runtime validation
+export interface TimeSpendReport {
+  readonly id: TimeSpendReportId
+  readonly identifier?: IssueIdentifier | undefined
+  readonly employee?: PersonName | undefined
+  readonly date?: number | null | undefined
+  readonly value: number
+  readonly description: string
+}
 
-export type TimeSpendReport = Schema.Schema.Type<typeof TimeSpendReportSchema>
+export interface TimeReportSummary {
+  readonly identifier?: IssueIdentifier | undefined
+  readonly totalTime: number
+  readonly estimation?: PositiveNumber | undefined
+  readonly remainingTime?: PositiveNumber | undefined
+  readonly reports: ReadonlyArray<TimeSpendReport>
+}
 
-export const TimeReportSummarySchema = Schema.Struct({
-  identifier: Schema.optional(IssueIdentifier.annotations({
-    description: "Issue identifier (e.g., 'HULY-123'). Absent if the issue was deleted."
-  })),
-  totalTime: Schema.Number.annotations({ description: "Total time in minutes" }),
-  estimation: Schema.optional(PositiveNumber.annotations({ description: "Estimated time in minutes" })),
-  remainingTime: Schema.optional(PositiveNumber.annotations({ description: "Remaining time in minutes" })),
-  reports: Schema.Array(TimeSpendReportSchema)
-}).annotations({
-  title: "TimeReportSummary",
-  description: "Time report summary for an issue"
-})
-
-export type TimeReportSummary = Schema.Schema.Type<typeof TimeReportSummarySchema>
-
-export const WorkSlotSchema = Schema.Struct({
-  id: NonEmptyString,
-  todoId: TodoId,
-  date: Timestamp.annotations({ description: "Start date timestamp" }),
-  dueDate: Timestamp.annotations({ description: "End date timestamp" }),
-  title: Schema.optional(Schema.String)
-}).annotations({
-  title: "WorkSlot",
-  description: "A scheduled work slot"
-})
-
-export type WorkSlot = Schema.Schema.Type<typeof WorkSlotSchema>
+export interface WorkSlot {
+  readonly id: string
+  readonly todoId: TodoId
+  readonly date: number
+  readonly dueDate: number
+  readonly title?: string | undefined
+}
 
 export const LogTimeParamsSchema = Schema.Struct({
   project: ProjectIdentifier.annotations({
@@ -198,27 +171,21 @@ export const StopTimerParamsSchema = Schema.Struct({
 
 export type StopTimerParams = Schema.Schema.Type<typeof StopTimerParamsSchema>
 
-export const DetailedTimeReportSchema = Schema.Struct({
-  project: ProjectIdentifier,
-  totalTime: Schema.Number.annotations({ description: "Total time in minutes" }),
-  byIssue: Schema.Array(Schema.Struct({
-    identifier: Schema.optional(IssueIdentifier.annotations({
-      description: "Issue identifier (e.g., 'HULY-123'). Absent if the issue was deleted."
-    })),
-    issueTitle: Schema.String,
-    totalTime: Schema.Number,
-    reports: Schema.Array(TimeSpendReportSchema)
-  })),
-  byEmployee: Schema.Array(Schema.Struct({
-    employeeName: Schema.optional(Schema.String),
-    totalTime: Schema.Number
-  }))
-}).annotations({
-  title: "DetailedTimeReport",
-  description: "Detailed time breakdown for a project"
-})
-
-export type DetailedTimeReport = Schema.Schema.Type<typeof DetailedTimeReportSchema>
+// No codec needed — internal type, not used for runtime validation
+export interface DetailedTimeReport {
+  readonly project: ProjectIdentifier
+  readonly totalTime: number
+  readonly byIssue: ReadonlyArray<{
+    readonly identifier?: IssueIdentifier | undefined
+    readonly issueTitle: string
+    readonly totalTime: number
+    readonly reports: ReadonlyArray<TimeSpendReport>
+  }>
+  readonly byEmployee: ReadonlyArray<{
+    readonly employeeName?: string | undefined
+    readonly totalTime: number
+  }>
+}
 
 export const logTimeParamsJsonSchema = JSONSchema.make(LogTimeParamsSchema)
 export const getTimeReportParamsJsonSchema = JSONSchema.make(GetTimeReportParamsSchema)
@@ -238,28 +205,23 @@ export const parseCreateWorkSlotParams = Schema.decodeUnknown(CreateWorkSlotPara
 export const parseStartTimerParams = Schema.decodeUnknown(StartTimerParamsSchema)
 export const parseStopTimerParams = Schema.decodeUnknown(StopTimerParamsSchema)
 
-// --- Result Schemas ---
+// No codec needed — internal type, not used for runtime validation
+export interface LogTimeResult {
+  readonly reportId: TimeSpendReportId
+  readonly identifier: IssueIdentifier
+}
 
-export const LogTimeResultSchema = Schema.Struct({
-  reportId: TimeSpendReportId,
-  identifier: IssueIdentifier
-}).annotations({ title: "LogTimeResult", description: "Result of log time operation" })
-export type LogTimeResult = Schema.Schema.Type<typeof LogTimeResultSchema>
+export interface CreateWorkSlotResult {
+  readonly slotId: string
+}
 
-export const CreateWorkSlotResultSchema = Schema.Struct({
-  slotId: NonEmptyString
-}).annotations({ title: "CreateWorkSlotResult", description: "Result of create work slot operation" })
-export type CreateWorkSlotResult = Schema.Schema.Type<typeof CreateWorkSlotResultSchema>
+export interface StartTimerResult {
+  readonly identifier: IssueIdentifier
+  readonly startedAt: number
+}
 
-export const StartTimerResultSchema = Schema.Struct({
-  identifier: IssueIdentifier,
-  startedAt: Timestamp
-}).annotations({ title: "StartTimerResult", description: "Result of start timer operation" })
-export type StartTimerResult = Schema.Schema.Type<typeof StartTimerResultSchema>
-
-export const StopTimerResultSchema = Schema.Struct({
-  identifier: IssueIdentifier,
-  stoppedAt: Timestamp,
-  reportId: Schema.optional(NonEmptyString)
-}).annotations({ title: "StopTimerResult", description: "Result of stop timer operation" })
-export type StopTimerResult = Schema.Schema.Type<typeof StopTimerResultSchema>
+export interface StopTimerResult {
+  readonly identifier: IssueIdentifier
+  readonly stoppedAt: number
+  readonly reportId?: string | undefined
+}

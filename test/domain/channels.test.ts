@@ -1,17 +1,13 @@
 import { describe, it } from "@effect/vitest"
-import { Effect, Schema } from "effect"
+import { Effect } from "effect"
 import { expect } from "vitest"
 import {
-  ChannelSchema,
-  ChannelSummarySchema,
   createChannelParamsJsonSchema,
   deleteChannelParamsJsonSchema,
-  DirectMessageSummarySchema,
   getChannelParamsJsonSchema,
   listChannelMessagesParamsJsonSchema,
   listChannelsParamsJsonSchema,
   listDirectMessagesParamsJsonSchema,
-  MessageSummarySchema,
   parseCreateChannelParams,
   parseDeleteChannelParams,
   parseGetChannelParams,
@@ -32,158 +28,6 @@ type JsonSchemaObject = {
 }
 
 describe("Channel Domain Schemas", () => {
-  describe("ChannelSummarySchema", () => {
-    // test-revizorro: approved
-    it.effect("parses minimal channel summary", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(ChannelSummarySchema)({
-          id: "channel-1",
-          name: "general",
-          private: false,
-          archived: false
-        })
-        expect(result).toEqual({
-          id: "channel-1",
-          name: "general",
-          private: false,
-          archived: false
-        })
-      }))
-
-    // test-revizorro: approved
-    it.effect("parses with all optional fields", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(ChannelSummarySchema)({
-          id: "channel-1",
-          name: "general",
-          topic: "General discussion",
-          private: true,
-          archived: false,
-          members: 5,
-          messages: 100,
-          modifiedOn: 1706500000000
-        })
-        expect(result.topic).toBe("General discussion")
-        expect(result.members).toBe(5)
-        expect(result.messages).toBe(100)
-        expect(result.modifiedOn).toBe(1706500000000)
-      }))
-
-    // test-revizorro: approved
-    it.effect("rejects empty id", () =>
-      Effect.gen(function*() {
-        const error = yield* Effect.flip(
-          Schema.decodeUnknown(ChannelSummarySchema)({
-            id: "  ",
-            name: "general",
-            private: false,
-            archived: false
-          })
-        )
-        expect(error._tag).toBe("ParseError")
-      }))
-  })
-
-  describe("ChannelSchema", () => {
-    // test-revizorro: approved
-    it.effect("parses minimal channel", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(ChannelSchema)({
-          id: "channel-1",
-          name: "general",
-          private: false,
-          archived: false
-        })
-        expect(result.id).toBe("channel-1")
-        expect(result.name).toBe("general")
-        expect(result.description).toBeUndefined()
-      }))
-
-    // test-revizorro: approved
-    it.effect("parses full channel", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(ChannelSchema)({
-          id: "channel-1",
-          name: "development",
-          topic: "Dev discussions",
-          description: "Channel for development team",
-          private: true,
-          archived: false,
-          members: ["John", "Jane"],
-          messages: 50,
-          modifiedOn: 1706500000000,
-          createdOn: 1706400000000
-        })
-        expect(result.topic).toBe("Dev discussions")
-        expect(result.description).toBe("Channel for development team")
-        expect(result.members).toEqual(["John", "Jane"])
-        expect(result.createdOn).toBe(1706400000000)
-      }))
-  })
-
-  describe("MessageSummarySchema", () => {
-    // test-revizorro: approved
-    it.effect("parses minimal message", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(MessageSummarySchema)({
-          id: "msg-1",
-          body: "Hello world"
-        })
-        expect(result.id).toBe("msg-1")
-        expect(result.body).toBe("Hello world")
-      }))
-
-    // test-revizorro: approved
-    it.effect("parses full message", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(MessageSummarySchema)({
-          id: "msg-1",
-          body: "Hello world",
-          sender: "John Doe",
-          senderId: "person-1",
-          createdOn: 1706500000000,
-          modifiedOn: 1706500000000,
-          editedOn: 1706510000000,
-          replies: 3
-        })
-        expect(result.id).toBe("msg-1")
-        expect(result.body).toBe("Hello world")
-        expect(result.sender).toBe("John Doe")
-        expect(result.senderId).toBe("person-1")
-        expect(result.createdOn).toBe(1706500000000)
-        expect(result.modifiedOn).toBe(1706500000000)
-        expect(result.editedOn).toBe(1706510000000)
-        expect(result.replies).toBe(3)
-      }))
-  })
-
-  describe("DirectMessageSummarySchema", () => {
-    // test-revizorro: approved
-    it.effect("parses minimal DM", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(DirectMessageSummarySchema)({
-          id: "dm-1",
-          participants: ["Alice", "Bob"]
-        })
-        expect(result.id).toBe("dm-1")
-        expect(result.participants).toEqual(["Alice", "Bob"])
-      }))
-
-    // test-revizorro: approved
-    it.effect("parses full DM", () =>
-      Effect.gen(function*() {
-        const result = yield* Schema.decodeUnknown(DirectMessageSummarySchema)({
-          id: "dm-1",
-          participants: ["Alice", "Bob"],
-          participantIds: ["person-1", "person-2"],
-          messages: 25,
-          modifiedOn: 1706500000000
-        })
-        expect(result.participantIds).toEqual(["person-1", "person-2"])
-        expect(result.messages).toBe(25)
-      }))
-  })
-
   describe("ListChannelsParamsSchema", () => {
     // test-revizorro: approved
     it.effect("parses empty params", () =>

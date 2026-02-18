@@ -1,6 +1,6 @@
 import { JSONSchema, Schema } from "effect"
 
-import { LimitParam, NonEmptyString, Timestamp } from "./shared.js"
+import { LimitParam, NonEmptyString } from "./shared.js"
 
 export const FulltextSearchParamsSchema = Schema.Struct({
   query: NonEmptyString.annotations({
@@ -18,28 +18,19 @@ export const FulltextSearchParamsSchema = Schema.Struct({
 
 export type FulltextSearchParams = Schema.Schema.Type<typeof FulltextSearchParamsSchema>
 
-export const SearchResultItemSchema = Schema.Struct({
-  id: NonEmptyString,
-  class: Schema.String,
-  space: Schema.optional(Schema.String),
-  modifiedOn: Schema.optional(Timestamp)
-}).annotations({
-  title: "SearchResultItem",
-  description: "Single search result item"
-})
+// No codec needed — internal type, not used for runtime validation
+export interface SearchResultItem {
+  readonly id: string
+  readonly class: string
+  readonly space?: string | undefined
+  readonly modifiedOn?: number | undefined
+}
 
-export type SearchResultItem = Schema.Schema.Type<typeof SearchResultItemSchema>
-
-export const FulltextSearchResultSchema = Schema.Struct({
-  items: Schema.Array(SearchResultItemSchema),
-  total: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
-  query: Schema.String
-}).annotations({
-  title: "FulltextSearchResult",
-  description: "Result of fulltext search"
-})
-
-export type FulltextSearchResult = Schema.Schema.Type<typeof FulltextSearchResultSchema>
+export interface FulltextSearchResult {
+  readonly items: ReadonlyArray<SearchResultItem>
+  readonly total: number
+  readonly query: string
+}
 
 export const fulltextSearchParamsJsonSchema = JSONSchema.make(FulltextSearchParamsSchema)
 
