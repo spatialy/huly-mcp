@@ -167,6 +167,9 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @firfi/huly-m
 | `create_issue_from_template` | Create a new issue from a template. Applies template defaults, allowing overrides for specific fields. Returns the created issue identifier. |
 | `update_issue_template` | Update fields on an existing Huly issue template. Only provided fields are modified. |
 | `delete_issue_template` | Permanently delete a Huly issue template. This action cannot be undone. |
+| `add_issue_relation` | Add a relation between two issues. Relation types: 'blocks' (source blocks target — pushes into target's blockedBy), 'is-blocked-by' (source is blocked by target — pushes into source's blockedBy), 'relates-to' (bidirectional link — updates both sides). targetIssue accepts cross-project identifiers like 'OTHER-42'. No-op if the relation already exists. |
+| `remove_issue_relation` | Remove a relation between two issues. Mirrors add_issue_relation: 'blocks' pulls from target's blockedBy, 'is-blocked-by' pulls from source's blockedBy, 'relates-to' pulls from both sides. No-op if the relation doesn't exist. |
+| `list_issue_relations` | List all relations of an issue. Returns blockedBy (issues blocking this one) and relations (bidirectional links) with resolved identifiers. Does NOT return issues that this issue blocks — use list_issue_relations on the target issue to see that. |
 
 ### Comments
 

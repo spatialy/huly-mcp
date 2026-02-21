@@ -1,4 +1,5 @@
 import {
+  addIssueRelationParamsJsonSchema,
   addLabelParamsJsonSchema,
   createComponentParamsJsonSchema,
   createIssueFromTemplateParamsJsonSchema,
@@ -11,8 +12,10 @@ import {
   getIssueParamsJsonSchema,
   getIssueTemplateParamsJsonSchema,
   listComponentsParamsJsonSchema,
+  listIssueRelationsParamsJsonSchema,
   listIssuesParamsJsonSchema,
   listIssueTemplatesParamsJsonSchema,
+  parseAddIssueRelationParams,
   parseAddLabelParams,
   parseCreateComponentParams,
   parseCreateIssueFromTemplateParams,
@@ -25,12 +28,15 @@ import {
   parseGetIssueParams,
   parseGetIssueTemplateParams,
   parseListComponentsParams,
+  parseListIssueRelationsParams,
   parseListIssuesParams,
   parseListIssueTemplatesParams,
+  parseRemoveIssueRelationParams,
   parseSetIssueComponentParams,
   parseUpdateComponentParams,
   parseUpdateIssueParams,
   parseUpdateIssueTemplateParams,
+  removeIssueRelationParamsJsonSchema,
   setIssueComponentParamsJsonSchema,
   updateComponentParamsJsonSchema,
   updateIssueParamsJsonSchema,
@@ -53,6 +59,7 @@ import {
   updateIssueTemplate
 } from "../../huly/operations/issue-templates.js"
 import { addLabel, createIssue, deleteIssue, getIssue, listIssues, updateIssue } from "../../huly/operations/issues.js"
+import { addIssueRelation, listIssueRelations, removeIssueRelation } from "../../huly/operations/relations.js"
 import { createToolHandler, type RegisteredTool } from "./registry.js"
 
 const CATEGORY = "issues" as const
@@ -264,6 +271,42 @@ export const issueTools: ReadonlyArray<RegisteredTool> = [
       "delete_issue_template",
       parseDeleteIssueTemplateParams,
       deleteIssueTemplate
+    )
+  },
+  {
+    name: "add_issue_relation",
+    description:
+      "Add a relation between two issues. Relation types: 'blocks' (source blocks target — pushes into target's blockedBy), 'is-blocked-by' (source is blocked by target — pushes into source's blockedBy), 'relates-to' (bidirectional link — updates both sides). targetIssue accepts cross-project identifiers like 'OTHER-42'. No-op if the relation already exists.",
+    category: CATEGORY,
+    inputSchema: addIssueRelationParamsJsonSchema,
+    handler: createToolHandler(
+      "add_issue_relation",
+      parseAddIssueRelationParams,
+      addIssueRelation
+    )
+  },
+  {
+    name: "remove_issue_relation",
+    description:
+      "Remove a relation between two issues. Mirrors add_issue_relation: 'blocks' pulls from target's blockedBy, 'is-blocked-by' pulls from source's blockedBy, 'relates-to' pulls from both sides. No-op if the relation doesn't exist.",
+    category: CATEGORY,
+    inputSchema: removeIssueRelationParamsJsonSchema,
+    handler: createToolHandler(
+      "remove_issue_relation",
+      parseRemoveIssueRelationParams,
+      removeIssueRelation
+    )
+  },
+  {
+    name: "list_issue_relations",
+    description:
+      "List all relations of an issue. Returns blockedBy (issues blocking this one) and relations (bidirectional links) with resolved identifiers. Does NOT return issues that this issue blocks — use list_issue_relations on the target issue to see that.",
+    category: CATEGORY,
+    inputSchema: listIssueRelationsParamsJsonSchema,
+    handler: createToolHandler(
+      "list_issue_relations",
+      parseListIssueRelationsParams,
+      listIssueRelations
     )
   }
 ]

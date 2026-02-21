@@ -9,8 +9,11 @@ pnpm build
 ## Environment Variables
 
 ```bash
-# Source from .env.production or set manually:
-source .env.production
+# Local Docker Huly (preferred):
+source .env.local
+
+# Remote Huly (only when explicitly needed):
+# source .env.production
 
 # Required variables:
 # HULY_URL, HULY_WORKSPACE, and either HULY_TOKEN or (HULY_EMAIL + HULY_PASSWORD)

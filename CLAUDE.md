@@ -2,17 +2,19 @@
 
 Rules are reflexive: when adding a rule, apply it immediately.
 
+## Design Principle: LLM-First API
+
+The primary consumer of this MCP server is an LLM coding agent, not a human developer. All design decisions — tool naming, parameter shapes, description writing, error messages, defaults — must optimize for LLM comprehension and single-call correctness. Prefer fewer tool calls with clear semantics over multi-step protocols. Auto-resolve identifiers where possible rather than requiring the caller to decompose them. Write tool descriptions as if the reader has no documentation beyond the schema and the description string.
+
 ## Package Manager
 
 Use `pnpm`, not npm. Prefer package.json scripts over raw commands (e.g., `pnpm typecheck` not `pnpm tsc --noEmit`).
 
 ## Verification
 
-Run before considering work complete: `pnpm build && pnpm typecheck && pnpm lint && pnpm test`
-
-## Integration Testing
-
-See `INTEGRATION_TESTING.md` for manual testing against live Huly instance.
+Run before considering work complete:
+1. `pnpm build && pnpm typecheck && pnpm lint && pnpm test`
+2. Integration tests against local Huly (Docker) — **required** for any new feature, major change, or pre-release. Do not defer to the user; run them yourself. See `INTEGRATION_TESTING.md` for test patterns and `CLAUDE.local.md` for credentials/setup.
 
 ## Code Style
 

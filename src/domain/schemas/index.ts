@@ -567,6 +567,28 @@ export {
 } from "./attachments.js"
 
 export {
+  type AddIssueRelationParams,
+  addIssueRelationParamsJsonSchema,
+  AddIssueRelationParamsSchema,
+  type AddIssueRelationResult,
+  type ListIssueRelationsParams,
+  listIssueRelationsParamsJsonSchema,
+  ListIssueRelationsParamsSchema,
+  type ListIssueRelationsResult,
+  parseAddIssueRelationParams,
+  parseListIssueRelationsParams,
+  parseRemoveIssueRelationParams,
+  type RelationEntry,
+  type RelationType,
+  RelationTypeSchema,
+  RelationTypeValues,
+  type RemoveIssueRelationParams,
+  removeIssueRelationParamsJsonSchema,
+  RemoveIssueRelationParamsSchema,
+  type RemoveIssueRelationResult
+} from "./relations.js"
+
+export {
   type ArchiveAllNotificationsResult,
   type ArchiveNotificationParams,
   archiveNotificationParamsJsonSchema,
