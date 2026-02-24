@@ -44,7 +44,6 @@ All data crossing system boundaries (APIs etc.) must be strongly typed — both 
 
 1. Run `effect-solutions list` to see available guides
 2. Run `effect-solutions show <topic>...` for relevant patterns (supports multiple topics)
-3. Search `.reference/effect/` for real implementations (run `effect-solutions setup` first)
 
 Topics: quick-start, project-setup, tsconfig, basics, services-and-layers, data-modeling, error-handling, config, testing, cli.
 
@@ -54,10 +53,6 @@ Never guess at Effect patterns - check the guide first.
 ## Huly API Reference
 
 **Source**: https://github.com/hcengineering/huly-examples/tree/main/platform-api
-
-**Local clone**: `.reference/huly-examples/platform-api/` - examples showing API usage patterns
-
-**Keep updated**: `cd .reference/huly-examples && git pull`
 
 Key examples to reference:
 - Issue management: `examples/issue-*.ts`
@@ -90,4 +85,4 @@ After merging a worktree branch, verify the merge commit actually landed (`git l
 pnpm build && pnpm version patch && pnpm publish && git push
 ```
 
-Package: `@firfi/huly-mcp` on npm.
+Package: `@spatialy/huly-mcp` on npm.

@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.dearlordylord/huly-mcp",
+  "name": "io.github.spatialy/huly-mcp",
   "description": "MCP server for Huly integration",
   "repository": {
-    "url": "https://github.com/dearlordylord/huly-mcp",
+    "url": "https://github.com/spatialy/huly-mcp",
     "source": "github"
   },
-  "version": "0.1.7",
+  "version": "0.1.41",
   "packages": [
     {
       "registryType": "npm",
-      "identifier": "@firfi/huly-mcp",
-      "version": "0.1.7",
+      "identifier": "@spatialy/huly-mcp",
+      "version": "0.1.41",
       "transport": {
         "type": "stdio"
       },

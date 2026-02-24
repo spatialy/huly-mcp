@@ -1,12 +1,12 @@
-# @firfi/huly-mcp
+# @spatialy/huly-mcp
 
-[![npm](https://img.shields.io/npm/v/@firfi/huly-mcp)](https://www.npmjs.com/package/@firfi/huly-mcp)
-[![npm downloads](https://img.shields.io/npm/dm/@firfi/huly-mcp)](https://www.npmjs.com/package/@firfi/huly-mcp)
+[![npm](https://img.shields.io/npm/v/@spatialy/huly-mcp)](https://www.npmjs.com/package/@spatialy/huly-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/@spatialy/huly-mcp)](https://www.npmjs.com/package/@spatialy/huly-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP](https://img.shields.io/badge/MCP-compatible-blue)](https://modelcontextprotocol.io)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
-[![MCP Server](https://badge.mcpx.dev?type=server&features=tools)](https://github.com/dearlordylord/huly-mcp)
-[![cooked at Monadical](https://img.shields.io/endpoint?url=https://monadical.com/static/api/cooked-at-monadical.json)](https://monadical.com)
+[![MCP Server](https://badge.mcpx.dev?type=server&features=tools)](https://github.com/spatialy/huly-mcp)
+
 
 MCP server for [Huly](https://huly.io/) integration.
 
@@ -19,7 +19,7 @@ The standard configuration works with most MCP clients:
   "mcpServers": {
     "huly": {
       "command": "npx",
-      "args": ["-y", "@firfi/huly-mcp@latest"],
+      "args": ["-y", "@spatialy/huly-mcp@latest"],
       "env": {
         "HULY_URL": "https://huly.app",
         "HULY_EMAIL": "your@email.com",
@@ -40,7 +40,7 @@ claude mcp add huly \
   -e HULY_EMAIL=your@email.com \
   -e HULY_PASSWORD=yourpassword \
   -e HULY_WORKSPACE=yourworkspace \
-  -- npx -y @firfi/huly-mcp@latest
+  -- npx -y @spatialy/huly-mcp@latest
 ```
 
 Or add to `~/.claude.json` using the standard config above.
@@ -67,7 +67,7 @@ Add to your user settings (`.vscode/mcp.json`) or use Command Palette → "MCP: 
   "servers": {
     "huly": {
       "command": "npx",
-      "args": ["-y", "@firfi/huly-mcp@latest"],
+      "args": ["-y", "@spatialy/huly-mcp@latest"],
       "env": {
         "HULY_URL": "https://huly.app",
         "HULY_EMAIL": "your@email.com",
@@ -105,7 +105,7 @@ HULY_EMAIL=your@email.com \
 HULY_PASSWORD=yourpassword \
 HULY_WORKSPACE=yourworkspace \
 MCP_TRANSPORT=http \
-npx -y @firfi/huly-mcp@latest
+npx -y @spatialy/huly-mcp@latest
 ```
 
 Server listens on `http://127.0.0.1:3000/mcp` by default.
@@ -113,7 +113,7 @@ Server listens on `http://127.0.0.1:3000/mcp` by default.
 Configure with `MCP_HTTP_PORT` and `MCP_HTTP_HOST`:
 
 ```bash
-MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @firfi/huly-mcp@latest
+MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @spatialy/huly-mcp@latest
 ```
 
 ## Environment Variables
