@@ -1,8 +1,8 @@
 {
-  "name": "@firfi/huly-mcp",
+  "name": "@spatialy/huly-mcp",
   "version": "0.1.40",
   "description": "MCP server for Huly integration",
-  "mcpName": "io.github.dearlordylord/huly-mcp",
+  "mcpName": "io.github.spatialy/huly-mcp",
   "type": "module",
   "main": "./dist/index.cjs",
   "files": [
@@ -13,12 +13,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dearlordylord/huly-mcp.git"
+    "url": "git+https://github.com/spatialy/huly-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/dearlordylord/huly-mcp/issues"
+    "url": "https://github.com/spatialy/huly-mcp/issues"
   },
-  "homepage": "https://github.com/dearlordylord/huly-mcp#readme",
+  "homepage": "https://github.com/spatialy/huly-mcp#readme",
   "scripts": {
     "prepare": "husky",
     "start": "node dist/index.cjs",
@@ -34,7 +34,7 @@
   },
   "bin": {
     "huly-mcp": "./dist/index.cjs",
-    "@firfi/huly-mcp": "./dist/index.cjs"
+    "@spatialy/huly-mcp": "./dist/index.cjs"
   },
   "keywords": [
     "mcp",
@@ -57,6 +57,7 @@
     "@hcengineering/api-client": "^0.7.3",
     "@hcengineering/attachment": "^0.7",
     "@hcengineering/calendar": "^0.7.0",
+    "@hcengineering/card": "^0.7.0",
     "@hcengineering/chunter": "^0.7.0",
     "@hcengineering/collaborator-client": "^0.7.17",
     "@hcengineering/contact": "^0.7.0",

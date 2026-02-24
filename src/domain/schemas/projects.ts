@@ -1,6 +1,6 @@
 import { JSONSchema, Schema } from "effect"
 
-import { LimitParam, ProjectIdentifier, StatusName } from "./shared.js"
+import { LimitParam, NonEmptyString, ProjectIdentifier, StatusName } from "./shared.js"
 
 // No codec needed — internal type, not used for runtime validation
 export interface ProjectSummary {
@@ -45,7 +45,95 @@ export const ProjectSchema = Schema.Struct({
 
 export type Project = Schema.Schema.Type<typeof ProjectSchema>
 
+// --- Project CRUD Schemas ---
+
+export const GetProjectParamsSchema = Schema.Struct({
+  project: NonEmptyString.annotations({
+    description: "Project identifier (e.g. 'PROJ')"
+  })
+}).annotations({
+  title: "GetProjectParams",
+  description: "Parameters for getting a single project with status information"
+})
+
+export type GetProjectParams = Schema.Schema.Type<typeof GetProjectParamsSchema>
+
+export const CreateProjectParamsSchema = Schema.Struct({
+  name: NonEmptyString.annotations({
+    description: "Project display name"
+  }),
+  identifier: Schema.String.pipe(
+    Schema.pattern(/^[A-Z][A-Z0-9_]{0,4}$/),
+    Schema.annotations({
+      description:
+        "Short uppercase identifier for issues (e.g. 'PROJ'). 1-5 chars, starts with letter, uppercase letters/digits/underscore only."
+    })
+  ),
+  description: Schema.optional(Schema.String.annotations({
+    description: "Project description"
+  })),
+  private: Schema.optional(Schema.Boolean.annotations({
+    description: "Whether the project is private (default: false)"
+  }))
+}).annotations({
+  title: "CreateProjectParams",
+  description: "Parameters for creating a new project"
+})
+
+export type CreateProjectParams = Schema.Schema.Type<typeof CreateProjectParamsSchema>
+
+export interface CreateProjectResult {
+  readonly identifier: ProjectIdentifier
+  readonly name: string
+}
+
+export const UpdateProjectParamsSchema = Schema.Struct({
+  project: NonEmptyString.annotations({
+    description: "Project identifier (e.g. 'PROJ')"
+  }),
+  name: Schema.optional(NonEmptyString.annotations({
+    description: "New project name"
+  })),
+  description: Schema.optional(Schema.String.annotations({
+    description: "New project description"
+  }))
+}).annotations({
+  title: "UpdateProjectParams",
+  description: "Parameters for updating an existing project"
+})
+
+export type UpdateProjectParams = Schema.Schema.Type<typeof UpdateProjectParamsSchema>
+
+export interface UpdateProjectResult {
+  readonly identifier: ProjectIdentifier
+  readonly updated: boolean
+}
+
+export const DeleteProjectParamsSchema = Schema.Struct({
+  project: NonEmptyString.annotations({
+    description: "Project identifier (e.g. 'PROJ')"
+  })
+}).annotations({
+  title: "DeleteProjectParams",
+  description: "Parameters for deleting a project"
+})
+
+export type DeleteProjectParams = Schema.Schema.Type<typeof DeleteProjectParamsSchema>
+
+export interface DeleteProjectResult {
+  readonly identifier: ProjectIdentifier
+  readonly deleted: boolean
+}
+
 export const listProjectsParamsJsonSchema = JSONSchema.make(ListProjectsParamsSchema)
+export const getProjectParamsJsonSchema = JSONSchema.make(GetProjectParamsSchema)
+export const createProjectParamsJsonSchema = JSONSchema.make(CreateProjectParamsSchema)
+export const updateProjectParamsJsonSchema = JSONSchema.make(UpdateProjectParamsSchema)
+export const deleteProjectParamsJsonSchema = JSONSchema.make(DeleteProjectParamsSchema)
 
 export const parseListProjectsParams = Schema.decodeUnknown(ListProjectsParamsSchema)
 export const parseProject = Schema.decodeUnknown(ProjectSchema)
+export const parseGetProjectParams = Schema.decodeUnknown(GetProjectParamsSchema)
+export const parseCreateProjectParams = Schema.decodeUnknown(CreateProjectParamsSchema)
+export const parseUpdateProjectParams = Schema.decodeUnknown(UpdateProjectParamsSchema)
+export const parseDeleteProjectParams = Schema.decodeUnknown(DeleteProjectParamsSchema)

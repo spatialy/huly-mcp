@@ -1,23 +1,55 @@
 /**
  * Project domain operations for Huly MCP server.
  *
- * Provides typed operations for querying projects from Huly platform.
+ * Provides typed operations for querying and managing projects from Huly platform.
  * Operations use HulyClient service and return typed domain objects.
  *
  * @module
  */
-import { type DocumentQuery, SortingOrder } from "@hcengineering/core"
-import { type Project as HulyProject } from "@hcengineering/tracker"
+import {
+  type Data,
+  type DocumentQuery,
+  type DocumentUpdate,
+  generateId,
+  type Ref,
+  SortingOrder
+} from "@hcengineering/core"
+import { type Project as HulyProject, TimeReportDayType } from "@hcengineering/tracker"
 import { Effect } from "effect"
 
-import type { ListProjectsParams, ListProjectsResult, ProjectSummary } from "../../domain/schemas.js"
-import { ProjectIdentifier } from "../../domain/schemas/shared.js"
+import type {
+  CreateProjectParams,
+  DeleteProjectParams,
+  GetProjectParams,
+  ListProjectsParams,
+  ListProjectsResult,
+  Project,
+  ProjectSummary,
+  UpdateProjectParams
+} from "../../domain/schemas.js"
+import type { CreateProjectResult, DeleteProjectResult, UpdateProjectResult } from "../../domain/schemas/projects.js"
+import { ProjectIdentifier, type StatusName } from "../../domain/schemas/shared.js"
 import { HulyClient, type HulyClientError } from "../client.js"
-import { clampLimit } from "./shared.js"
+import type { ProjectNotFoundError } from "../errors.js"
+import { clampLimit, findProjectWithStatuses } from "./shared.js"
 
-import { tracker } from "../huly-plugins.js"
+import { core, tracker } from "../huly-plugins.js"
 
 type ListProjectsError = HulyClientError
+
+type GetProjectError =
+  | HulyClientError
+  | ProjectNotFoundError
+
+type CreateProjectError = HulyClientError
+
+type UpdateProjectError =
+  | HulyClientError
+  | ProjectNotFoundError
+
+type DeleteProjectError =
+  | HulyClientError
+  | ProjectNotFoundError
 
 export const listProjects = (
   params: ListProjectsParams
@@ -56,4 +88,99 @@ export const listProjects = (
       projects: summaries,
       total
     }
+  })
+
+export const getProject = (
+  params: GetProjectParams
+): Effect.Effect<Project, GetProjectError, HulyClient> =>
+  Effect.gen(function*() {
+    const { project, statuses } = yield* findProjectWithStatuses(params.project)
+
+    const defaultStatus = statuses.find((s) => s._id === project.defaultIssueStatus)
+    const statusNames = statuses.map((s) => s.name as StatusName)
+
+    return {
+      identifier: ProjectIdentifier.make(project.identifier),
+      name: project.name,
+      description: project.description || undefined,
+      archived: project.archived,
+      defaultStatus: defaultStatus ? defaultStatus.name as StatusName : undefined,
+      statuses: statusNames.length > 0 ? statusNames : undefined
+    }
+  })
+
+export const createProject = (
+  params: CreateProjectParams
+): Effect.Effect<CreateProjectResult, CreateProjectError, HulyClient> =>
+  Effect.gen(function*() {
+    const client = yield* HulyClient
+
+    const projectId: Ref<HulyProject> = generateId()
+
+    const projectData: Data<HulyProject> = {
+      name: params.name,
+      identifier: params.identifier.toUpperCase(),
+      description: params.description ?? "",
+      private: params.private ?? false,
+      archived: false,
+      members: [],
+      sequence: 0,
+      defaultIssueStatus: tracker.status.Backlog,
+      defaultTimeReportDay: TimeReportDayType.CurrentWorkDay,
+      type: tracker.ids.ClassingProjectType
+    }
+
+    yield* client.createDoc(
+      tracker.class.Project,
+      core.space.Space,
+      projectData,
+      projectId
+    )
+
+    return { identifier: ProjectIdentifier.make(params.identifier.toUpperCase()), name: params.name }
+  })
+
+export const updateProject = (
+  params: UpdateProjectParams
+): Effect.Effect<UpdateProjectResult, UpdateProjectError, HulyClient> =>
+  Effect.gen(function*() {
+    const { client, project } = yield* findProjectWithStatuses(params.project)
+
+    const updateOps: DocumentUpdate<HulyProject> = {}
+
+    if (params.name !== undefined) {
+      updateOps.name = params.name
+    }
+
+    if (params.description !== undefined) {
+      updateOps.description = params.description
+    }
+
+    if (Object.keys(updateOps).length === 0) {
+      return { identifier: ProjectIdentifier.make(project.identifier), updated: false }
+    }
+
+    yield* client.updateDoc(
+      tracker.class.Project,
+      core.space.Space,
+      project._id,
+      updateOps
+    )
+
+    return { identifier: ProjectIdentifier.make(project.identifier), updated: true }
+  })
+
+export const deleteProject = (
+  params: DeleteProjectParams
+): Effect.Effect<DeleteProjectResult, DeleteProjectError, HulyClient> =>
+  Effect.gen(function*() {
+    const { client, project } = yield* findProjectWithStatuses(params.project)
+
+    yield* client.removeDoc(
+      tracker.class.Project,
+      core.space.Space,
+      project._id
+    )
+
+    return { identifier: ProjectIdentifier.make(project.identifier), deleted: true }
   })

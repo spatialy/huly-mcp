@@ -90,7 +90,9 @@ const INVALID_PARAMS_TAGS: ReadonlySet<HulyDomainError["_tag"]> = new Set<HulyDo
   "NotificationContextNotFoundError",
   "InvalidPersonUuidError",
   "FileTooLargeError",
-  "InvalidContentTypeError"
+  "InvalidContentTypeError",
+  "CardNotFoundError",
+  "CardTypeNotFoundError"
 ])
 
 const INTERNAL_ERROR_PREFIX: Partial<Record<HulyDomainError["_tag"], string>> = {

@@ -9,6 +9,7 @@ export const attachment = require("@hcengineering/attachment")
   .default as typeof import("@hcengineering/attachment").default
 export const calendar = require("@hcengineering/calendar")
   .default as typeof import("@hcengineering/calendar").default
+export const card = require("@hcengineering/card").default as typeof import("@hcengineering/card").default
 export const chunter = require("@hcengineering/chunter").default as typeof import("@hcengineering/chunter").default
 export const contact = require("@hcengineering/contact").default as typeof import("@hcengineering/contact").default
 export const core = require("@hcengineering/core").default as typeof import("@hcengineering/core").default

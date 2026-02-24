@@ -1,24 +1,36 @@
 import {
   createDocumentParamsJsonSchema,
+  createTeamspaceParamsJsonSchema,
   deleteDocumentParamsJsonSchema,
+  deleteTeamspaceParamsJsonSchema,
   getDocumentParamsJsonSchema,
+  getTeamspaceParamsJsonSchema,
   listDocumentsParamsJsonSchema,
   listTeamspacesParamsJsonSchema,
   parseCreateDocumentParams,
+  parseCreateTeamspaceParams,
   parseDeleteDocumentParams,
+  parseDeleteTeamspaceParams,
   parseGetDocumentParams,
+  parseGetTeamspaceParams,
   parseListDocumentsParams,
   parseListTeamspacesParams,
   parseUpdateDocumentParams,
-  updateDocumentParamsJsonSchema
+  parseUpdateTeamspaceParams,
+  updateDocumentParamsJsonSchema,
+  updateTeamspaceParamsJsonSchema
 } from "../../domain/schemas.js"
 import {
   createDocument,
+  createTeamspace,
   deleteDocument,
+  deleteTeamspace,
   getDocument,
+  getTeamspace,
   listDocuments,
   listTeamspaces,
-  updateDocument
+  updateDocument,
+  updateTeamspace
 } from "../../huly/operations/documents.js"
 import { createToolHandler, type RegisteredTool } from "./registry.js"
 
@@ -35,6 +47,51 @@ export const documentTools: ReadonlyArray<RegisteredTool> = [
       "list_teamspaces",
       parseListTeamspacesParams,
       listTeamspaces
+    )
+  },
+  {
+    name: "get_teamspace",
+    description:
+      "Get details of a single Huly teamspace by name or ID. Returns teamspace metadata including name, description, archived and private status.",
+    category: CATEGORY,
+    inputSchema: getTeamspaceParamsJsonSchema,
+    handler: createToolHandler(
+      "get_teamspace",
+      parseGetTeamspaceParams,
+      getTeamspace
+    )
+  },
+  {
+    name: "create_teamspace",
+    description: "Create a new Huly document teamspace. Returns the created teamspace id and name.",
+    category: CATEGORY,
+    inputSchema: createTeamspaceParamsJsonSchema,
+    handler: createToolHandler(
+      "create_teamspace",
+      parseCreateTeamspaceParams,
+      createTeamspace
+    )
+  },
+  {
+    name: "update_teamspace",
+    description: "Update fields on an existing Huly teamspace. Only provided fields are modified.",
+    category: CATEGORY,
+    inputSchema: updateTeamspaceParamsJsonSchema,
+    handler: createToolHandler(
+      "update_teamspace",
+      parseUpdateTeamspaceParams,
+      updateTeamspace
+    )
+  },
+  {
+    name: "delete_teamspace",
+    description: "Permanently delete a Huly teamspace and all its documents. This action cannot be undone.",
+    category: CATEGORY,
+    inputSchema: deleteTeamspaceParamsJsonSchema,
+    handler: createToolHandler(
+      "delete_teamspace",
+      parseDeleteTeamspaceParams,
+      deleteTeamspace
     )
   },
   {

@@ -5,6 +5,8 @@ import {
   ActivityMessageNotFoundError,
   AttachmentNotFoundError,
   BYTES_PER_MB,
+  CardNotFoundError,
+  CardTypeNotFoundError,
   ChannelNotFoundError,
   CommentNotFoundError,
   ComponentNotFoundError,
@@ -676,6 +678,10 @@ describe("Huly Errors", () => {
               return `toolarge:${error.filename}`
             case "InvalidContentTypeError":
               return `contenttype:${error.contentType}`
+            case "CardNotFoundError":
+              return `card:${error.identifier}`
+            case "CardTypeNotFoundError":
+              return `cardtype:${error.identifier}`
           }
         }
 
@@ -721,6 +727,8 @@ describe("Huly Errors", () => {
         expect(
           matchError(new InvalidContentTypeError({ filename: "f.exe", contentType: "application/x-msdownload" }))
         ).toBe("contenttype:application/x-msdownload")
+        expect(matchError(new CardNotFoundError({ identifier: "card-1" }))).toBe("card:card-1")
+        expect(matchError(new CardTypeNotFoundError({ identifier: "type-1" }))).toBe("cardtype:type-1")
       }))
   })
 })

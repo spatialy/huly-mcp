@@ -170,3 +170,94 @@ export interface DeleteDocumentResult {
   readonly id: DocumentId
   readonly deleted: boolean
 }
+
+// --- Teamspace CRUD Schemas ---
+
+export const GetTeamspaceParamsSchema = Schema.Struct({
+  teamspace: TeamspaceIdentifier.annotations({
+    description: "Teamspace name or ID"
+  })
+}).annotations({
+  title: "GetTeamspaceParams",
+  description: "Parameters for getting a single teamspace"
+})
+
+export type GetTeamspaceParams = Schema.Schema.Type<typeof GetTeamspaceParamsSchema>
+
+export interface Teamspace {
+  readonly id: TeamspaceId
+  readonly name: string
+  readonly description?: string | undefined
+  readonly archived: boolean
+  readonly private: boolean
+}
+
+export const CreateTeamspaceParamsSchema = Schema.Struct({
+  name: NonEmptyString.annotations({
+    description: "Teamspace name"
+  }),
+  description: Schema.optional(Schema.String.annotations({
+    description: "Teamspace description"
+  })),
+  private: Schema.optional(Schema.Boolean.annotations({
+    description: "Whether the teamspace is private (default: false)"
+  }))
+}).annotations({
+  title: "CreateTeamspaceParams",
+  description: "Parameters for creating a teamspace"
+})
+
+export type CreateTeamspaceParams = Schema.Schema.Type<typeof CreateTeamspaceParamsSchema>
+
+export interface CreateTeamspaceResult {
+  readonly id: TeamspaceId
+  readonly name: string
+}
+
+export const UpdateTeamspaceParamsSchema = Schema.Struct({
+  teamspace: TeamspaceIdentifier.annotations({
+    description: "Teamspace name or ID"
+  }),
+  name: Schema.optional(NonEmptyString.annotations({
+    description: "New teamspace name"
+  })),
+  description: Schema.optional(Schema.String.annotations({
+    description: "New teamspace description"
+  }))
+}).annotations({
+  title: "UpdateTeamspaceParams",
+  description: "Parameters for updating a teamspace"
+})
+
+export type UpdateTeamspaceParams = Schema.Schema.Type<typeof UpdateTeamspaceParamsSchema>
+
+export interface UpdateTeamspaceResult {
+  readonly id: TeamspaceId
+  readonly updated: boolean
+}
+
+export const DeleteTeamspaceParamsSchema = Schema.Struct({
+  teamspace: TeamspaceIdentifier.annotations({
+    description: "Teamspace name or ID"
+  })
+}).annotations({
+  title: "DeleteTeamspaceParams",
+  description: "Parameters for deleting a teamspace"
+})
+
+export type DeleteTeamspaceParams = Schema.Schema.Type<typeof DeleteTeamspaceParamsSchema>
+
+export interface DeleteTeamspaceResult {
+  readonly id: TeamspaceId
+  readonly deleted: boolean
+}
+
+export const getTeamspaceParamsJsonSchema = JSONSchema.make(GetTeamspaceParamsSchema)
+export const createTeamspaceParamsJsonSchema = JSONSchema.make(CreateTeamspaceParamsSchema)
+export const updateTeamspaceParamsJsonSchema = JSONSchema.make(UpdateTeamspaceParamsSchema)
+export const deleteTeamspaceParamsJsonSchema = JSONSchema.make(DeleteTeamspaceParamsSchema)
+
+export const parseGetTeamspaceParams = Schema.decodeUnknown(GetTeamspaceParamsSchema)
+export const parseCreateTeamspaceParams = Schema.decodeUnknown(CreateTeamspaceParamsSchema)
+export const parseUpdateTeamspaceParams = Schema.decodeUnknown(UpdateTeamspaceParamsSchema)
+export const parseDeleteTeamspaceParams = Schema.decodeUnknown(DeleteTeamspaceParamsSchema)

@@ -29,6 +29,9 @@ importers:
       '@hcengineering/calendar':
         specifier: ^0.7.0
         version: 0.7.0
+      '@hcengineering/card':
+        specifier: ^0.7.0
+        version: 0.7.0
       '@hcengineering/chunter':
         specifier: ^0.7.0
         version: 0.7.0

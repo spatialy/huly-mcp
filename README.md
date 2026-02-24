@@ -136,13 +136,17 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @firfi/huly-m
 <!-- tools:start -->
 ## Available Tools
 
-**`TOOLSETS` categories:** `projects`, `issues`, `comments`, `milestones`, `documents`, `storage`, `attachments`, `contacts`, `channels`, `calendar`, `time tracking`, `search`, `activity`, `notifications`, `workspace`, `labels`
+**`TOOLSETS` categories:** `projects`, `issues`, `comments`, `milestones`, `documents`, `storage`, `attachments`, `contacts`, `channels`, `calendar`, `time tracking`, `search`, `activity`, `notifications`, `workspace`, `cards`, `labels`
 
 ### Projects
 
 | Tool | Description |
 |------|-------------|
 | `list_projects` | List all Huly projects. Returns projects sorted by name. Supports filtering by archived status. |
+| `get_project` | Get full details of a Huly project including statuses. Returns project metadata, default status, and all available statuses. |
+| `create_project` | Create a new Huly project with the given identifier and name. The identifier must be 1-5 uppercase characters (e.g. 'PROJ'). Creates with default Backlog status. |
+| `update_project` | Update fields on an existing Huly project. Only provided fields are modified. |
+| `delete_project` | Permanently delete a Huly project and all its issues. This action cannot be undone. |
 
 ### Issues
 
@@ -197,6 +201,10 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @firfi/huly-m
 | Tool | Description |
 |------|-------------|
 | `list_teamspaces` | List all Huly document teamspaces. Returns teamspaces sorted by name. Supports filtering by archived status. |
+| `get_teamspace` | Get details of a single Huly teamspace by name or ID. Returns teamspace metadata including name, description, archived and private status. |
+| `create_teamspace` | Create a new Huly document teamspace. Returns the created teamspace id and name. |
+| `update_teamspace` | Update fields on an existing Huly teamspace. Only provided fields are modified. |
+| `delete_teamspace` | Permanently delete a Huly teamspace and all its documents. This action cannot be undone. |
 | `list_documents` | List documents in a Huly teamspace. Returns documents sorted by modification date (newest first). Supports searching by title substring (titleSearch) and content (contentSearch). |
 | `get_document` | Retrieve full details for a Huly document including markdown content. Use this to view document content and metadata. |
 | `create_document` | Create a new document in a Huly teamspace. Content supports markdown formatting. Returns the created document id. |
@@ -330,6 +338,17 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @firfi/huly-m
 | `update_user_profile` | Update the current user's profile. Supports bio, city, country, website, social links, and public visibility. |
 | `update_guest_settings` | Update workspace guest settings. Control read-only guest access and guest sign-up permissions. |
 | `get_regions` | Get available regions for workspace creation. Returns region codes and display names. |
+
+### Cards
+
+| Tool | Description |
+|------|-------------|
+| `list_card_types` | List available card types (MasterTags) in the Huly workspace. Use this to discover what card types exist before creating or filtering cards. |
+| `list_cards` | List cards in the Huly workspace. Optionally filter by card type ID. Returns cards sorted by modification date (newest first). |
+| `get_card` | Get full details of a Huly card including markdown content. Look up by title or ID. |
+| `create_card` | Create a new card in the Huly workspace. Optionally specify a card type (MasterTag ID from list_card_types). Content supports markdown. |
+| `update_card` | Update fields on an existing Huly card. Only provided fields are modified. Content updates support markdown. |
+| `delete_card` | Permanently delete a Huly card. This action cannot be undone. |
 
 ### Labels
 

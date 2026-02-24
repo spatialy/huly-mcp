@@ -5,6 +5,7 @@ import type { McpToolResponse } from "../error-mapping.js"
 import { activityTools } from "./activity.js"
 import { attachmentTools } from "./attachments.js"
 import { calendarTools } from "./calendar.js"
+import { cardTools } from "./cards.js"
 import { channelTools } from "./channels.js"
 import { commentTools } from "./comments.js"
 import { contactTools } from "./contacts.js"
@@ -39,7 +40,8 @@ const allTools: ReadonlyArray<RegisteredTool> = [
   ...searchTools,
   ...activityTools,
   ...notificationTools,
-  ...workspaceTools
+  ...workspaceTools,
+  ...cardTools
 ]
 
 export const CATEGORY_NAMES: ReadonlySet<string> = new Set(

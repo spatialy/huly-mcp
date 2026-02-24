@@ -454,6 +454,34 @@ export class InvalidContentTypeError extends Schema.TaggedError<InvalidContentTy
 }
 
 /**
+ * Card not found.
+ */
+export class CardNotFoundError extends Schema.TaggedError<CardNotFoundError>()(
+  "CardNotFoundError",
+  {
+    identifier: Schema.String
+  }
+) {
+  override get message(): string {
+    return `Card '${this.identifier}' not found`
+  }
+}
+
+/**
+ * Card type (MasterTag) not found.
+ */
+export class CardTypeNotFoundError extends Schema.TaggedError<CardTypeNotFoundError>()(
+  "CardTypeNotFoundError",
+  {
+    identifier: Schema.String
+  }
+) {
+  override get message(): string {
+    return `Card type '${this.identifier}' not found`
+  }
+}
+
+/**
  * Union of all Huly domain errors.
  */
 export type HulyDomainError =
@@ -489,6 +517,8 @@ export type HulyDomainError =
   | InvalidPersonUuidError
   | FileTooLargeError
   | InvalidContentTypeError
+  | CardNotFoundError
+  | CardTypeNotFoundError
 
 /**
  * Schema for all Huly domain errors (for serialization).
@@ -526,7 +556,9 @@ export const HulyDomainError: Schema.Union<
     typeof NotificationContextNotFoundError,
     typeof InvalidPersonUuidError,
     typeof FileTooLargeError,
-    typeof InvalidContentTypeError
+    typeof InvalidContentTypeError,
+    typeof CardNotFoundError,
+    typeof CardTypeNotFoundError
   ]
 > = Schema.Union(
   HulyError,
@@ -560,5 +592,7 @@ export const HulyDomainError: Schema.Union<
   NotificationContextNotFoundError,
   InvalidPersonUuidError,
   FileTooLargeError,
-  InvalidContentTypeError
+  InvalidContentTypeError,
+  CardNotFoundError,
+  CardTypeNotFoundError
 )
