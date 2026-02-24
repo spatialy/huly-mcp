@@ -32,11 +32,13 @@ import {
   parseListIssuesParams,
   parseListIssueTemplatesParams,
   parseRemoveIssueRelationParams,
+  parseRemoveLabelParams,
   parseSetIssueComponentParams,
   parseUpdateComponentParams,
   parseUpdateIssueParams,
   parseUpdateIssueTemplateParams,
   removeIssueRelationParamsJsonSchema,
+  removeLabelParamsJsonSchema,
   setIssueComponentParamsJsonSchema,
   updateComponentParamsJsonSchema,
   updateIssueParamsJsonSchema,
@@ -59,6 +61,7 @@ import {
   updateIssueTemplate
 } from "../../huly/operations/issue-templates.js"
 import { addLabel, createIssue, deleteIssue, getIssue, listIssues, updateIssue } from "../../huly/operations/issues.js"
+import { removeIssueLabel } from "../../huly/operations/labels.js"
 import { addIssueRelation, listIssueRelations, removeIssueRelation } from "../../huly/operations/relations.js"
 import { createToolHandler, type RegisteredTool } from "./registry.js"
 
@@ -122,6 +125,18 @@ export const issueTools: ReadonlyArray<RegisteredTool> = [
       "add_issue_label",
       parseAddLabelParams,
       addLabel
+    )
+  },
+  {
+    name: "remove_issue_label",
+    description:
+      "Remove a tag/label from a Huly issue. Detaches the label reference; does not delete the label definition.",
+    category: CATEGORY,
+    inputSchema: removeLabelParamsJsonSchema,
+    handler: createToolHandler(
+      "remove_issue_label",
+      parseRemoveLabelParams,
+      removeIssueLabel
     )
   },
   {

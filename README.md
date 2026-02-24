@@ -136,7 +136,7 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @firfi/huly-m
 <!-- tools:start -->
 ## Available Tools
 
-**`TOOLSETS` categories:** `projects`, `issues`, `comments`, `milestones`, `documents`, `storage`, `attachments`, `contacts`, `channels`, `calendar`, `time tracking`, `search`, `activity`, `notifications`, `workspace`
+**`TOOLSETS` categories:** `projects`, `issues`, `comments`, `milestones`, `documents`, `storage`, `attachments`, `contacts`, `channels`, `calendar`, `time tracking`, `search`, `activity`, `notifications`, `workspace`, `labels`
 
 ### Projects
 
@@ -154,6 +154,7 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @firfi/huly-m
 | `create_issue` | Create a new issue in a Huly project. Optionally create as a sub-issue by specifying parentIssue. Description supports markdown formatting. Returns the created issue identifier. |
 | `update_issue` | Update fields on an existing Huly issue. Only provided fields are modified. Description updates support markdown. |
 | `add_issue_label` | Add a tag/label to a Huly issue. Creates the tag if it doesn't exist in the project. |
+| `remove_issue_label` | Remove a tag/label from a Huly issue. Detaches the label reference; does not delete the label definition. |
 | `delete_issue` | Permanently delete a Huly issue. This action cannot be undone. |
 | `list_components` | List components in a Huly project. Components organize issues by area/feature. Returns components sorted by modification date (newest first). |
 | `get_component` | Retrieve full details for a Huly component. Use this to view component content and metadata. |
@@ -329,6 +330,15 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @firfi/huly-m
 | `update_user_profile` | Update the current user's profile. Supports bio, city, country, website, social links, and public visibility. |
 | `update_guest_settings` | Update workspace guest settings. Control read-only guest access and guest sign-up permissions. |
 | `get_regions` | Get available regions for workspace creation. Returns region codes and display names. |
+
+### Labels
+
+| Tool | Description |
+|------|-------------|
+| `list_labels` | List label/tag definitions in the workspace. Labels are global (not project-scoped). Returns labels for tracker issues sorted by modification date (newest first). |
+| `create_label` | Create a new label/tag definition in the workspace. Labels are global and can be attached to any issue. Returns existing label if one with the same title already exists (created=false). Use add_issue_label to attach a label to a specific issue. |
+| `update_label` | Update a label/tag definition. Accepts label ID or title. Only provided fields are modified. |
+| `delete_label` | Permanently delete a label/tag definition. Accepts label ID or title. This action cannot be undone. |
 
 <!-- tools:end -->
 

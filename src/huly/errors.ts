@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- all domain errors live in a single file for exhaustive pattern matching */
 /**
  * Error hierarchy for Huly MCP server.
  *
@@ -335,6 +336,17 @@ export class AttachmentNotFoundError extends Schema.TaggedError<AttachmentNotFou
   }
 }
 
+export class TagNotFoundError extends Schema.TaggedError<TagNotFoundError>()(
+  "TagNotFoundError",
+  {
+    identifier: Schema.String
+  }
+) {
+  override get message(): string {
+    return `Tag/label '${this.identifier}' not found`
+  }
+}
+
 /**
  * Component not found in the specified project.
  */
@@ -469,6 +481,7 @@ export type HulyDomainError =
   | ReactionNotFoundError
   | SavedMessageNotFoundError
   | AttachmentNotFoundError
+  | TagNotFoundError
   | ComponentNotFoundError
   | IssueTemplateNotFoundError
   | NotificationNotFoundError
@@ -506,6 +519,7 @@ export const HulyDomainError: Schema.Union<
     typeof ReactionNotFoundError,
     typeof SavedMessageNotFoundError,
     typeof AttachmentNotFoundError,
+    typeof TagNotFoundError,
     typeof ComponentNotFoundError,
     typeof IssueTemplateNotFoundError,
     typeof NotificationNotFoundError,
@@ -539,6 +553,7 @@ export const HulyDomainError: Schema.Union<
   ReactionNotFoundError,
   SavedMessageNotFoundError,
   AttachmentNotFoundError,
+  TagNotFoundError,
   ComponentNotFoundError,
   IssueTemplateNotFoundError,
   NotificationNotFoundError,

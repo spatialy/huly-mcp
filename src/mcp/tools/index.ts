@@ -11,6 +11,7 @@ import { contactTools } from "./contacts.js"
 import { deletionTools } from "./deletion.js"
 import { documentTools } from "./documents.js"
 import { issueTools } from "./issues.js"
+import { labelTools } from "./labels.js"
 import { milestoneTools } from "./milestones.js"
 import { notificationTools } from "./notifications.js"
 import { projectTools } from "./projects.js"
@@ -24,6 +25,7 @@ import { workspaceTools } from "./workspace.js"
 const allTools: ReadonlyArray<RegisteredTool> = [
   ...projectTools,
   ...issueTools,
+  ...labelTools,
   ...commentTools,
   ...deletionTools,
   ...milestoneTools,

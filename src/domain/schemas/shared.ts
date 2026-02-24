@@ -89,6 +89,9 @@ export type CommentId = Schema.Schema.Type<typeof CommentId>
 export const TimeSpendReportId = HulyRef("TimeSpendReportId")
 export type TimeSpendReportId = Schema.Schema.Type<typeof TimeSpendReportId>
 
+export const TagElementId = HulyRef("TagElementId")
+export type TagElementId = Schema.Schema.Type<typeof TagElementId>
+
 // === Tier 2: Human-Readable Identifiers ===
 
 export const ProjectIdentifier = NonEmptyString.pipe(Schema.brand("ProjectIdentifier"))
@@ -192,6 +195,9 @@ export type TeamspaceIdentifier = Schema.Schema.Type<typeof TeamspaceIdentifier>
 
 export const DocumentIdentifier = NonEmptyString.pipe(Schema.brand("DocumentIdentifier"))
 export type DocumentIdentifier = Schema.Schema.Type<typeof DocumentIdentifier>
+
+export const TagIdentifier = NonEmptyString.pipe(Schema.brand("TagIdentifier"))
+export type TagIdentifier = Schema.Schema.Type<typeof TagIdentifier>
 
 export const MemberReference = Schema.String.pipe(Schema.brand("MemberReference"))
 export type MemberReference = Schema.Schema.Type<typeof MemberReference>

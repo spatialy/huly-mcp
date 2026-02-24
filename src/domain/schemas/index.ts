@@ -61,9 +61,14 @@ export {
   parseIssue,
   parseIssueSummary,
   parseListIssuesParams,
+  parseRemoveLabelParams,
   parseUpdateIssueParams,
   type PersonRef,
   PersonRefSchema,
+  type RemoveLabelParams,
+  removeLabelParamsJsonSchema,
+  RemoveLabelParamsSchema,
+  type RemoveLabelResult,
   type UpdateIssueParams,
   updateIssueParamsJsonSchema,
   UpdateIssueParamsSchema,
@@ -106,6 +111,30 @@ export {
   UpdateComponentParamsSchema,
   type UpdateComponentResult
 } from "./components.js"
+
+export {
+  type CreateLabelParams,
+  createLabelParamsJsonSchema,
+  CreateLabelParamsSchema,
+  type CreateLabelResult,
+  type DeleteLabelParams,
+  deleteLabelParamsJsonSchema,
+  DeleteLabelParamsSchema,
+  type DeleteLabelResult,
+  type ListLabelsParams,
+  listLabelsParamsJsonSchema,
+  ListLabelsParamsSchema,
+  parseCreateLabelParams,
+  parseDeleteLabelParams,
+  parseListLabelsParams,
+  parseUpdateLabelParams,
+  type TagElementSummary,
+  TagElementSummarySchema,
+  type UpdateLabelParams,
+  updateLabelParamsJsonSchema,
+  UpdateLabelParamsSchema,
+  type UpdateLabelResult
+} from "./labels.js"
 
 export {
   type DeletionImpact,

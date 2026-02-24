@@ -34,6 +34,7 @@ import {
   ReactionNotFoundError,
   RecurringEventNotFoundError,
   SavedMessageNotFoundError,
+  TagNotFoundError,
   TeamspaceNotFoundError,
   ThreadReplyNotFoundError
 } from "../../src/huly/errors.js"
@@ -659,6 +660,8 @@ describe("Huly Errors", () => {
               return `saved:${error.messageId}`
             case "AttachmentNotFoundError":
               return `attachment:${error.attachmentId}`
+            case "TagNotFoundError":
+              return `tag:${error.identifier}`
             case "ComponentNotFoundError":
               return `component:${error.identifier}`
             case "IssueTemplateNotFoundError":
@@ -704,6 +707,7 @@ describe("Huly Errors", () => {
         expect(matchError(new ReactionNotFoundError({ messageId: "msg-1", emoji: "heart" }))).toBe("reaction:heart")
         expect(matchError(new SavedMessageNotFoundError({ messageId: "sm-1" }))).toBe("saved:sm-1")
         expect(matchError(new AttachmentNotFoundError({ attachmentId: "att-1" }))).toBe("attachment:att-1")
+        expect(matchError(new TagNotFoundError({ identifier: "lbl-1" }))).toBe("tag:lbl-1")
         expect(matchError(new ComponentNotFoundError({ identifier: "cmp-1", project: "P" }))).toBe("component:cmp-1")
         expect(matchError(new IssueTemplateNotFoundError({ identifier: "tpl-1", project: "P" }))).toBe("template:tpl-1")
         expect(matchError(new NotificationNotFoundError({ notificationId: "n-1" }))).toBe("notification:n-1")
