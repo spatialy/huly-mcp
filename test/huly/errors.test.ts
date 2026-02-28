@@ -38,6 +38,9 @@ import {
   SavedMessageNotFoundError,
   TagNotFoundError,
   TeamspaceNotFoundError,
+  TestCaseNotFoundError,
+  TestProjectNotFoundError,
+  TestSuiteNotFoundError,
   ThreadReplyNotFoundError
 } from "../../src/huly/errors.js"
 
@@ -682,6 +685,12 @@ describe("Huly Errors", () => {
               return `card:${error.identifier}`
             case "CardTypeNotFoundError":
               return `cardtype:${error.identifier}`
+            case "TestProjectNotFoundError":
+              return `testproject:${error.identifier}`
+            case "TestSuiteNotFoundError":
+              return `testsuite:${error.identifier}`
+            case "TestCaseNotFoundError":
+              return `testcase:${error.identifier}`
           }
         }
 
@@ -729,6 +738,9 @@ describe("Huly Errors", () => {
         ).toBe("contenttype:application/x-msdownload")
         expect(matchError(new CardNotFoundError({ identifier: "card-1" }))).toBe("card:card-1")
         expect(matchError(new CardTypeNotFoundError({ identifier: "type-1" }))).toBe("cardtype:type-1")
+        expect(matchError(new TestProjectNotFoundError({ identifier: "tp-1" }))).toBe("testproject:tp-1")
+        expect(matchError(new TestSuiteNotFoundError({ identifier: "ts-1", project: "P" }))).toBe("testsuite:ts-1")
+        expect(matchError(new TestCaseNotFoundError({ identifier: "tc-1", suite: "S" }))).toBe("testcase:tc-1")
       }))
   })
 })

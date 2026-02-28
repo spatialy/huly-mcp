@@ -92,6 +92,15 @@ export type TimeSpendReportId = Schema.Schema.Type<typeof TimeSpendReportId>
 export const TagElementId = HulyRef("TagElementId")
 export type TagElementId = Schema.Schema.Type<typeof TagElementId>
 
+export const TestProjectId = HulyRef("TestProjectId")
+export type TestProjectId = Schema.Schema.Type<typeof TestProjectId>
+
+export const TestSuiteId = HulyRef("TestSuiteId")
+export type TestSuiteId = Schema.Schema.Type<typeof TestSuiteId>
+
+export const TestCaseId = HulyRef("TestCaseId")
+export type TestCaseId = Schema.Schema.Type<typeof TestCaseId>
+
 // === Tier 2: Human-Readable Identifiers ===
 
 export const ProjectIdentifier = NonEmptyString.pipe(Schema.brand("ProjectIdentifier"))

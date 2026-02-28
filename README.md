@@ -136,7 +136,7 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @spatialy/hul
 <!-- tools:start -->
 ## Available Tools
 
-**`TOOLSETS` categories:** `projects`, `issues`, `comments`, `milestones`, `documents`, `storage`, `attachments`, `contacts`, `channels`, `calendar`, `time tracking`, `search`, `activity`, `notifications`, `workspace`, `cards`, `labels`
+**`TOOLSETS` categories:** `projects`, `issues`, `comments`, `milestones`, `documents`, `storage`, `attachments`, `contacts`, `channels`, `calendar`, `time tracking`, `search`, `activity`, `notifications`, `workspace`, `cards`, `labels`, `test-management`
 
 ### Projects
 
@@ -358,6 +358,22 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @spatialy/hul
 | `create_label` | Create a new label/tag definition in the workspace. Labels are global and can be attached to any issue. Returns existing label if one with the same title already exists (created=false). Use add_issue_label to attach a label to a specific issue. |
 | `update_label` | Update a label/tag definition. Accepts label ID or title. Only provided fields are modified. |
 | `delete_label` | Permanently delete a label/tag definition. Accepts label ID or title. This action cannot be undone. |
+
+### Test-Management
+
+| Tool | Description |
+|------|-------------|
+| `list_test_projects` | List test management projects in the Huly workspace. These are separate from tracker projects — they contain test suites and test cases. |
+| `list_test_suites` | List test suites in a test project. Optionally filter by parent suite to see only nested suites. Returns suites sorted by name. |
+| `get_test_suite` | Get full details of a test suite including its markdown description. Look up by name or ID within a test project. |
+| `create_test_suite` | Create a new test suite in a test project. Supports nesting via the parent parameter. Description supports markdown. |
+| `update_test_suite` | Update a test suite's name or description. Only provided fields are modified. Description supports markdown. |
+| `delete_test_suite` | Permanently delete a test suite from a test project. This action cannot be undone. |
+| `list_test_cases` | List test cases in a test project. Filter by suite, type (functional/performance/regression/security/smoke/usability), priority (low/medium/high/urgent), status (draft/ready-for-review/fix-review-comments/approved/rejected), or assignee. |
+| `get_test_case` | Get full details of a test case including its markdown description, type, priority, status, and assignee. Look up by name or ID. |
+| `create_test_case` | Create a new test case in a test suite. Defaults: type=functional, priority=medium, status=draft. Description supports markdown. Assignee resolved by email or name. |
+| `update_test_case` | Update fields on a test case. Only provided fields are modified. Set assignee to null to unassign. Description supports markdown. |
+| `delete_test_case` | Permanently delete a test case. This action cannot be undone. |
 
 <!-- tools:end -->
 

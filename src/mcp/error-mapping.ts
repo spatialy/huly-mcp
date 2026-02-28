@@ -92,7 +92,10 @@ const INVALID_PARAMS_TAGS: ReadonlySet<HulyDomainError["_tag"]> = new Set<HulyDo
   "FileTooLargeError",
   "InvalidContentTypeError",
   "CardNotFoundError",
-  "CardTypeNotFoundError"
+  "CardTypeNotFoundError",
+  "TestProjectNotFoundError",
+  "TestSuiteNotFoundError",
+  "TestCaseNotFoundError"
 ])
 
 const INTERNAL_ERROR_PREFIX: Partial<Record<HulyDomainError["_tag"], string>> = {

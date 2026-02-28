@@ -481,6 +481,41 @@ export class CardTypeNotFoundError extends Schema.TaggedError<CardTypeNotFoundEr
   }
 }
 
+export class TestProjectNotFoundError extends Schema.TaggedError<TestProjectNotFoundError>()(
+  "TestProjectNotFoundError",
+  {
+    identifier: Schema.String
+  }
+) {
+  override get message(): string {
+    return `Test project '${this.identifier}' not found`
+  }
+}
+
+export class TestSuiteNotFoundError extends Schema.TaggedError<TestSuiteNotFoundError>()(
+  "TestSuiteNotFoundError",
+  {
+    identifier: Schema.String,
+    project: Schema.String
+  }
+) {
+  override get message(): string {
+    return `Test suite '${this.identifier}' not found in project '${this.project}'`
+  }
+}
+
+export class TestCaseNotFoundError extends Schema.TaggedError<TestCaseNotFoundError>()(
+  "TestCaseNotFoundError",
+  {
+    identifier: Schema.String,
+    suite: Schema.String
+  }
+) {
+  override get message(): string {
+    return `Test case '${this.identifier}' not found in suite '${this.suite}'`
+  }
+}
+
 /**
  * Union of all Huly domain errors.
  */
@@ -519,6 +554,9 @@ export type HulyDomainError =
   | InvalidContentTypeError
   | CardNotFoundError
   | CardTypeNotFoundError
+  | TestProjectNotFoundError
+  | TestSuiteNotFoundError
+  | TestCaseNotFoundError
 
 /**
  * Schema for all Huly domain errors (for serialization).
@@ -558,7 +596,10 @@ export const HulyDomainError: Schema.Union<
     typeof FileTooLargeError,
     typeof InvalidContentTypeError,
     typeof CardNotFoundError,
-    typeof CardTypeNotFoundError
+    typeof CardTypeNotFoundError,
+    typeof TestProjectNotFoundError,
+    typeof TestSuiteNotFoundError,
+    typeof TestCaseNotFoundError
   ]
 > = Schema.Union(
   HulyError,
@@ -594,5 +635,8 @@ export const HulyDomainError: Schema.Union<
   FileTooLargeError,
   InvalidContentTypeError,
   CardNotFoundError,
-  CardTypeNotFoundError
+  CardTypeNotFoundError,
+  TestProjectNotFoundError,
+  TestSuiteNotFoundError,
+  TestCaseNotFoundError
 )

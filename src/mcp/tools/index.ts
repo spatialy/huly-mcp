@@ -20,6 +20,7 @@ import type { RegisteredTool, ToolDefinition } from "./registry.js"
 import { resolveAnnotations } from "./registry.js"
 import { searchTools } from "./search.js"
 import { storageTools } from "./storage.js"
+import { testManagementTools } from "./test-management.js"
 import { timeTools } from "./time.js"
 import { workspaceTools } from "./workspace.js"
 
@@ -41,7 +42,8 @@ const allTools: ReadonlyArray<RegisteredTool> = [
   ...activityTools,
   ...notificationTools,
   ...workspaceTools,
-  ...cardTools
+  ...cardTools,
+  ...testManagementTools
 ]
 
 export const CATEGORY_NAMES: ReadonlySet<string> = new Set(
