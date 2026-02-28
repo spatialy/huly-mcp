@@ -516,6 +516,42 @@ export class TestCaseNotFoundError extends Schema.TaggedError<TestCaseNotFoundEr
   }
 }
 
+export class TestPlanNotFoundError extends Schema.TaggedError<TestPlanNotFoundError>()(
+  "TestPlanNotFoundError",
+  {
+    identifier: Schema.String,
+    project: Schema.String
+  }
+) {
+  override get message(): string {
+    return `Test plan '${this.identifier}' not found in project '${this.project}'`
+  }
+}
+
+export class TestRunNotFoundError extends Schema.TaggedError<TestRunNotFoundError>()(
+  "TestRunNotFoundError",
+  {
+    identifier: Schema.String,
+    project: Schema.String
+  }
+) {
+  override get message(): string {
+    return `Test run '${this.identifier}' not found in project '${this.project}'`
+  }
+}
+
+export class TestResultNotFoundError extends Schema.TaggedError<TestResultNotFoundError>()(
+  "TestResultNotFoundError",
+  {
+    identifier: Schema.String,
+    run: Schema.String
+  }
+) {
+  override get message(): string {
+    return `Test result '${this.identifier}' not found in run '${this.run}'`
+  }
+}
+
 /**
  * Union of all Huly domain errors.
  */
@@ -557,6 +593,9 @@ export type HulyDomainError =
   | TestProjectNotFoundError
   | TestSuiteNotFoundError
   | TestCaseNotFoundError
+  | TestPlanNotFoundError
+  | TestRunNotFoundError
+  | TestResultNotFoundError
 
 /**
  * Schema for all Huly domain errors (for serialization).
@@ -599,7 +638,10 @@ export const HulyDomainError: Schema.Union<
     typeof CardTypeNotFoundError,
     typeof TestProjectNotFoundError,
     typeof TestSuiteNotFoundError,
-    typeof TestCaseNotFoundError
+    typeof TestCaseNotFoundError,
+    typeof TestPlanNotFoundError,
+    typeof TestRunNotFoundError,
+    typeof TestResultNotFoundError
   ]
 > = Schema.Union(
   HulyError,
@@ -638,5 +680,8 @@ export const HulyDomainError: Schema.Union<
   CardTypeNotFoundError,
   TestProjectNotFoundError,
   TestSuiteNotFoundError,
-  TestCaseNotFoundError
+  TestCaseNotFoundError,
+  TestPlanNotFoundError,
+  TestRunNotFoundError,
+  TestResultNotFoundError
 )

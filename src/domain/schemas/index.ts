@@ -823,6 +823,9 @@ export {
   type UpdateTestSuiteResult
 } from "./test-management.js"
 
+export * from "./test-plans.js"
+export * from "./test-runs.js"
+
 export {
   type CardDetail,
   CardId,

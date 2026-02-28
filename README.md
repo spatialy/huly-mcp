@@ -374,6 +374,23 @@ MCP_TRANSPORT=http MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 npx -y @spatialy/hul
 | `create_test_case` | Create a new test case in a test suite. Defaults: type=functional, priority=medium, status=draft. Description supports markdown. Assignee resolved by email or name. |
 | `update_test_case` | Update fields on a test case. Only provided fields are modified. Set assignee to null to unassign. Description supports markdown. |
 | `delete_test_case` | Permanently delete a test case. This action cannot be undone. |
+| `list_test_plans` | List test plans in a test project. Test plans group test cases for repeated execution (e.g., regression suites, release checklists). |
+| `get_test_plan` | Get full details of a test plan including its description and list of test plan items (test case references with optional assignee overrides). |
+| `create_test_plan` | Create an empty test plan in a test project. After creation, use add_test_plan_item to add test cases to it. Description supports markdown. |
+| `update_test_plan` | Update a test plan's name or description. Only provided fields are modified. Description supports markdown. |
+| `delete_test_plan` | Permanently delete a test plan and its items. This action cannot be undone. |
+| `add_test_plan_item` | Add a test case to a test plan. Automatically captures the test case's parent suite. Optionally override the assignee for this plan. |
+| `remove_test_plan_item` | Remove a test case from a test plan by its item ID. Use get_test_plan to find item IDs. |
+| `list_test_runs` | List test runs in a test project. Test runs track the execution of test cases with pass/fail results. |
+| `get_test_run` | Get full details of a test run including its description and due date. Use list_test_results to see results within the run. |
+| `create_test_run` | Create an empty test run. After creation, use create_test_result to add results, or use run_test_plan to create a pre-populated run from a test plan. |
+| `update_test_run` | Update a test run's name, description, or due date. Set dueDate to null to clear it. Only provided fields are modified. |
+| `delete_test_run` | Permanently delete a test run and all its results. This action cannot be undone. |
+| `list_test_results` | List test results in a test run. Filter by status (untested/blocked/passed/failed) or assignee. Each result links to a test case. |
+| `get_test_result` | Get full details of a test result including description, status, linked test case, and assignee. |
+| `create_test_result` | Add a test result to a test run. Links to an existing test case. Defaults to status=untested. Name is inherited from the test case. |
+| `update_test_result` | Update a test result's status, assignee, or description. Use this to record pass/fail outcomes. Set assignee to null to unassign. |
+| `run_test_plan` | Create a test run from a test plan. Copies all test plan items into the run as test results with status=untested. This is the primary way to execute a test plan — one call creates a fully populated test run ready for testing. |
 
 <!-- tools:end -->
 

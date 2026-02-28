@@ -691,6 +691,12 @@ describe("Huly Errors", () => {
               return `testsuite:${error.identifier}`
             case "TestCaseNotFoundError":
               return `testcase:${error.identifier}`
+            case "TestPlanNotFoundError":
+              return `testplan:${error.identifier}`
+            case "TestRunNotFoundError":
+              return `testrun:${error.identifier}`
+            case "TestResultNotFoundError":
+              return `testresult:${error.identifier}`
           }
         }
 

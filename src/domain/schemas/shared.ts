@@ -101,6 +101,18 @@ export type TestSuiteId = Schema.Schema.Type<typeof TestSuiteId>
 export const TestCaseId = HulyRef("TestCaseId")
 export type TestCaseId = Schema.Schema.Type<typeof TestCaseId>
 
+export const TestPlanId = HulyRef("TestPlanId")
+export type TestPlanId = Schema.Schema.Type<typeof TestPlanId>
+
+export const TestPlanItemId = HulyRef("TestPlanItemId")
+export type TestPlanItemId = Schema.Schema.Type<typeof TestPlanItemId>
+
+export const TestRunId = HulyRef("TestRunId")
+export type TestRunId = Schema.Schema.Type<typeof TestRunId>
+
+export const TestResultId = HulyRef("TestResultId")
+export type TestResultId = Schema.Schema.Type<typeof TestResultId>
+
 // === Tier 2: Human-Readable Identifiers ===
 
 export const ProjectIdentifier = NonEmptyString.pipe(Schema.brand("ProjectIdentifier"))

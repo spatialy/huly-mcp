@@ -433,6 +433,22 @@ chmod +x test_new_capabilities.sh
 
 ---
 
+## Test Management: Plans, Runs & Results
+
+Automated integration test script for test plans, test runs, test results, and the `run_test_plan` compound tool:
+
+```bash
+source .env.local && bash scripts/integration-test-plans-runs.sh
+```
+
+**Prerequisites**: A test project named "QA" must exist in the Huly workspace. Create it manually in the Huly UI (Test Management → New Project).
+
+The script exercises all 17 Phase 2 tools in a full create→verify→cleanup cycle: creates a suite, test cases, a test plan with items, a test run with results, runs `run_test_plan`, then deletes everything. Reports pass/fail counts.
+
+**Note**: Each tool call takes ~8-10 seconds (MCP connection overhead + `sleep 8` to keep stdin open for write operations). The full suite runs in ~3 minutes.
+
+---
+
 ## How It Works
 
 When `MCP_AUTO_EXIT=true`, the server exits when stdin closes (when printf finishes). Without this flag, the server runs indefinitely (normal MCP behavior for production use with clients like Claude Desktop).

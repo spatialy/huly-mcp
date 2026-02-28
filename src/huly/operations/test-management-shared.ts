@@ -3,15 +3,19 @@ import type { Ref } from "@hcengineering/core"
 import { Effect } from "effect"
 
 import type { TestCasePriority, TestCaseStatus, TestCaseType } from "../../domain/schemas/test-management.js"
+import type { TestResultStatus } from "../../domain/schemas/test-runs.js"
 import type { HulyClient, HulyClientError } from "../client.js"
 import {
   PersonNotFoundError,
   TestCaseNotFoundError,
+  TestPlanNotFoundError,
   TestProjectNotFoundError,
+  TestResultNotFoundError,
+  TestRunNotFoundError,
   TestSuiteNotFoundError
 } from "../errors.js"
 import { contact } from "../huly-plugins.js"
-import type { TestCase, TestProject, TestSuite } from "../test-management-classes.js"
+import type { TestCase, TestPlan, TestProject, TestResult, TestRun, TestSuite } from "../test-management-classes.js"
 import { testManagement } from "../test-management-classes.js"
 import { findByNameOrId, findPersonByEmailOrName, toRef } from "./shared.js"
 
@@ -69,6 +73,24 @@ export const typeToString = (n: number): TestCaseType => TEST_CASE_TYPE_TO_STRIN
 export const priorityToString = (n: number): TestCasePriority => TEST_CASE_PRIORITY_TO_STRING[n] ?? "medium"
 export const statusToString = (n: number): TestCaseStatus => TEST_CASE_STATUS_TO_STRING[n] ?? "draft"
 
+// --- Test Result Status Enum Mappings ---
+
+const TEST_RESULT_STATUS_TO_STRING: Record<number, TestResultStatus> = {
+  0: "untested",
+  1: "blocked",
+  2: "passed",
+  3: "failed"
+}
+
+export const STRING_TO_TEST_RESULT_STATUS: Record<TestResultStatus, number> = {
+  untested: 0,
+  blocked: 1,
+  passed: 2,
+  failed: 3
+}
+
+export const resultStatusToString = (n: number): TestResultStatus => TEST_RESULT_STATUS_TO_STRING[n] ?? "untested"
+
 // --- Lookup Helpers ---
 
 export const findTestProject = (
@@ -123,6 +145,63 @@ export const findTestCase = (
       return yield* new TestCaseNotFoundError({ identifier, suite: "(project)" })
     }
     return tc
+  })
+
+export const findTestPlan = (
+  client: HulyClient["Type"],
+  projectId: Ref<TestProject>,
+  identifier: string,
+  projectName: string
+): Effect.Effect<TestPlan, TestPlanNotFoundError | HulyClientError> =>
+  Effect.gen(function*() {
+    const plan = yield* findByNameOrId(
+      client,
+      testManagement.class.TestPlan,
+      { space: projectId, name: identifier },
+      { space: projectId, _id: toRef<TestPlan>(identifier) }
+    )
+    if (plan === undefined) {
+      return yield* new TestPlanNotFoundError({ identifier, project: projectName })
+    }
+    return plan
+  })
+
+export const findTestRun = (
+  client: HulyClient["Type"],
+  projectId: Ref<TestProject>,
+  identifier: string,
+  projectName: string
+): Effect.Effect<TestRun, TestRunNotFoundError | HulyClientError> =>
+  Effect.gen(function*() {
+    const run = yield* findByNameOrId(
+      client,
+      testManagement.class.TestRun,
+      { space: projectId, name: identifier },
+      { space: projectId, _id: toRef<TestRun>(identifier) }
+    )
+    if (run === undefined) {
+      return yield* new TestRunNotFoundError({ identifier, project: projectName })
+    }
+    return run
+  })
+
+export const findTestResult = (
+  client: HulyClient["Type"],
+  projectId: Ref<TestProject>,
+  identifier: string,
+  runName: string
+): Effect.Effect<TestResult, TestResultNotFoundError | HulyClientError> =>
+  Effect.gen(function*() {
+    const result = yield* findByNameOrId(
+      client,
+      testManagement.class.TestResult,
+      { space: projectId, name: identifier },
+      { space: projectId, _id: toRef<TestResult>(identifier) }
+    )
+    if (result === undefined) {
+      return yield* new TestResultNotFoundError({ identifier, run: runName })
+    }
+    return result
   })
 
 export const resolveAssigneeRef = (
