@@ -1,7 +1,7 @@
 /**
  * HulyClient - Data operations within a workspace.
  *
- * Uses @hcengineering/api-client (TxOperations) for CRUD on documents:
+ * Uses WebSocket transport (TxOperations) for CRUD on documents:
  * issues, projects, milestones, documents, contacts, comments, etc.
  *
  * For workspace/account management (members, settings, workspace lifecycle),
@@ -9,82 +9,39 @@
  *
  * @module
  */
+import { getClient as getAccountClient } from "@hcengineering/account-client"
 import {
-  createRestTxOperations,
   getWorkspaceToken,
   loadServerConfig,
   type MarkupFormat,
-  type MarkupRef
+  type MarkupRef,
+  NodeWebSocketFactory
 } from "@hcengineering/api-client"
-import { getClient as getCollaboratorClient } from "@hcengineering/collaborator-client"
 import {
   type AttachedData,
   type AttachedDoc,
   type Class,
+  type Client,
   type Data,
   type Doc,
   type DocumentQuery,
   type DocumentUpdate,
   type FindOptions,
   type FindResult,
-  makeCollabId,
+  pickPrimarySocialId,
   type Ref,
   type Space,
   toFindResult,
-  type TxOperations,
+  TxOperations,
   type TxResult,
-  type WithLookup,
-  type WorkspaceUuid
+  type WithLookup
 } from "@hcengineering/core"
-import { htmlToJSON, jsonToHTML, jsonToMarkup, markupToJSON } from "@hcengineering/text"
-import { markdownToMarkup, markupToMarkdown } from "@hcengineering/text-markdown"
-import { absurd, Context, Effect, Layer } from "effect"
+import { Context, Effect, Layer } from "effect"
 
 import { HulyConfigService } from "../config/config.js"
-import { concatLink } from "../utils/url.js"
 import { authToOptions, type ConnectionConfig, type ConnectionError, connectWithRetry } from "./auth-utils.js"
 import { HulyConnectionError } from "./errors.js"
-
-interface MarkupConvertOptions {
-  readonly refUrl: string
-  readonly imageUrl: string
-}
-
-function toInternalMarkup(
-  value: string,
-  format: MarkupFormat,
-  opts: MarkupConvertOptions
-): string {
-  switch (format) {
-    case "markup":
-      return value
-    case "html":
-      return jsonToMarkup(htmlToJSON(value))
-    case "markdown":
-      return jsonToMarkup(markdownToMarkup(value, opts))
-    default:
-      absurd(format)
-      throw new Error(`Invalid format: ${format}`)
-  }
-}
-
-function fromInternalMarkup(
-  markup: string,
-  format: MarkupFormat,
-  opts: MarkupConvertOptions
-): string {
-  switch (format) {
-    case "markup":
-      return markup
-    case "html":
-      return jsonToHTML(markupToJSON(markup))
-    case "markdown":
-      return markupToMarkdown(markupToJSON(markup), opts)
-    default:
-      absurd(format)
-      throw new Error(`Invalid format: ${format}`)
-  }
-}
+import { createMarkupOps, type MarkupOperations } from "./markup-ops.js"
 
 export type HulyClientError = ConnectionError
 
@@ -170,11 +127,15 @@ export class HulyClient extends Context.Tag("@hulymcp/HulyClient")<
     Effect.gen(function*() {
       const config = yield* HulyConfigService
 
-      const { client, markupOps } = yield* connectRestWithRetry({
+      const { client, markupOps, wsClient } = yield* connectWebSocketWithRetry({
         url: config.url,
         auth: config.auth,
         workspace: config.workspace
       })
+
+      yield* Effect.addFinalizer(() =>
+        Effect.tryPromise({ try: () => wsClient.close(), catch: () => undefined }).pipe(Effect.ignore)
+      )
 
       const withClient = <A>(
         op: (client: TxOperations) => Promise<A>,
@@ -335,88 +296,50 @@ export class HulyClient extends Context.Tag("@hulymcp/HulyClient")<
   }
 }
 
-interface MarkupOperations {
-  fetchMarkup: (
-    objectClass: Ref<Class<Doc>>,
-    objectId: Ref<Doc>,
-    objectAttr: string,
-    id: MarkupRef,
-    format: MarkupFormat
-  ) => Promise<string>
-  uploadMarkup: (
-    objectClass: Ref<Class<Doc>>,
-    objectId: Ref<Doc>,
-    objectAttr: string,
-    markup: string,
-    format: MarkupFormat
-  ) => Promise<MarkupRef>
-  updateMarkup: (
-    objectClass: Ref<Class<Doc>>,
-    objectId: Ref<Doc>,
-    objectAttr: string,
-    markup: string,
-    format: MarkupFormat
-  ) => Promise<void>
+type ClientFactory = (token: string, endpoint: string, opt?: { socketFactory?: unknown }) => Promise<Client>
+
+// @hcengineering/client-resources is CJS with a default export. Under NodeNext + verbatimModuleSyntax,
+// dynamic import wraps CJS as { default: { default: fn, connect: fn } }, making the types non-callable.
+// We navigate the wrapper at runtime and assert through unknown since the shape is verified by the await call.
+
+const getClientFactory = async (): Promise<ClientFactory> => {
+  const mod: unknown = await import("@hcengineering/client-resources")
+  type Resources = { function: { GetClient: ClientFactory } }
+  type Factory = () => Promise<Resources>
+  const wrapper = mod as { default: { default: Factory } | Factory }
+  const factory = typeof wrapper.default === "function" ? wrapper.default : wrapper.default.default
+  const resources = await factory()
+  return resources.function.GetClient
 }
 
-interface RestConnection {
+interface WsConnection {
   client: TxOperations
+  wsClient: Client
   markupOps: MarkupOperations
 }
 
-function createMarkupOps(
-  url: string,
-  workspace: WorkspaceUuid,
-  token: string,
-  collaboratorUrl: string
-): MarkupOperations {
-  const refUrl = concatLink(url, `/browse?workspace=${workspace}`)
-  const imageUrl = concatLink(url, `/files?workspace=${workspace}&file=`)
-  const collaborator = getCollaboratorClient(workspace, token, collaboratorUrl)
-
-  return {
-    async fetchMarkup(objectClass, objectId, objectAttr, doc, format) {
-      const collabId = makeCollabId(objectClass, objectId, objectAttr)
-      const markup = await collaborator.getMarkup(collabId, doc)
-      return fromInternalMarkup(markup, format, { refUrl, imageUrl })
-    },
-
-    async uploadMarkup(objectClass, objectId, objectAttr, value, format) {
-      const collabId = makeCollabId(objectClass, objectId, objectAttr)
-      return await collaborator.createMarkup(collabId, toInternalMarkup(value, format, { refUrl, imageUrl }))
-    },
-
-    async updateMarkup(objectClass, objectId, objectAttr, value, format) {
-      const collabId = makeCollabId(objectClass, objectId, objectAttr)
-      return await collaborator.updateMarkup(collabId, toInternalMarkup(value, format, { refUrl, imageUrl }))
-    }
-  }
-}
-
-const connectRest = async (
+const connectWebSocket = async (
   config: ConnectionConfig
-): Promise<RestConnection> => {
+): Promise<WsConnection> => {
   const serverConfig = await loadServerConfig(config.url)
-
   const authOptions = authToOptions(config.auth, config.workspace)
+  const { endpoint, token, workspaceId } = await getWorkspaceToken(config.url, authOptions, serverConfig)
 
-  const { endpoint, token, workspaceId } = await getWorkspaceToken(
-    config.url,
-    authOptions,
-    serverConfig
-  )
+  const accountClient = getAccountClient(serverConfig.ACCOUNTS_URL, token)
+  const socialIds = await accountClient.getSocialIds(true)
+  const primarySocialId = pickPrimarySocialId(socialIds)._id
 
-  const client = await createRestTxOperations(endpoint, workspaceId, token)
-  const markupOps = createMarkupOps(
-    config.url,
-    workspaceId,
-    token,
-    serverConfig.COLLABORATOR_URL
-  )
+  const createWsClient = await getClientFactory()
+  const wsClient = await createWsClient(token, endpoint, {
+    socketFactory: NodeWebSocketFactory
+  })
 
-  return { client, markupOps }
+  const client = new TxOperations(wsClient, primarySocialId)
+  const markupOps = createMarkupOps(config.url, workspaceId, token, serverConfig.COLLABORATOR_URL)
+
+  return { client, wsClient, markupOps }
 }
 
-const connectRestWithRetry = (
+const connectWebSocketWithRetry = (
   config: ConnectionConfig
-): Effect.Effect<RestConnection, ConnectionError> => connectWithRetry(() => connectRest(config), "Connection failed")
+): Effect.Effect<WsConnection, ConnectionError> => connectWithRetry(() => connectWebSocket(config), "Connection failed")

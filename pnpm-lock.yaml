@@ -35,6 +35,12 @@ importers:
       '@hcengineering/chunter':
         specifier: ^0.7.0
         version: 0.7.0
+      '@hcengineering/client':
+        specifier: ^0.7
+        version: 0.7.18
+      '@hcengineering/client-resources':
+        specifier: ^0.7
+        version: 0.7.18
       '@hcengineering/collaborator-client':
         specifier: ^0.7.17
         version: 0.7.17
@@ -89,6 +95,9 @@ importers:
       posthog-node:
         specifier: ^5.24.11
         version: 5.24.11
+      ws:
+        specifier: ^8.18.2
+        version: 8.19.0
     devDependencies:
       '@effect/eslint-plugin':
         specifier: ^0.3.2

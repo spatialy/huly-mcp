@@ -53,7 +53,7 @@ const mockCollaboratorClient = {
 }
 
 vi.mock("@hcengineering/api-client", () => ({
-  createRestTxOperations: vi.fn().mockImplementation(() => Promise.resolve(mockTxOperations)),
+  NodeWebSocketFactory: vi.fn(),
   getWorkspaceToken: vi.fn().mockImplementation(() =>
     Promise.resolve({
       endpoint: "http://localhost:9090",
@@ -68,6 +68,34 @@ vi.mock("@hcengineering/api-client", () => ({
     })
   )
 }))
+
+vi.mock("@hcengineering/account-client", () => ({
+  getClient: vi.fn().mockReturnValue({
+    getSocialIds: vi.fn().mockResolvedValue([{ _id: "test-social-id" }])
+  })
+}))
+
+vi.mock("@hcengineering/client-resources", () => ({
+  default: vi.fn().mockImplementation(() =>
+    Promise.resolve({
+      function: {
+        GetClient: vi.fn().mockResolvedValue({ close: mockClose })
+      }
+    })
+  )
+}))
+
+vi.mock("@hcengineering/core", async () => {
+  const actual = await vi.importActual("@hcengineering/core")
+  return {
+    ...actual,
+    // Regular function (not arrow) because it's called with `new TxOperations(...)` — arrow functions can't be constructors
+    TxOperations: vi.fn(function() {
+      return mockTxOperations
+    }),
+    pickPrimarySocialId: vi.fn().mockReturnValue({ _id: "test-social-id" })
+  }
+})
 
 vi.mock("@hcengineering/collaborator-client", () => ({
   getClient: vi.fn().mockImplementation(() => mockCollaboratorClient)
@@ -632,7 +660,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
 
   describe("connection", () => {
     // test-revizorro: approved
-    it.effect("connects via connectRestWithRetry and creates client", () =>
+    it.effect("connects via connectWebSocketWithRetry and creates client", () =>
       Effect.gen(function*() {
         const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
         expect(client.findAll).toBeDefined()
@@ -1198,7 +1226,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
 
   describe("connection failure", () => {
     // test-revizorro: approved
-    it.effect("connectRestWithRetry wraps connection errors", () =>
+    it.effect("connectWebSocketWithRetry wraps connection errors", () =>
       Effect.gen(function*() {
         const apiClient = yield* Effect.promise(() => import("@hcengineering/api-client"))
         vi.mocked(apiClient.loadServerConfig).mockRejectedValue(new Error("server unreachable"))
