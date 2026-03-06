@@ -42,3 +42,7 @@ if (typeof globalThis.navigator === "undefined") {
     configurable: true
   })
 }
+
+// MCP stdio transport uses stdout for JSON-RPC — redirect console.log to stderr
+// so Huly client library logs ("Connected to server", "findfull model") don't corrupt the protocol stream
+console.log = console.error
