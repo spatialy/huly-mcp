@@ -108,7 +108,12 @@ export type StatusInfo = {
 export const findProjectWithStatuses = (
   projectIdentifier: string
 ): Effect.Effect<
-  { client: HulyClient["Type"]; project: HulyProject; statuses: Array<StatusInfo> },
+  {
+    client: HulyClient["Type"]
+    project: HulyProject
+    statuses: Array<StatusInfo>
+    defaultStatusRef: Ref<Status> | undefined
+  },
   ProjectNotFoundError | HulyClientError,
   HulyClient
 > =>
@@ -184,7 +189,13 @@ export const findProjectWithStatuses = (
       }
     }
 
-    return { client, project, statuses }
+    // project.defaultIssueStatus was removed from the Project model in Huly 0.7.x —
+    // the field exists in the TS type but is undefined at runtime.
+    // Fall back to the first status in the project type's status list (typically "Backlog").
+    const rawDefault = project.defaultIssueStatus as Ref<Status> | undefined
+    const defaultStatusRef = rawDefault ?? statuses[0]?._id
+
+    return { client, project, statuses, defaultStatusRef }
   })
 
 export const parseIssueIdentifier = (

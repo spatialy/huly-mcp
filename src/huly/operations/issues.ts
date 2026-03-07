@@ -63,7 +63,6 @@ import {
   clampLimit,
   findIssueInProject,
   findPersonByEmailOrName,
-  findProject,
   findProjectAndIssue,
   findProjectWithStatuses,
   parseIssueIdentifier,
@@ -155,8 +154,13 @@ const resolveAssignee = (
 
 const resolveStatusName = (
   statuses: Array<StatusInfo>,
-  statusId: Ref<Status>
+  statusId: Ref<Status> | undefined
 ): Effect.Effect<string, HulyError> => {
+  if (statusId === undefined) {
+    return statuses.length > 0
+      ? Effect.succeed(statuses[0].name)
+      : Effect.succeed("Unknown")
+  }
   const statusDoc = statuses.find(s => s._id === statusId)
   if (statusDoc === undefined) {
     return Effect.fail(
@@ -380,15 +384,7 @@ export const createIssue = (
   params: CreateIssueParams
 ): Effect.Effect<CreateIssueResult, CreateIssueError, HulyClient> =>
   Effect.gen(function*() {
-    const result = params.status !== undefined
-      ? yield* findProjectWithStatuses(params.project)
-      : yield* Effect.map(findProject(params.project), ({ client, project }) => ({
-        client,
-        project,
-        statuses: []
-      }))
-
-    const { client, project, statuses } = result
+    const { client, defaultStatusRef, project, statuses } = yield* findProjectWithStatuses(params.project)
 
     const issueId: Ref<HulyIssue> = generateId()
 
@@ -402,7 +398,7 @@ export const createIssue = (
     )
     const sequence = extractUpdatedSequence(incResult) ?? project.sequence + 1
 
-    let statusRef: Ref<Status> = project.defaultIssueStatus
+    let statusRef: Ref<Status> = defaultStatusRef ?? toRef<Status>(tracker.status.Backlog)
     if (params.status !== undefined) {
       statusRef = yield* resolveStatusByName(statuses, params.status, params.project)
     }
