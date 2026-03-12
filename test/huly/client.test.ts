@@ -1226,6 +1226,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
 
   describe("connection failure", () => {
     // test-revizorro: approved
+    // Connection is lazy — errors surface on first operation, not during layer construction
     it.effect("connectWebSocketWithRetry wraps connection errors", () =>
       Effect.gen(function*() {
         const apiClient = yield* Effect.promise(() => import("@hcengineering/api-client"))
@@ -1234,7 +1235,10 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
         const freshLayer = HulyClient.layer.pipe(Layer.provide(testConfigLayer))
 
         const fiber = yield* Effect.fork(
-          HulyClient.pipe(Effect.provide(freshLayer))
+          Effect.gen(function*() {
+            const client = yield* HulyClient
+            yield* client.findAll("c" as DocRef<Class<Doc>>, {})
+          }).pipe(Effect.provide(freshLayer))
         )
 
         yield* TestClock.adjust("500 millis")

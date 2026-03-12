@@ -37,6 +37,7 @@ import {
   type WithLookup
 } from "@hcengineering/core"
 import { Context, Effect, Layer } from "effect"
+import * as MutableRef from "effect/Ref"
 
 import { HulyConfigService } from "../config/config.js"
 import { authToOptions, type ConnectionConfig, type ConnectionError, connectWithRetry } from "./auth-utils.js"
@@ -118,6 +119,8 @@ export class HulyClient extends Context.Tag("@hulymcp/HulyClient")<
   HulyClient,
   HulyClientOperations
 >() {
+  // Lazy connection: deferred until first tool call.
+  // MCP server responds to initialize/tools/list instantly without waiting for WebSocket.
   static readonly layer: Layer.Layer<
     HulyClient,
     HulyClientError,
@@ -127,28 +130,39 @@ export class HulyClient extends Context.Tag("@hulymcp/HulyClient")<
     Effect.gen(function*() {
       const config = yield* HulyConfigService
 
-      const { client, markupOps, wsClient } = yield* connectWebSocketWithRetry({
-        url: config.url,
-        auth: config.auth,
-        workspace: config.workspace
-      })
+      const connRef = yield* MutableRef.make<WsConnection | null>(null)
+
+      const ensureConnection: Effect.Effect<WsConnection, HulyClientError> = Effect.flatMap(
+        MutableRef.get(connRef),
+        (existing) =>
+          existing !== null
+            ? Effect.succeed(existing)
+            : Effect.tap(
+              connectWebSocketWithRetry({ url: config.url, auth: config.auth, workspace: config.workspace }),
+              (conn) => MutableRef.set(connRef, conn)
+            )
+      )
 
       yield* Effect.addFinalizer(() =>
-        Effect.tryPromise({ try: () => wsClient.close(), catch: () => undefined }).pipe(Effect.ignore)
+        Effect.flatMap(MutableRef.get(connRef), (conn) =>
+          conn !== null
+            ? Effect.tryPromise({ try: () => conn.wsClient.close(), catch: () => undefined }).pipe(Effect.ignore)
+            : Effect.void)
       )
 
       const withClient = <A>(
         op: (client: TxOperations) => Promise<A>,
         errorMsg: string
       ): Effect.Effect<A, HulyClientError> =>
-        Effect.tryPromise({
-          try: () => op(client),
-          catch: (e) =>
-            new HulyConnectionError({
-              message: `${errorMsg}: ${String(e)}`,
-              cause: e
-            })
-        })
+        Effect.flatMap(ensureConnection, (conn) =>
+          Effect.tryPromise({
+            try: () => op(conn.client),
+            catch: (e) =>
+              new HulyConnectionError({
+                message: `${errorMsg}: ${String(e)}`,
+                cause: e
+              })
+          }))
 
       const operations: HulyClientOperations = {
         findAll: <T extends Doc>(
@@ -228,34 +242,37 @@ export class HulyClient extends Context.Tag("@hulymcp/HulyClient")<
           ),
 
         uploadMarkup: (objectClass, objectId, objectAttr, markup, format) =>
-          Effect.tryPromise({
-            try: () => markupOps.uploadMarkup(objectClass, objectId, objectAttr, markup, format),
-            catch: (e) =>
-              new HulyConnectionError({
-                message: `uploadMarkup failed: ${String(e)}`,
-                cause: e
-              })
-          }),
+          Effect.flatMap(ensureConnection, (conn) =>
+            Effect.tryPromise({
+              try: () => conn.markupOps.uploadMarkup(objectClass, objectId, objectAttr, markup, format),
+              catch: (e) =>
+                new HulyConnectionError({
+                  message: `uploadMarkup failed: ${String(e)}`,
+                  cause: e
+                })
+            })),
 
         fetchMarkup: (objectClass, objectId, objectAttr, id, format) =>
-          Effect.tryPromise({
-            try: () => markupOps.fetchMarkup(objectClass, objectId, objectAttr, id, format),
-            catch: (e) =>
-              new HulyConnectionError({
-                message: `fetchMarkup failed: ${String(e)}`,
-                cause: e
-              })
-          }),
+          Effect.flatMap(ensureConnection, (conn) =>
+            Effect.tryPromise({
+              try: () => conn.markupOps.fetchMarkup(objectClass, objectId, objectAttr, id, format),
+              catch: (e) =>
+                new HulyConnectionError({
+                  message: `fetchMarkup failed: ${String(e)}`,
+                  cause: e
+                })
+            })),
 
         updateMarkup: (objectClass, objectId, objectAttr, markup, format) =>
-          Effect.tryPromise({
-            try: () => markupOps.updateMarkup(objectClass, objectId, objectAttr, markup, format),
-            catch: (e) =>
-              new HulyConnectionError({
-                message: `updateMarkup failed: ${String(e)}`,
-                cause: e
-              })
-          })
+          Effect.flatMap(ensureConnection, (conn) =>
+            Effect.tryPromise({
+              try: () => conn.markupOps.updateMarkup(objectClass, objectId, objectAttr, markup, format),
+              catch: (e) =>
+                new HulyConnectionError({
+                  message: `updateMarkup failed: ${String(e)}`,
+                  cause: e
+                })
+            }))
       }
 
       return operations
