@@ -44,6 +44,21 @@ import { authToOptions, type ConnectionConfig, type ConnectionError, connectWith
 import { HulyAuthError, HulyConnectionError } from "./errors.js"
 import { createMarkupOps, type MarkupOperations } from "./markup-ops.js"
 
+const CONNECTION_DEAD_PATTERNS = [
+  "Connection closed",
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "EPIPE",
+  "ETIMEDOUT",
+  "socket hang up",
+  "WebSocket is not open"
+]
+
+const isConnectionDead = (error: HulyConnectionError): boolean => {
+  const msg = String(error.cause ?? error.message)
+  return CONNECTION_DEAD_PATTERNS.some((p) => msg.includes(p))
+}
+
 export type HulyClientError = ConnectionError
 
 export interface HulyClientOperations {
@@ -183,7 +198,11 @@ export class HulyClient extends Context.Tag("@hulymcp/HulyClient")<
               })
           })
         }).pipe(
-          Effect.tapError(() => MutableRef.set(connRef, null)),
+          Effect.tapError((e) =>
+            e instanceof HulyConnectionError && isConnectionDead(e)
+              ? MutableRef.set(connRef, null)
+              : Effect.void
+          ),
           Effect.retry({
             schedule: operationRetrySchedule,
             while: (e) => !(e instanceof HulyAuthError)

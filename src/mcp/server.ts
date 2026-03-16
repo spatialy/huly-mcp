@@ -21,6 +21,23 @@ import { createErrorResponse, createUnknownToolError, McpErrorCode, toMcpRespons
 import type { ToolRegistry } from "./tools/index.js"
 import { CATEGORY_NAMES, createFilteredRegistry, resolveAnnotations, toolRegistry } from "./tools/index.js"
 
+export const createConcurrencyLimiter = (maxConcurrent: number) => {
+  let active = 0
+  const queue: Array<() => void> = []
+  return async <T>(fn: () => Promise<T>): Promise<T> => {
+    if (active >= maxConcurrent) {
+      await new Promise<void>((resolve) => queue.push(resolve))
+    }
+    active++
+    try {
+      return await fn()
+    } finally {
+      active--
+      queue.shift()?.()
+    }
+  }
+}
+
 interface McpInputSchema {
   readonly type: "object"
   readonly properties?: Record<string, unknown>
@@ -73,6 +90,8 @@ interface McpServerOperations {
  * Create a configured MCP Server instance with tool handlers.
  * Used for both stdio and HTTP transports.
  */
+const MAX_CONCURRENT_TOOLS = 8
+
 const createMcpServer = (
   hulyClient: HulyClient["Type"],
   storageClient: HulyStorageClient["Type"],
@@ -80,7 +99,8 @@ const createMcpServer = (
   registry: ToolRegistry,
   workspaceClient?: WorkspaceClientOperations,
   onToolStart?: () => void,
-  onToolEnd?: () => void
+  onToolEnd?: () => void,
+  limitConcurrency?: <T>(fn: () => Promise<T>) => Promise<T>
 ): Server => {
   const server = new Server(
     {
@@ -110,51 +130,54 @@ const createMcpServer = (
   })
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    onToolStart?.()
-    const { arguments: args, name } = request.params
-    const start = Date.now()
+    const execute = async () => {
+      onToolStart?.()
+      const { arguments: args, name } = request.params
+      const start = Date.now()
 
-    try {
-      const response = await registry.handleToolCall(
-        name,
-        args ?? {},
-        hulyClient,
-        storageClient,
-        workspaceClient
-      )
-      const durationMs = Date.now() - start
+      try {
+        const response = await registry.handleToolCall(
+          name,
+          args ?? {},
+          hulyClient,
+          storageClient,
+          workspaceClient
+        )
+        const durationMs = Date.now() - start
 
-      if (response === null) {
-        const errorResponse = createUnknownToolError(name)
+        if (response === null) {
+          const errorResponse = createUnknownToolError(name)
+          telemetry.toolCalled({
+            toolName: name,
+            status: "error",
+            errorTag: errorResponse._meta.errorTag,
+            durationMs
+          })
+          return toMcpResponse(errorResponse)
+        }
+
+        const isInternalError = response._meta?.errorCode === McpErrorCode.InternalError
         telemetry.toolCalled({
           toolName: name,
-          status: "error",
-          errorTag: errorResponse._meta.errorTag,
+          status: isInternalError ? "error" : "success",
+          errorTag: response._meta?.errorTag,
           durationMs
         })
-        return toMcpResponse(errorResponse)
+
+        return toMcpResponse(response)
+      } catch {
+        const durationMs = Date.now() - start
+        telemetry.toolCalled({ toolName: name, status: "error", errorTag: "UnhandledException", durationMs })
+        return toMcpResponse(createErrorResponse(
+          `Internal error processing ${name}`,
+          McpErrorCode.InternalError,
+          "UnhandledException"
+        ))
+      } finally {
+        onToolEnd?.()
       }
-
-      const isInternalError = response._meta?.errorCode === McpErrorCode.InternalError
-      telemetry.toolCalled({
-        toolName: name,
-        status: isInternalError ? "error" : "success",
-        errorTag: response._meta?.errorTag,
-        durationMs
-      })
-
-      return toMcpResponse(response)
-    } catch {
-      const durationMs = Date.now() - start
-      telemetry.toolCalled({ toolName: name, status: "error", errorTag: "UnhandledException", durationMs })
-      return toMcpResponse(createErrorResponse(
-        `Internal error processing ${name}`,
-        McpErrorCode.InternalError,
-        "UnhandledException"
-      ))
-    } finally {
-      onToolEnd?.()
     }
+    return limitConcurrency ? limitConcurrency(execute) : execute()
   })
 
   return server
@@ -210,6 +233,7 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
 
               if (config.transport === "stdio") {
                 const inFlightCount = yield* Ref.make(0)
+                const limitConcurrency = createConcurrencyLimiter(MAX_CONCURRENT_TOOLS)
                 const stdioServer = createMcpServer(
                   hulyClient,
                   storageClient,
@@ -217,7 +241,8 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
                   registry,
                   workspaceClient,
                   () => Effect.runSync(Ref.update(inFlightCount, (n) => n + 1)),
-                  () => Effect.runSync(Ref.update(inFlightCount, (n) => n - 1))
+                  () => Effect.runSync(Ref.update(inFlightCount, (n) => n - 1)),
+                  limitConcurrency
                 )
                 yield* Ref.set(serverRef, stdioServer)
                 const transport = new StdioServerTransport()

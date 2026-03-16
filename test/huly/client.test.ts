@@ -1313,6 +1313,99 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
       }))
   })
 
+  describe("selective connection invalidation", () => {
+    it.effect("transient errors do NOT invalidate connection (no reconnect on retry)", () =>
+      Effect.gen(function*() {
+        const apiClient = yield* Effect.promise(() => import("@hcengineering/api-client"))
+        const loadServerConfig = vi.mocked(apiClient.loadServerConfig)
+
+        mockFindAll.mockRejectedValue(new Error("Document validation error"))
+
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.findAll("c" as DocRef<Class<TestDoc>>, {} as DocumentQuery<TestDoc>)
+            )
+          })
+        )
+
+        yield* TestClock.adjust("500 millis")
+        const error = yield* Fiber.join(fiber)
+
+        expect(error._tag).toBe("HulyConnectionError")
+        expect(loadServerConfig).toHaveBeenCalledTimes(1)
+      }))
+
+    it.effect("dead connection errors DO invalidate connection (reconnect on retry)", () =>
+      Effect.gen(function*() {
+        const apiClient = yield* Effect.promise(() => import("@hcengineering/api-client"))
+        const loadServerConfig = vi.mocked(apiClient.loadServerConfig)
+
+        mockFindAll.mockRejectedValue(new Error("Connection closed"))
+
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.findAll("c" as DocRef<Class<TestDoc>>, {} as DocumentQuery<TestDoc>)
+            )
+          })
+        )
+
+        yield* TestClock.adjust("500 millis")
+        const error = yield* Fiber.join(fiber)
+
+        expect(error._tag).toBe("HulyConnectionError")
+        expect(error.message).toContain("Connection closed")
+        expect(loadServerConfig.mock.calls.length).toBeGreaterThan(1)
+      }))
+
+    it.effect("ECONNRESET invalidates connection", () =>
+      Effect.gen(function*() {
+        const apiClient = yield* Effect.promise(() => import("@hcengineering/api-client"))
+        const loadServerConfig = vi.mocked(apiClient.loadServerConfig)
+
+        mockFindAll.mockRejectedValue(new Error("read ECONNRESET"))
+
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.findAll("c" as DocRef<Class<TestDoc>>, {} as DocumentQuery<TestDoc>)
+            )
+          })
+        )
+
+        yield* TestClock.adjust("500 millis")
+        yield* Fiber.join(fiber)
+
+        expect(loadServerConfig.mock.calls.length).toBeGreaterThan(1)
+      }))
+
+    it.effect("WebSocket is not open invalidates connection", () =>
+      Effect.gen(function*() {
+        const apiClient = yield* Effect.promise(() => import("@hcengineering/api-client"))
+        const loadServerConfig = vi.mocked(apiClient.loadServerConfig)
+
+        mockFindAll.mockRejectedValue(new Error("WebSocket is not open"))
+
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.findAll("c" as DocRef<Class<TestDoc>>, {} as DocumentQuery<TestDoc>)
+            )
+          })
+        )
+
+        yield* TestClock.adjust("500 millis")
+        yield* Fiber.join(fiber)
+
+        expect(loadServerConfig.mock.calls.length).toBeGreaterThan(1)
+      }))
+  })
+
   describe("connection failure", () => {
     // test-revizorro: approved
     // Connection is lazy — errors surface on first operation, not during layer construction

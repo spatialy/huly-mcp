@@ -22,7 +22,7 @@ import { HulyClient, type HulyClientOperations } from "../../src/huly/client.js"
 import { HulyStorageClient } from "../../src/huly/storage.js"
 import { WorkspaceClient } from "../../src/huly/workspace-client.js"
 import { HttpServerFactoryService, HttpTransportError } from "../../src/mcp/http-transport.js"
-import { McpServerError, McpServerService } from "../../src/mcp/server.js"
+import { createConcurrencyLimiter, McpServerError, McpServerService } from "../../src/mcp/server.js"
 import { TOOL_DEFINITIONS } from "../../src/mcp/tools/index.js"
 import type { SessionStartProps, TelemetryOperations, ToolCalledProps } from "../../src/telemetry/telemetry.js"
 import { TelemetryService } from "../../src/telemetry/telemetry.js"
@@ -1560,5 +1560,76 @@ describe("McpServerService.layer operations", () => {
 
         yield* cleanup(fiber)
       }), { timeout: 5000 })
+  })
+})
+
+describe("createConcurrencyLimiter", () => {
+  it("limits concurrent executions to maxConcurrent", async () => {
+    const limiter = createConcurrencyLimiter(2)
+    let active = 0
+    let maxActive = 0
+    const results: Array<number> = []
+
+    const task = (id: number) =>
+      limiter(async () => {
+        active++
+        maxActive = Math.max(maxActive, active)
+        await new Promise((r) => setTimeout(r, 50))
+        results.push(id)
+        active--
+        return id
+      })
+
+    await Promise.all([task(1), task(2), task(3), task(4)])
+
+    expect(maxActive).toBe(2)
+    expect(results).toHaveLength(4)
+    expect(results).toEqual(expect.arrayContaining([1, 2, 3, 4]))
+  })
+
+  it("returns values from queued functions", async () => {
+    const limiter = createConcurrencyLimiter(1)
+
+    const [a, b, c] = await Promise.all([
+      limiter(async () => "first"),
+      limiter(async () => "second"),
+      limiter(async () => "third")
+    ])
+
+    expect(a).toBe("first")
+    expect(b).toBe("second")
+    expect(c).toBe("third")
+  })
+
+  it("propagates errors without breaking the queue", async () => {
+    const limiter = createConcurrencyLimiter(1)
+
+    const p1 = limiter(async () => {
+      throw new Error("fail")
+    }).catch((e: Error) => e.message)
+    const p2 = limiter(async () => "ok")
+
+    const [r1, r2] = await Promise.all([p1, p2])
+
+    expect(r1).toBe("fail")
+    expect(r2).toBe("ok")
+  })
+
+  it("does not queue when under the limit", async () => {
+    const limiter = createConcurrencyLimiter(5)
+    let active = 0
+    let maxActive = 0
+
+    const task = () =>
+      limiter(async () => {
+        active++
+        maxActive = Math.max(maxActive, active)
+        await new Promise((r) => setTimeout(r, 10))
+        active--
+      })
+
+    await Promise.all([task(), task(), task()])
+
+    expect(maxActive).toBe(3)
   })
 })
