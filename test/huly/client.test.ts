@@ -703,13 +703,20 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
       Effect.gen(function*() {
         mockFindAll.mockRejectedValue(new Error("network failure"))
 
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
-        const error = yield* Effect.flip(
-          client.findAll(
-            "c" as DocRef<Class<TestDoc>>,
-            {} as DocumentQuery<TestDoc>
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.findAll(
+                "c" as DocRef<Class<TestDoc>>,
+                {} as DocumentQuery<TestDoc>
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const error = yield* Fiber.join(fiber)
 
         expect(error._tag).toBe("HulyConnectionError")
         expect(error.message).toContain("findAll failed")
@@ -739,13 +746,20 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
       Effect.gen(function*() {
         mockFindOne.mockRejectedValue(new Error("query error"))
 
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
-        const error = yield* Effect.flip(
-          client.findOne(
-            "c" as DocRef<Class<TestDoc>>,
-            {} as DocumentQuery<TestDoc>
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.findOne(
+                "c" as DocRef<Class<TestDoc>>,
+                {} as DocumentQuery<TestDoc>
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const error = yield* Fiber.join(fiber)
 
         expect(error._tag).toBe("HulyConnectionError")
         expect(error.message).toContain("findOne failed")
@@ -780,14 +794,21 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
       Effect.gen(function*() {
         mockCreateDoc.mockRejectedValue(new Error("create failed"))
 
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
-        const error = yield* Effect.flip(
-          client.createDoc(
-            "c" as DocRef<Class<TestDoc>>,
-            "s" as DocRef<Space>,
-            { title: "x" } as Data<TestDoc>
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.createDoc(
+                "c" as DocRef<Class<TestDoc>>,
+                "s" as DocRef<Space>,
+                { title: "x" } as Data<TestDoc>
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const error = yield* Fiber.join(fiber)
 
         expect(error._tag).toBe("HulyConnectionError")
         expect(error.message).toContain("createDoc failed")
@@ -825,15 +846,22 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
       Effect.gen(function*() {
         mockUpdateDoc.mockRejectedValue(new Error("update error"))
 
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
-        const error = yield* Effect.flip(
-          client.updateDoc(
-            "c" as DocRef<Class<TestDoc>>,
-            "s" as DocRef<Space>,
-            "id" as DocRef<TestDoc>,
-            {}
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.updateDoc(
+                "c" as DocRef<Class<TestDoc>>,
+                "s" as DocRef<Space>,
+                "id" as DocRef<TestDoc>,
+                {}
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const error = yield* Fiber.join(fiber)
 
         expect(error._tag).toBe("HulyConnectionError")
         expect(error.message).toContain("updateDoc failed")
@@ -874,17 +902,24 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
       Effect.gen(function*() {
         mockAddCollection.mockRejectedValue(new Error("collection error"))
 
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
-        const error = yield* Effect.flip(
-          client.addCollection(
-            "c" as DocRef<Class<AttachedDoc>>,
-            "s" as DocRef<Space>,
-            "p" as DocRef<Doc>,
-            "pc" as DocRef<Class<Doc>>,
-            "col",
-            {} as AttachedData<AttachedDoc>
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.addCollection(
+                "c" as DocRef<Class<AttachedDoc>>,
+                "s" as DocRef<Space>,
+                "p" as DocRef<Doc>,
+                "pc" as DocRef<Class<Doc>>,
+                "col",
+                {} as AttachedData<AttachedDoc>
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const error = yield* Fiber.join(fiber)
 
         expect(error._tag).toBe("HulyConnectionError")
         expect(error.message).toContain("addCollection failed")
@@ -914,14 +949,21 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
       Effect.gen(function*() {
         mockRemoveDoc.mockRejectedValue(new Error("remove error"))
 
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
-        const error = yield* Effect.flip(
-          client.removeDoc(
-            "c" as DocRef<Class<TestDoc>>,
-            "s" as DocRef<Space>,
-            "id" as DocRef<TestDoc>
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.removeDoc(
+                "c" as DocRef<Class<TestDoc>>,
+                "s" as DocRef<Space>,
+                "id" as DocRef<TestDoc>
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const error = yield* Fiber.join(fiber)
 
         expect(error._tag).toBe("HulyConnectionError")
         expect(error.message).toContain("removeDoc failed")

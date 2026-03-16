@@ -36,12 +36,12 @@ import {
   type TxResult,
   type WithLookup
 } from "@hcengineering/core"
-import { Context, Effect, Layer } from "effect"
+import { Context, Effect, Layer, Schedule } from "effect"
 import * as MutableRef from "effect/Ref"
 
 import { HulyConfigService } from "../config/config.js"
 import { authToOptions, type ConnectionConfig, type ConnectionError, connectWithRetry } from "./auth-utils.js"
-import { HulyConnectionError } from "./errors.js"
+import { HulyAuthError, HulyConnectionError } from "./errors.js"
 import { createMarkupOps, type MarkupOperations } from "./markup-ops.js"
 
 export type HulyClientError = ConnectionError
@@ -130,17 +130,19 @@ export class HulyClient extends Context.Tag("@hulymcp/HulyClient")<
     Effect.gen(function*() {
       const config = yield* HulyConfigService
 
+      const CONNECT_TIMEOUT = "30 seconds"
       const connRef = yield* MutableRef.make<WsConnection | null>(null)
 
-      const ensureConnection: Effect.Effect<WsConnection, HulyClientError> = Effect.flatMap(
-        MutableRef.get(connRef),
-        (existing) =>
-          existing !== null
-            ? Effect.succeed(existing)
-            : Effect.tap(
-              connectWebSocketWithRetry({ url: config.url, auth: config.auth, workspace: config.workspace }),
-              (conn) => MutableRef.set(connRef, conn)
-            )
+      const ensureConnection = yield* Effect.cached(
+        Effect.tap(
+          connectWebSocketWithRetry({ url: config.url, auth: config.auth, workspace: config.workspace }).pipe(
+            Effect.timeoutFail({
+              duration: CONNECT_TIMEOUT,
+              onTimeout: () => new HulyConnectionError({ message: `Connection timed out after ${CONNECT_TIMEOUT}` })
+            })
+          ),
+          (conn) => MutableRef.set(connRef, conn)
+        )
       )
 
       yield* Effect.addFinalizer(() =>
@@ -148,6 +150,10 @@ export class HulyClient extends Context.Tag("@hulymcp/HulyClient")<
           conn !== null
             ? Effect.tryPromise({ try: () => conn.wsClient.close(), catch: () => undefined }).pipe(Effect.ignore)
             : Effect.void)
+      )
+
+      const operationRetrySchedule = Schedule.exponential("100 millis").pipe(
+        Schedule.compose(Schedule.recurs(2))
       )
 
       const withClient = <A>(
@@ -162,7 +168,12 @@ export class HulyClient extends Context.Tag("@hulymcp/HulyClient")<
                 message: `${errorMsg}: ${String(e)}`,
                 cause: e
               })
-          }))
+          }).pipe(
+            Effect.retry({
+              schedule: operationRetrySchedule,
+              while: (e) => !(e instanceof HulyAuthError)
+            })
+          ))
 
       const operations: HulyClientOperations = {
         findAll: <T extends Doc>(
