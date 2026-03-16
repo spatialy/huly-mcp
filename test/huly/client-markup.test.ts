@@ -15,7 +15,7 @@ import {
   type WithLookup,
   type WorkspaceMemberInfo
 } from "@hcengineering/core"
-import { Cause, Effect, Exit } from "effect"
+import { Effect } from "effect"
 import { expect } from "vitest"
 import { HulyClient } from "../../src/huly/client.js"
 import { HulyConnectionError } from "../../src/huly/errors.js"
@@ -70,28 +70,29 @@ describe("HulyClient.testLayer defaults", () => {
     }))
 
   // test-revizorro: approved
-  it.effect("createDoc dies (not implemented)", () =>
+  it.effect("createDoc fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient.pipe(
         Effect.provide(HulyClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         client.createDoc(
           "c" as DocRef<Class<TestDoc>>,
           "s" as DocRef<Space>,
           { title: "t" } as Data<TestDoc>
         )
       )
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("updateDoc dies (not implemented)", () =>
+  it.effect("updateDoc fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient.pipe(
         Effect.provide(HulyClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         client.updateDoc(
           "c" as DocRef<Class<TestDoc>>,
           "s" as DocRef<Space>,
@@ -99,16 +100,17 @@ describe("HulyClient.testLayer defaults", () => {
           {}
         )
       )
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("addCollection dies (not implemented)", () =>
+  it.effect("addCollection fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient.pipe(
         Effect.provide(HulyClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         client.addCollection(
           "c" as DocRef<Class<AttachedDoc>>,
           "s" as DocRef<Space>,
@@ -118,32 +120,34 @@ describe("HulyClient.testLayer defaults", () => {
           {} as AttachedData<AttachedDoc>
         )
       )
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("removeDoc dies (not implemented)", () =>
+  it.effect("removeDoc fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient.pipe(
         Effect.provide(HulyClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         client.removeDoc(
           "c" as DocRef<Class<TestDoc>>,
           "s" as DocRef<Space>,
           "id" as DocRef<TestDoc>
         )
       )
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("uploadMarkup dies (not implemented)", () =>
+  it.effect("uploadMarkup fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient.pipe(
         Effect.provide(HulyClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         client.uploadMarkup(
           "c" as DocRef<Class<Doc>>,
           "id" as DocRef<Doc>,
@@ -152,16 +156,17 @@ describe("HulyClient.testLayer defaults", () => {
           "markdown"
         )
       )
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("updateMarkup dies (not implemented)", () =>
+  it.effect("updateMarkup fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* HulyClient.pipe(
         Effect.provide(HulyClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         client.updateMarkup(
           "c" as DocRef<Class<Doc>>,
           "id" as DocRef<Doc>,
@@ -170,7 +175,8 @@ describe("HulyClient.testLayer defaults", () => {
           "markdown"
         )
       )
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 })
 
@@ -296,87 +302,95 @@ describe("WorkspaceClient.testLayer defaults", () => {
     }))
 
   // test-revizorro: approved
-  it.effect("getPersonInfo dies (not implemented)", () =>
+  it.effect("getPersonInfo fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* WorkspaceClient.pipe(
         Effect.provide(WorkspaceClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         client.getPersonInfo("person-uuid" as PersonUuid)
       )
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("updateWorkspaceRole dies (not implemented)", () =>
+  it.effect("updateWorkspaceRole fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* WorkspaceClient.pipe(
         Effect.provide(WorkspaceClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         client.updateWorkspaceRole("account", AccountRole.Guest)
       )
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("getWorkspaceInfo dies (not implemented)", () =>
+  it.effect("getWorkspaceInfo fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* WorkspaceClient.pipe(
         Effect.provide(WorkspaceClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(client.getWorkspaceInfo())
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      const error = yield* Effect.flip(client.getWorkspaceInfo())
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("createWorkspace dies (not implemented)", () =>
+  it.effect("createWorkspace fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* WorkspaceClient.pipe(
         Effect.provide(WorkspaceClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(client.createWorkspace("new-ws"))
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      const error = yield* Effect.flip(client.createWorkspace("new-ws"))
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("deleteWorkspace dies (not implemented)", () =>
+  it.effect("deleteWorkspace fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* WorkspaceClient.pipe(
         Effect.provide(WorkspaceClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(client.deleteWorkspace())
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      const error = yield* Effect.flip(client.deleteWorkspace())
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("setMyProfile dies (not implemented)", () =>
+  it.effect("setMyProfile fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* WorkspaceClient.pipe(
         Effect.provide(WorkspaceClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(client.setMyProfile({}))
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      const error = yield* Effect.flip(client.setMyProfile({}))
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("updateAllowReadOnlyGuests dies (not implemented)", () =>
+  it.effect("updateAllowReadOnlyGuests fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* WorkspaceClient.pipe(
         Effect.provide(WorkspaceClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(client.updateAllowReadOnlyGuests(true))
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      const error = yield* Effect.flip(client.updateAllowReadOnlyGuests(true))
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 
   // test-revizorro: approved
-  it.effect("updateAllowGuestSignUp dies (not implemented)", () =>
+  it.effect("updateAllowGuestSignUp fails (not implemented)", () =>
     Effect.gen(function*() {
       const client = yield* WorkspaceClient.pipe(
         Effect.provide(WorkspaceClient.testLayer({}))
       )
-      const exit = yield* Effect.exit(client.updateAllowGuestSignUp(true))
-      expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+      const error = yield* Effect.flip(client.updateAllowGuestSignUp(true))
+      expect(error._tag).toBe("HulyConnectionError")
+      expect(error.message).toContain("not implemented in test layer")
     }))
 })
 

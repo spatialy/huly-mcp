@@ -16,7 +16,7 @@ import {
   type TxResult,
   type WithLookup
 } from "@hcengineering/core"
-import { Cause, Effect, Exit, Fiber, Layer, TestClock } from "effect"
+import { Effect, Exit, Fiber, Layer, TestClock } from "effect"
 import { beforeEach, expect, vi } from "vitest"
 import { HulyConfigService } from "../../src/config/config.js"
 import { HulyClient, type HulyClientError } from "../../src/huly/client.js"
@@ -218,12 +218,12 @@ describe("HulyClient Service", () => {
       }))
 
     // test-revizorro: approved
-    it.effect("default uploadMarkup dies (not implemented)", () =>
+    it.effect("default uploadMarkup fails (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
 
         const client = yield* HulyClient.pipe(Effect.provide(testLayer))
-        const exit = yield* Effect.exit(client.uploadMarkup(
+        const error = yield* Effect.flip(client.uploadMarkup(
           "class" as DocRef<Class<Doc>>,
           "id" as DocRef<Doc>,
           "attr",
@@ -231,7 +231,8 @@ describe("HulyClient Service", () => {
           "markdown"
         ))
 
-        expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+        expect(error._tag).toBe("HulyConnectionError")
+        expect(error.message).toContain("not implemented in test layer")
       }))
 
     // test-revizorro: approved
@@ -252,12 +253,12 @@ describe("HulyClient Service", () => {
       }))
 
     // test-revizorro: approved
-    it.effect("default removeDoc dies (not implemented)", () =>
+    it.effect("default removeDoc fails (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
 
         const client = yield* HulyClient.pipe(Effect.provide(testLayer))
-        const exit = yield* Effect.exit(
+        const error = yield* Effect.flip(
           client.removeDoc(
             "c" as DocRef<Class<TestDoc>>,
             "s" as DocRef<Space>,
@@ -265,16 +266,17 @@ describe("HulyClient Service", () => {
           )
         )
 
-        expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+        expect(error._tag).toBe("HulyConnectionError")
+        expect(error.message).toContain("not implemented in test layer")
       }))
 
     // test-revizorro: approved
-    it.effect("default updateMarkup dies (not implemented)", () =>
+    it.effect("default updateMarkup fails (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
 
         const client = yield* HulyClient.pipe(Effect.provide(testLayer))
-        const exit = yield* Effect.exit(
+        const error = yield* Effect.flip(
           client.updateMarkup(
             "c" as DocRef<Class<Doc>>,
             "id" as DocRef<Doc>,
@@ -284,16 +286,17 @@ describe("HulyClient Service", () => {
           )
         )
 
-        expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+        expect(error._tag).toBe("HulyConnectionError")
+        expect(error.message).toContain("not implemented in test layer")
       }))
 
     // test-revizorro: approved
-    it.effect("default addCollection dies (not implemented)", () =>
+    it.effect("default addCollection fails (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
 
         const client = yield* HulyClient.pipe(Effect.provide(testLayer))
-        const exit = yield* Effect.exit(
+        const error = yield* Effect.flip(
           client.addCollection(
             "c" as DocRef<Class<AttachedDoc>>,
             "s" as DocRef<Space>,
@@ -304,16 +307,17 @@ describe("HulyClient Service", () => {
           )
         )
 
-        expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+        expect(error._tag).toBe("HulyConnectionError")
+        expect(error.message).toContain("not implemented in test layer")
       }))
 
     // test-revizorro: approved
-    it.effect("default createDoc dies (not implemented)", () =>
+    it.effect("default createDoc fails (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
 
         const client = yield* HulyClient.pipe(Effect.provide(testLayer))
-        const exit = yield* Effect.exit(
+        const error = yield* Effect.flip(
           client.createDoc(
             "c" as DocRef<Class<TestDoc>>,
             "s" as DocRef<Space>,
@@ -321,16 +325,17 @@ describe("HulyClient Service", () => {
           )
         )
 
-        expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+        expect(error._tag).toBe("HulyConnectionError")
+        expect(error.message).toContain("not implemented in test layer")
       }))
 
     // test-revizorro: approved
-    it.effect("default updateDoc dies (not implemented)", () =>
+    it.effect("default updateDoc fails (not implemented)", () =>
       Effect.gen(function*() {
         const testLayer = HulyClient.testLayer({})
 
         const client = yield* HulyClient.pipe(Effect.provide(testLayer))
-        const exit = yield* Effect.exit(
+        const error = yield* Effect.flip(
           client.updateDoc(
             "c" as DocRef<Class<TestDoc>>,
             "s" as DocRef<Space>,
@@ -339,7 +344,8 @@ describe("HulyClient Service", () => {
           )
         )
 
-        expect(Exit.isFailure(exit) && Cause.isDie(exit.cause)).toBe(true)
+        expect(error._tag).toBe("HulyConnectionError")
+        expect(error.message).toContain("not implemented in test layer")
       }))
   })
 
@@ -1037,16 +1043,23 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
       Effect.gen(function*() {
         mockCreateMarkup.mockRejectedValue(new Error("upload failed"))
 
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
-        const error = yield* Effect.flip(
-          client.uploadMarkup(
-            "c" as DocRef<Class<Doc>>,
-            "id" as DocRef<Doc>,
-            "attr",
-            "content",
-            "markup"
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.uploadMarkup(
+                "c" as DocRef<Class<Doc>>,
+                "id" as DocRef<Doc>,
+                "attr",
+                "content",
+                "markup"
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const error = yield* Fiber.join(fiber)
 
         expect(error._tag).toBe("HulyConnectionError")
         expect(error.message).toContain("uploadMarkup failed")
@@ -1116,16 +1129,23 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
       Effect.gen(function*() {
         mockGetMarkup.mockRejectedValue(new Error("fetch failed"))
 
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
-        const error = yield* Effect.flip(
-          client.fetchMarkup(
-            "c" as DocRef<Class<Doc>>,
-            "id" as DocRef<Doc>,
-            "attr",
-            "ref" as MarkupRef,
-            "markup"
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.fetchMarkup(
+                "c" as DocRef<Class<Doc>>,
+                "id" as DocRef<Doc>,
+                "attr",
+                "ref" as MarkupRef,
+                "markup"
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const error = yield* Fiber.join(fiber)
 
         expect(error._tag).toBe("HulyConnectionError")
         expect(error.message).toContain("fetchMarkup failed")
@@ -1188,16 +1208,23 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
       Effect.gen(function*() {
         mockUpdateMarkup.mockRejectedValue(new Error("update failed"))
 
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
-        const error = yield* Effect.flip(
-          client.updateMarkup(
-            "c" as DocRef<Class<Doc>>,
-            "id" as DocRef<Doc>,
-            "attr",
-            "content",
-            "markup"
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.updateMarkup(
+                "c" as DocRef<Class<Doc>>,
+                "id" as DocRef<Doc>,
+                "attr",
+                "content",
+                "markup"
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const error = yield* Fiber.join(fiber)
 
         expect(error._tag).toBe("HulyConnectionError")
         expect(error.message).toContain("updateMarkup failed")
@@ -1208,19 +1235,25 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
     // test-revizorro: approved
     it.effect("throws on invalid format during uploadMarkup", () =>
       Effect.gen(function*() {
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
-        // Force an invalid format to hit the default/absurd branch
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const invalidFormat = "invalid" as any
-        const exit = yield* Effect.exit(
-          client.uploadMarkup(
-            "c" as DocRef<Class<Doc>>,
-            "id" as DocRef<Doc>,
-            "attr",
-            "content",
-            invalidFormat
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.exit(
+              client.uploadMarkup(
+                "c" as DocRef<Class<Doc>>,
+                "id" as DocRef<Doc>,
+                "attr",
+                "content",
+                invalidFormat
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const exit = yield* Fiber.join(fiber)
 
         expect(Exit.isFailure(exit)).toBe(true)
       }))
@@ -1228,18 +1261,25 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
     // test-revizorro: approved
     it.effect("throws on invalid format during updateMarkup", () =>
       Effect.gen(function*() {
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const invalidFormat = "bogus" as any
-        const exit = yield* Effect.exit(
-          client.updateMarkup(
-            "c" as DocRef<Class<Doc>>,
-            "id" as DocRef<Doc>,
-            "attr",
-            "content",
-            invalidFormat
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.exit(
+              client.updateMarkup(
+                "c" as DocRef<Class<Doc>>,
+                "id" as DocRef<Doc>,
+                "attr",
+                "content",
+                invalidFormat
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const exit = yield* Fiber.join(fiber)
 
         expect(Exit.isFailure(exit)).toBe(true)
       }))
@@ -1249,18 +1289,25 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
     // test-revizorro: approved
     it.effect("throws on invalid format during fetchMarkup", () =>
       Effect.gen(function*() {
-        const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const invalidFormat = "invalid" as any
-        const exit = yield* Effect.exit(
-          client.fetchMarkup(
-            "c" as DocRef<Class<Doc>>,
-            "id" as DocRef<Doc>,
-            "attr",
-            "ref" as MarkupRef,
-            invalidFormat
-          )
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.exit(
+              client.fetchMarkup(
+                "c" as DocRef<Class<Doc>>,
+                "id" as DocRef<Doc>,
+                "attr",
+                "ref" as MarkupRef,
+                invalidFormat
+              )
+            )
+          })
         )
+
+        yield* TestClock.adjust("500 millis")
+        const exit = yield* Fiber.join(fiber)
 
         expect(Exit.isFailure(exit)).toBe(true)
       }))
@@ -1283,7 +1330,7 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
           }).pipe(Effect.provide(freshLayer))
         )
 
-        yield* TestClock.adjust("500 millis")
+        yield* TestClock.adjust("5 seconds")
 
         const exit = yield* Fiber.join(fiber).pipe(Effect.exit)
 
