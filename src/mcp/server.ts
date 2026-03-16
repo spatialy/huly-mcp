@@ -78,7 +78,9 @@ const createMcpServer = (
   storageClient: HulyStorageClient["Type"],
   telemetry: TelemetryOperations,
   registry: ToolRegistry,
-  workspaceClient?: WorkspaceClientOperations
+  workspaceClient?: WorkspaceClientOperations,
+  onToolStart?: () => void,
+  onToolEnd?: () => void
 ): Server => {
   const server = new Server(
     {
@@ -108,6 +110,7 @@ const createMcpServer = (
   })
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    onToolStart?.()
     const { arguments: args, name } = request.params
     const start = Date.now()
 
@@ -149,6 +152,8 @@ const createMcpServer = (
         McpErrorCode.InternalError,
         "UnhandledException"
       ))
+    } finally {
+      onToolEnd?.()
     }
   })
 
@@ -204,7 +209,16 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
               yield* Ref.set(isRunning, true)
 
               if (config.transport === "stdio") {
-                const stdioServer = createMcpServer(hulyClient, storageClient, telemetry, registry, workspaceClient)
+                const inFlightCount = yield* Ref.make(0)
+                const stdioServer = createMcpServer(
+                  hulyClient,
+                  storageClient,
+                  telemetry,
+                  registry,
+                  workspaceClient,
+                  () => Effect.runSync(Ref.update(inFlightCount, (n) => n + 1)),
+                  () => Effect.runSync(Ref.update(inFlightCount, (n) => n - 1))
+                )
                 yield* Ref.set(serverRef, stdioServer)
                 const transport = new StdioServerTransport()
 
@@ -239,6 +253,22 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
                       process.stdin.off("close", cleanup)
                     }
                   })
+                })
+
+                const DRAIN_TIMEOUT_MS = 10_000
+                const DRAIN_POLL_MS = 100
+                yield* Effect.gen(function*() {
+                  const deadline = Date.now() + DRAIN_TIMEOUT_MS
+                  let count = yield* Ref.get(inFlightCount)
+                  while (count > 0 && Date.now() < deadline) {
+                    yield* Effect.sleep(`${DRAIN_POLL_MS} millis`)
+                    count = yield* Ref.get(inFlightCount)
+                  }
+                  if (count > 0) {
+                    console.error(
+                      `Shutdown: ${count} tool calls still in-flight after ${DRAIN_TIMEOUT_MS}ms timeout, proceeding`
+                    )
+                  }
                 })
 
                 yield* flushTelemetry
