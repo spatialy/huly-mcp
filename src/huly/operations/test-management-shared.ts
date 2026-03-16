@@ -21,7 +21,7 @@ import { findByNameOrId, findPersonByEmailOrName, toRef } from "./shared.js"
 
 // --- Enum Mappings ---
 
-const TEST_CASE_TYPE_TO_STRING: Record<number, TestCaseType> = {
+const TEST_CASE_TYPE_TO_STRING: Partial<Record<number, TestCaseType>> = {
   0: "functional",
   1: "performance",
   2: "regression",
@@ -39,7 +39,7 @@ export const STRING_TO_TEST_CASE_TYPE: Record<TestCaseType, number> = {
   usability: 5
 }
 
-const TEST_CASE_PRIORITY_TO_STRING: Record<number, TestCasePriority> = {
+const TEST_CASE_PRIORITY_TO_STRING: Partial<Record<number, TestCasePriority>> = {
   0: "low",
   1: "medium",
   2: "high",
@@ -53,7 +53,7 @@ export const STRING_TO_TEST_CASE_PRIORITY: Record<TestCasePriority, number> = {
   urgent: 3
 }
 
-const TEST_CASE_STATUS_TO_STRING: Record<number, TestCaseStatus> = {
+const TEST_CASE_STATUS_TO_STRING: Partial<Record<number, TestCaseStatus>> = {
   0: "draft",
   1: "ready-for-review",
   2: "fix-review-comments",
@@ -69,13 +69,33 @@ export const STRING_TO_TEST_CASE_STATUS: Record<TestCaseStatus, number> = {
   "rejected": 4
 }
 
-export const typeToString = (n: number): TestCaseType => TEST_CASE_TYPE_TO_STRING[n] ?? "functional"
-export const priorityToString = (n: number): TestCasePriority => TEST_CASE_PRIORITY_TO_STRING[n] ?? "medium"
-export const statusToString = (n: number): TestCaseStatus => TEST_CASE_STATUS_TO_STRING[n] ?? "draft"
+export const typeToString = (n: number): TestCaseType => {
+  const result = TEST_CASE_TYPE_TO_STRING[n]
+  if (result === undefined) {
+    console.error(`Unknown TestCaseType enum value: ${n}, defaulting to "functional"`)
+  }
+  return result ?? "functional"
+}
+
+export const priorityToString = (n: number): TestCasePriority => {
+  const result = TEST_CASE_PRIORITY_TO_STRING[n]
+  if (result === undefined) {
+    console.error(`Unknown TestCasePriority enum value: ${n}, defaulting to "medium"`)
+  }
+  return result ?? "medium"
+}
+
+export const statusToString = (n: number): TestCaseStatus => {
+  const result = TEST_CASE_STATUS_TO_STRING[n]
+  if (result === undefined) {
+    console.error(`Unknown TestCaseStatus enum value: ${n}, defaulting to "draft"`)
+  }
+  return result ?? "draft"
+}
 
 // --- Test Result Status Enum Mappings ---
 
-const TEST_RESULT_STATUS_TO_STRING: Record<number, TestResultStatus> = {
+const TEST_RESULT_STATUS_TO_STRING: Partial<Record<number, TestResultStatus>> = {
   0: "untested",
   1: "blocked",
   2: "passed",
@@ -89,7 +109,13 @@ export const STRING_TO_TEST_RESULT_STATUS: Record<TestResultStatus, number> = {
   failed: 3
 }
 
-export const resultStatusToString = (n: number): TestResultStatus => TEST_RESULT_STATUS_TO_STRING[n] ?? "untested"
+export const resultStatusToString = (n: number): TestResultStatus => {
+  const result = TEST_RESULT_STATUS_TO_STRING[n]
+  if (result === undefined) {
+    console.error(`Unknown TestResultStatus enum value: ${n}, defaulting to "untested"`)
+  }
+  return result ?? "untested"
+}
 
 // --- Lookup Helpers ---
 
