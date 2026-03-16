@@ -318,6 +318,7 @@ export const findPersonByEmailOrName = (
       )
       if (person !== undefined) return person
     }
+    yield* Effect.logDebug(`findPerson: exact email channel match not found for "${emailOrName}"`)
 
     // 2. Exact name match
     const exactPerson = yield* client.findOne<Person>(
@@ -325,6 +326,7 @@ export const findPersonByEmailOrName = (
       { name: emailOrName }
     )
     if (exactPerson !== undefined) return exactPerson
+    yield* Effect.logDebug(`findPerson: exact name match not found for "${emailOrName}"`)
 
     // 3. Substring email channel match via $like (email channels only)
     const escaped = escapeLikeWildcards(emailOrName)
@@ -342,11 +344,15 @@ export const findPersonByEmailOrName = (
       )
       if (person !== undefined) return person
     }
+    yield* Effect.logDebug(`findPerson: substring email channel match not found for "${emailOrName}"`)
 
     // 4. Substring name match via $like
     const likePerson = yield* client.findOne<Person>(
       contact.class.Person,
       { name: { $like: `%${escaped}%` } }
     )
+    if (likePerson === undefined) {
+      yield* Effect.logDebug(`findPerson: all 4 strategies failed for "${emailOrName}"`)
+    }
     return likePerson
   })

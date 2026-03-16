@@ -123,7 +123,7 @@ export class WorkspaceClient extends Context.Tag("@hulymcp/WorkspaceClient")<
     mockOps: Partial<WorkspaceClientOperations>
   ): Layer.Layer<WorkspaceClient> {
     const notImplemented = (name: string) => (): Effect.Effect<never, WorkspaceClientError> =>
-      Effect.die(new Error(`${name} not implemented in test layer`))
+      Effect.fail(new HulyConnectionError({ message: `${name} not implemented in test layer` }))
 
     const defaultOps: WorkspaceClientOperations = {
       getWorkspaceMembers: () => Effect.succeed([]),
