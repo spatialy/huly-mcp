@@ -90,10 +90,10 @@ export const listWorkspaceMembers = (
             name,
             email
           }
-        }),
+        }).pipe(Effect.option),
       { concurrency: 10 }
     )
-    return result
+    return Array.from(result).filter(Option.isSome).map((o) => o.value)
   })
 
 export const updateMemberRole = (
