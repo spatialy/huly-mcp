@@ -17,7 +17,7 @@ import { WorkspaceClient, type WorkspaceClientOperations } from "../huly/workspa
 import type { TelemetryOperations } from "../telemetry/telemetry.js"
 import { TelemetryService } from "../telemetry/telemetry.js"
 import { VERSION } from "../version.js"
-import { createUnknownToolError, McpErrorCode, toMcpResponse } from "./error-mapping.js"
+import { createErrorResponse, createUnknownToolError, McpErrorCode, toMcpResponse } from "./error-mapping.js"
 import type { ToolRegistry } from "./tools/index.js"
 import { CATEGORY_NAMES, createFilteredRegistry, resolveAnnotations, toolRegistry } from "./tools/index.js"
 
@@ -109,37 +109,47 @@ const createMcpServer = (
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { arguments: args, name } = request.params
-
     const start = Date.now()
-    const response = await registry.handleToolCall(
-      name,
-      args ?? {},
-      hulyClient,
-      storageClient,
-      workspaceClient
-    )
-    const durationMs = Date.now() - start
 
-    if (response === null) {
-      const errorResponse = createUnknownToolError(name)
+    try {
+      const response = await registry.handleToolCall(
+        name,
+        args ?? {},
+        hulyClient,
+        storageClient,
+        workspaceClient
+      )
+      const durationMs = Date.now() - start
+
+      if (response === null) {
+        const errorResponse = createUnknownToolError(name)
+        telemetry.toolCalled({
+          toolName: name,
+          status: "error",
+          errorTag: errorResponse._meta.errorTag,
+          durationMs
+        })
+        return toMcpResponse(errorResponse)
+      }
+
+      const isInternalError = response._meta?.errorCode === McpErrorCode.InternalError
       telemetry.toolCalled({
         toolName: name,
-        status: "error",
-        errorTag: errorResponse._meta.errorTag,
+        status: isInternalError ? "error" : "success",
+        errorTag: response._meta?.errorTag,
         durationMs
       })
-      return toMcpResponse(errorResponse)
+
+      return toMcpResponse(response)
+    } catch {
+      const durationMs = Date.now() - start
+      telemetry.toolCalled({ toolName: name, status: "error", errorTag: "UnhandledException", durationMs })
+      return toMcpResponse(createErrorResponse(
+        `Internal error processing ${name}`,
+        McpErrorCode.InternalError,
+        "UnhandledException"
+      ))
     }
-
-    const isInternalError = response._meta?.errorCode === McpErrorCode.InternalError
-    telemetry.toolCalled({
-      toolName: name,
-      status: isInternalError ? "error" : "success",
-      errorTag: response._meta?.errorTag,
-      durationMs
-    })
-
-    return toMcpResponse(response)
   })
 
   return server

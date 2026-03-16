@@ -52,7 +52,7 @@ interface McpErrorResponseWithMeta extends McpToolResponse {
   _meta: ErrorMetadata
 }
 
-const createErrorResponse = (
+export const createErrorResponse = (
   text: string,
   errorCode: McpErrorCode,
   errorTag?: string
