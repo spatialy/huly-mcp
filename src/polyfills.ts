@@ -46,3 +46,18 @@ if (typeof globalThis.navigator === "undefined") {
 // MCP stdio transport uses stdout for JSON-RPC — redirect console.log to stderr
 // so Huly client library logs ("Connected to server", "findfull model") don't corrupt the protocol stream
 console.log = console.error
+
+// Safety net: @hcengineering/client-resources throws uncaught exceptions from
+// wsocket.onmessage when RPCHandler.readResponse() hits corrupt msgpack buffers
+// (connection.js:520). Without this handler, the process crashes and Claude Code
+// loses the MCP connection. We log the error and continue — the affected RPC call
+// will timeout via OPERATION_TIMEOUT, and the connection may self-heal on next use.
+process.on("uncaughtException", (err) => {
+  const msg = String(err.message)
+  if (msg.includes("end of buffer not reached")) {
+    console.error(`[huly] caught buffer deserialization error (non-fatal): ${msg}`)
+    return
+  }
+  console.error(`[huly] uncaught exception, exiting: ${msg}`)
+  process.exit(1)
+})
