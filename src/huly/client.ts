@@ -145,18 +145,22 @@ export class HulyClient extends Context.Tag("@hulymcp/HulyClient")<
     Effect.gen(function*() {
       const config = yield* HulyConfigService
 
-      const CONNECT_TIMEOUT = "30 seconds"
+      const CONNECT_TIMEOUT = "10 seconds"
+      const OPERATION_TIMEOUT = "30 seconds"
       const connRef = yield* MutableRef.make<WsConnection | null>(null)
       const connectLock = yield* Effect.makeSemaphore(1)
 
-      const doConnect = Effect.tap(
-        connectWebSocketWithRetry({ url: config.url, auth: config.auth, workspace: config.workspace }).pipe(
-          Effect.timeoutFail({
-            duration: CONNECT_TIMEOUT,
-            onTimeout: () => new HulyConnectionError({ message: `Connection timed out after ${CONNECT_TIMEOUT}` })
-          })
-        ),
-        (conn) => MutableRef.set(connRef, conn)
+      const connectEffect = connectWebSocketWithRetry(
+        { url: config.url, auth: config.auth, workspace: config.workspace }
+      )
+      const doConnect = connectEffect.pipe(
+        Effect.timeoutFail({
+          duration: CONNECT_TIMEOUT,
+          onTimeout: () => new HulyConnectionError({ message: `Timed out after ${CONNECT_TIMEOUT}` })
+        }),
+        Effect.tap(() => Effect.sync(() => console.error("[huly] connected to workspace"))),
+        Effect.tapError((e) => Effect.sync(() => console.error(`[huly] connection failed: ${e.message}`))),
+        Effect.tap((conn) => MutableRef.set(connRef, conn))
       )
 
       const ensureConnection: Effect.Effect<WsConnection, HulyClientError> = Effect.gen(function*() {
@@ -196,11 +200,19 @@ export class HulyClient extends Context.Tag("@hulymcp/HulyClient")<
                 message: `${errorMsg}: ${String(e)}`,
                 cause: e
               })
-          })
+          }).pipe(
+            Effect.timeoutFail({
+              duration: OPERATION_TIMEOUT,
+              onTimeout: () => new HulyConnectionError({ message: `${errorMsg}: timed out after ${OPERATION_TIMEOUT}` })
+            })
+          )
         }).pipe(
           Effect.tapError((e) =>
             e instanceof HulyConnectionError && isConnectionDead(e)
-              ? MutableRef.set(connRef, null)
+              ? Effect.all([
+                MutableRef.set(connRef, null),
+                Effect.sync(() => console.error(`[huly] connection invalidated: ${e.message}`))
+              ])
               : Effect.void
           ),
           Effect.retry({

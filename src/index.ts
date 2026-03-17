@@ -44,7 +44,7 @@ const getHttpHost = Config.string("MCP_HTTP_HOST").pipe(
 )
 
 const getAutoExit = Config.boolean("MCP_AUTO_EXIT").pipe(
-  Config.withDefault(false)
+  Config.withDefault(true)
 )
 
 const buildAppLayer = (

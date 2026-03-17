@@ -213,6 +213,10 @@ export class McpServerService extends Context.Tag("@hulymcp/McpServer")<
           toolsets
         })
 
+        console.error(
+          `[huly-mcp] v${VERSION} starting (${config.transport} transport, ${registry.definitions.length} tools)`
+        )
+
         const flushTelemetry = Effect.ignore(
           Effect.tryPromise(() => telemetry.shutdown())
         )

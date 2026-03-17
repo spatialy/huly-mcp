@@ -1404,6 +1404,26 @@ describe("HulyClient.layer (live layer with mocked externals)", () => {
 
         expect(loadServerConfig.mock.calls.length).toBeGreaterThan(1)
       }))
+
+    it.effect("operations that hang beyond OPERATION_TIMEOUT fail with timeout error", () =>
+      Effect.gen(function*() {
+        mockFindAll.mockReturnValue(new Promise(() => {}))
+
+        const fiber = yield* Effect.fork(
+          Effect.gen(function*() {
+            const client = yield* HulyClient.pipe(Effect.provide(liveClientLayer))
+            return yield* Effect.flip(
+              client.findAll("c" as DocRef<Class<TestDoc>>, {} as DocumentQuery<TestDoc>)
+            )
+          })
+        )
+
+        yield* TestClock.adjust("120 seconds")
+        const error = yield* Fiber.join(fiber)
+
+        expect(error._tag).toBe("HulyConnectionError")
+        expect(error.message).toContain("timed out")
+      }))
   })
 
   describe("connection failure", () => {
